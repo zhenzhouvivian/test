@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library - Aholo3D</title>
+    <style>
+        :root {
+            --color-primary: #2563EB;
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --color-info: #3B82F6;
+            --color-gray-50: #F9FAFB;
+            --color-gray-100: #F3F4F6;
+            --color-gray-200: #E5E7EB;
+            --color-gray-300: #D1D5DB;
+            --color-gray-400: #9CA3AF;
+            --color-gray-500: #6B7280;
+            --color-gray-600: #4B5563;
+            --color-gray-700: #374151;
+            --color-gray-800: #1F2937;
+            --color-gray-900: #111827;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F9FAFB;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-tertiary: #9CA3AF;
+            --border-light: #E5E7EB;
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 24px;
+            --space-2xl: 32px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: var(--bg-secondary); color: var(--text-primary); }
+
+        /* Library Layout */
+        .library-container { max-width: 1400px; margin: 0 auto; padding: var(--space-2xl); }
+        .library-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2xl); }
+        .library-title { font-size: 24px; font-weight: 600; }
+        .create-btn { padding: 10px 20px; background: var(--color-primary); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 500; }
+
+        /* Cards Grid */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-xl); }
+
+        /* Project Card */
+        .project-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            transition: all 250ms ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .project-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .project-card.uploading { cursor: default; }
+        .project-card.uploading:hover { transform: none; }
+
+        .card-thumbnail {
+            aspect-ratio: 16 / 10;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-thumbnail.uploading { background: var(--color-gray-200); }
+        .card-thumbnail.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .card-thumbnail.error { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
+        .card-thumbnail.processing { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+        .card-status-badge {
+            position: absolute;
+            top: var(--space-md);
+            left: var(--space-md);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-menu-btn {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 250ms ease;
+        }
+
+        .project-card:hover .card-menu-btn { opacity: 1; }
+        .card-menu-btn:hover { background: rgba(0,0,0,0.5); }
+
+        .card-content { padding: var(--space-lg); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: var(--space-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { font-size: 13px; color: var(--text-tertiary); display: flex; gap: var(--space-md); }
+
+        .upload-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 48px;
+            right: var(--space-md);
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            min-width: 160px;
+            z-index: 100;
+            display: none;
+            border: 1px solid var(--border-light);
+        }
+
+        .dropdown-menu.active { display: block; }
+        .dropdown-item { padding: var(--space-md) var(--space-lg); font-size: 14px; cursor: pointer; transition: background 150ms ease; }
+        .dropdown-item:hover { background: var(--color-gray-50); }
+        .dropdown-item:first-child { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+        .dropdown-item:last-child { border-radius: 0 0 var(--radius-md) var(--radius-md); }
+        .dropdown-divider { height: 1px; background: var(--border-light); margin: 4px 0; }
+
+        /* Project Info Modal Integration */
+        #projectInfoFrame {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        #projectInfoFrame.active { display: block; }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--text-primary);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            box-shadow: var(--shadow-md);
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 300ms ease;
+        }
+
+        .toast.active { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="library-container">
+        <header class="library-header">
+            <h1 class="library-title">我的项目</h1>
+            <button class="create-btn" onclick="startCreate()">+ 新建项目</button>
+        </header>
+
+        <div class="cards-grid" id="cardsGrid">
+            <!-- Cards will be generated by JS -->
+        </div>
+    </div>
+
+    <!-- Project Info Page (Embedded) -->
+    <iframe id="projectInfoFrame" src="project-info-page.html"></iframe>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ========== Mock Data ==========
+        const projects = [
+            { id: 'GS-2024-001', name: '客厅沙发', status: 'success', type: '物体', createdAt: '2024-01-15 10:30', thumbnail: 'gradient1' },
+            { id: 'GS-2024-002', name: '办公室全景', status: 'processing', type: '空间', createdAt: '2024-01-15 11:45', thumbnail: 'gradient2', stage: '点云生成', progress: 65 },
+            { id: 'GS-2024-003', name: 'AI生成花瓶', status: 'pending', type: 'AI生成', createdAt: '2024-01-15 12:00', thumbnail: 'gradient3', queuePosition: 3 },
+            { id: 'GS-2024-004', name: '餐厅场景', status: 'error', type: '空间', createdAt: '2024-01-15 13:20', thumbnail: 'gradient4', errorReason: '处理超时，请重试' },
+            { id: 'GS-2024-005', name: '上传中...', status: 'uploading', type: '物体', createdAt: '刚刚', thumbnail: 'uploading', uploadProgress: 45 },
+            { id: 'GS-2024-006', name: '预处理中', status: 'preprocessing', type: '物体', createdAt: '2024-01-15 14:00', thumbnail: 'gradient5', stage: '图像预处理' }
+        ];
+
+        // ========== Card Status Config ==========
+        const statusConfig = {
+            uploading: { label: '上传中', class: 'uploading', clickable: false },
+            pending: { label: '排队中', class: 'pending', clickable: true },
+            preprocessing: { label: '预处理', class: 'processing', clickable: true },
+            processing: { label: '创建中', class: 'processing', clickable: true },
+            success: { label: '成功', class: 'success', clickable: true }, // 点击打开编辑器
+            error: { label: '失败', class: 'error', clickable: true }
+        };
+
+        // ========== Render Functions ==========
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = projects.map(project => createCardHTML(project)).join('');
+            attachCardListeners();
+        }
+
+        function createCardHTML(project) {
+            const config = statusConfig[project.status] || statusConfig.processing;
+            const isUploading = project.status === 'uploading';
+            
+            return `
+                <div class="project-card ${project.status}" data-id="${project.id}" data-status="${project.status}">
+                    <div class="card-thumbnail ${config.class}">
+                        <span class="card-status-badge">${config.label}</span>
+                        <button class="card-menu-btn" onclick="showCardMenu(event, '${project.id}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="6" r="2"></circle>
+                                <circle cx="12" cy="12" r="2"></circle>
+                                <circle cx="12" cy="18" r="2"></circle>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="menu-${project.id}">
+                            <div class="dropdown-item" onclick="viewProjectInfo('${project.id}')">查看项目信息</div>
+                            ${project.status === 'success' ? '<div class="dropdown-item" onclick="openEditor(\'' + project.id + '\')">在编辑器中打开</div>' : ''}
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item" onclick="deleteProject('${project.id}')" style="color: var(--color-error);">删除</div>
+                        </div>
+                        ${isUploading ? `
+                            <div class="upload-progress">
+                                <div class="upload-progress-bar" style="width: ${project.uploadProgress}%"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${project.name}</h3>
+                        <div class="card-meta">
+                            <span>${project.type}</span>
+                            <span>·</span>
+                            <span>${project.createdAt}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachCardListeners() {
+            document.querySelectorAll('.project-card').forEach(card => {
+                const status = card.dataset.status;
+                const config = statusConfig[status];
+                
+                // 上传中无操作
+                if (!config.clickable) return;
+
+                card.addEventListener('click', (e) => {
+                    // 忽略菜单按钮点击
+                    if (e.target.closest('.card-menu-btn') || e.target.closest('.dropdown-menu')) return;
+                    
+                    const projectId = card.dataset.id;
+                    
+                    // 成功状态打开编辑器，其他状态打开项目信息页
+                    if (status === 'success') {
+                        openEditor(projectId);
+                    } else {
+                        viewProjectInfo(projectId);
+                    }
+                });
+            });
+        }
+
+        // ========== Card Click Logic ==========
+        function showCardMenu(event, projectId) {
+            event.stopPropagation();
+            // 关闭其他菜单
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+            // 打开当前菜单
+            const menu = document.getElementById(`menu-${projectId}`);
+            menu.classList.add('active');
+        }
+
+        // 点击外部关闭菜单
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+        });
+
+        // ========== Navigation Functions ==========
+        function viewProjectInfo(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            // 构建项目数据
+            const projectData = {
+                id: project.id,
+                name: project.name,
+                status: project.status,
+                type: project.type,
+                createdAt: project.createdAt,
+                stage: project.stage || '-',
+                queuePosition: project.queuePosition || '-',
+                errorReason: project.errorReason || '',
+                videos: [
+                    { name: '360度旋转.mp4', size: '2.4 MB', duration: '00:15' },
+                    { name: '细节特写.mp4', size: '1.8 MB', duration: '00:08' }
+                ]
+            };
+
+            // 打开项目信息页
+            const frame = document.getElementById('projectInfoFrame');
+            frame.classList.add('active');
+            
+            // 等待 iframe 加载完成后发送数据
+            frame.onload = () => {
+                frame.contentWindow.postMessage({
+                    type: 'projectInfo:init',
+                    data: projectData
+                }, '*');
+            };
+            
+            // 如果已经加载，直接发送
+            if (frame.contentWindow) {
+                frame.contentWindow.postMessage({
+                    type: 'projectInfo:init',
+                    data: projectData
+                }, '*');
+            }
+        }
+
+        function openEditor(projectId) {
+            showToast(`打开编辑器: ${projectId}`);
+            // window.location.href = `/editor/${projectId}`;
+        }
+
+        function deleteProject(projectId) {
+            if (confirm('确定要删除这个项目吗？')) {
+                showToast(`项目 ${projectId} 已删除`);
+                // 重新渲染
+                const index = projects.findIndex(p => p.id === projectId);
+                if (index > -1) {
+                    projects.splice(index, 1);
+                    renderCards();
+                }
+            }
+        }
+
+        function startCreate() {
+            showToast('开始创建新项目...');
+            // 模拟创建流程
+            setTimeout(() => {
+                const newProject = {
+                    id: `GS-2024-${String(projects.length + 1).padStart(3, '0')}`,
+                    name: '新项目',
+                    status: 'pending',
+                    type: '物体',
+                    createdAt: '刚刚',
+                    thumbnail: 'gradient1',
+                    queuePosition: 1
+                };
+                projects.unshift(newProject);
+                renderCards();
+                // 自动打开项目信息页
+                viewProjectInfo(newProject.id);
+            }, 500);
+        }
+
+        // ========== Message Handler ==========
+        window.addEventListener('message', (e) => {
+            const { type, action, projectId } = e.data;
+            
+            switch(type) {
+                case 'projectInfo:closed':
+                    document.getElementById('projectInfoFrame').classList.remove('active');
+                    break;
+                    
+                case 'projectInfo:action':
+                    handleProjectAction(action, projectId);
+                    break;
+                    
+                case 'projectInfo:supplement':
+                    showToast(`项目 ${projectId}: 已选择 ${e.data.fileCount} 个补充文件`);
+                    break;
+            }
+        });
+
+        function handleProjectAction(action, projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            switch(action) {
+                case 'edit':
+                    showToast(`编辑项目: ${project.name}`);
+                    break;
+                case 'retry':
+                    showToast(`重试项目: ${project.name}`);
+                    project.status = 'pending';
+                    renderCards();
+                    break;
+                case 'fix':
+                    showToast(`修复项目: ${project.name}`);
+                    break;
+            }
+        }
+
+        // ========== Utility Functions ==========
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        // ========== Init ==========
+        renderCards();
+    </script>
+</body>
+</html>
