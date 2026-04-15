@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目信息 - Aholo</title>
+    <style>
+        :root {
+            --color-primary: #2563EB;
+            --color-primary-hover: #1D4ED8;
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --color-info: #3B82F6;
+            --color-gray-50: #F9FAFB;
+            --color-gray-100: #F3F4F6;
+            --color-gray-200: #E5E7EB;
+            --color-gray-300: #D1D5DB;
+            --color-gray-400: #9CA3AF;
+            --color-gray-500: #6B7280;
+            --color-gray-600: #4B5563;
+            --color-gray-700: #374151;
+            --color-gray-800: #1F2937;
+            --color-gray-900: #111827;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F9FAFB;
+            --bg-tertiary: #F3F4F6;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-size-xs: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            --font-size-xl: 20px;
+            --font-size-2xl: 24px;
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-family); background-color: var(--bg-secondary); color: var(--text-primary); line-height: 1.5; }
+        .project-info-page { max-width: 1200px; margin: 0 auto; padding: var(--spacing-lg); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--color-gray-200); }
+        .page-title { font-size: var(--font-size-2xl); font-weight: 600; color: var(--text-primary); }
+        .close-btn { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; padding: var(--spacing-sm); border-radius: var(--radius-md); transition: all var(--transition-fast); }
+        .close-btn:hover { background-color: var(--color-gray-100); color: var(--text-primary); }
+        .quick-actions { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-xl); }
+        .btn { display: inline-flex; align-items: center; gap: var(--spacing-sm); padding: 10px 20px; border-radius: var(--radius-md); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer; transition: all var(--transition-fast); border: none; }
+        .btn-primary { background-color: var(--color-primary); color: white; }
+        .btn-primary:hover { background-color: var(--color-primary-hover); }
+        .btn-secondary { background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--color-gray-300); }
+        .btn-secondary:hover { background-color: var(--color-gray-50); border-color: var(--color-gray-400); }
+        .btn-warning { background-color: var(--color-warning); color: white; }
+        .btn-warning:hover { background-color: #D97706; }
+        .status-section { margin-bottom: var(--spacing-xl); }
+        .status-badge { display: inline-flex; align-items: center; gap: var(--spacing-sm); padding: 8px 16px; border-radius: 20px; font-size: var(--font-size-sm); font-weight: 500; }
+        .status-success { background-color: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+        .status-processing { background-color: rgba(59, 130, 246, 0.1); color: var(--color-info); }
+        .status-error { background-color: rgba(239, 68, 68, 0.1); color: var(--color-error); }
+        .status-pending { background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
+        .status-icon { width: 8px; height: 8px; border-radius: 50%; }
+        .status-success .status-icon { background-color: var(--color-success); }
+        .status-processing .status-icon { background-color: var(--color-info); animation: pulse 2s infinite; }
+        .status-error .status-icon { background-color: var(--color-error); }
+        .status-pending .status-icon { background-color: var(--color-warning); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl); }
+        .card { background-color: var(--bg-primary); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--color-gray-200); }
+        .card-title { font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-sm); }
+        .card-icon { width: 20px; height: 20px; color: var(--color-primary); }
+        .info-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+        .info-item { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--color-gray-100); }
+        .info-item:last-child { border-bottom: none; }
+        .info-label { font-size: var(--font-size-sm); color: var(--text-secondary); }
+        .info-value { font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); font-family: 'Monaco', 'Menlo', monospace; }
+        .info-value.type-badge { padding: 4px 12px; background-color: var(--color-gray-100); border-radius: 12px; font-family: inherit; }
+        .error-reason { color: var(--color-error); font-size: var(--font-size-sm); margin-top: var(--spacing-sm); padding: var(--spacing-sm); background-color: rgba(239, 68, 68, 0.05); border-radius: var(--radius-sm); border-left: 3px solid var(--color-error); }
+        .preview-section { background-color: var(--bg-primary); border-radius: var(--radius-lg); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--color-gray-200); }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); }
+        .preview-title { font-size: var(--font-size-md); font-weight: 600; display: flex; align-items: center; gap: var(--spacing-sm); }
+        .view-btn { padding: 6px 16px; font-size: var(--font-size-sm); }
+        .preview-content { background-color: var(--bg-secondary); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; position: relative; }
+        .preview-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: var(--font-size-sm); }
+        .preview-hint { margin-top: var(--spacing-sm); font-size: var(--font-size-xs); color: var(--text-tertiary); display: flex; align-items: center; gap: var(--spacing-xs); }
+        .hint-icon { width: 14px; height: 14px; }
+        .pointcloud-section { background-color: var(--bg-primary); border-radius: var(--radius-lg); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--color-gray-200); }
+        .pointcloud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); }
+        .pointcloud-visualization { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: var(--radius-md); height: 300px; position: relative; overflow: hidden; margin-bottom: var(--spacing-md); }
+        .pointcloud-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.5); font-size: var(--font-size-sm); }
+        .color-legend { display: flex; gap: var(--spacing-lg); margin-bottom: var(--spacing-md); }
+        .legend-item { display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--font-size-sm); }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-dot.green { background-color: var(--color-success); box-shadow: 0 0 8px var(--color-success); }
+        .legend-dot.red { background-color: var(--color-error); box-shadow: 0 0 8px var(--color-error); }
+        .pointcloud-actions { display: flex; justify-content: space-between; align-items: center; }
+        .pointcloud-hint { font-size: var(--font-size-xs); color: var(--text-tertiary); max-width: 60%; }
+        .videos-section { background-color: var(--bg-primary); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--color-gray-200); }
+        .videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md); margin-top: var(--spacing-md); }
+        .video-card { background-color: var(--bg-secondary); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--color-gray-200); transition: all var(--transition-fast); }
+        .video-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .video-thumbnail { aspect-ratio: 16 / 9; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; cursor: pointer; }
+        .video-play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; background-color: rgba(255, 255, 255, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast); }
+        .video-play-btn:hover { background-color: white; transform: translate(-50%, -50%) scale(1.1); }
+        .video-play-icon { width: 0; height: 0; border-left: 14px solid var(--text-primary); border-top: 9px solid transparent; border-bottom: 9px solid transparent; margin-left: 4px; }
+        .video-info { padding: var(--spacing-sm) var(--spacing-md); }
+        .video-name { font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-xs); }
+        .video-meta { display: flex; justify-content: space-between; align-items: center; font-size: var(--font-size-xs); color: var(--text-tertiary); }
+        .video-download { color: var(--color-primary); cursor: pointer; transition: color var(--transition-fast); }
+        .video-download:hover { color: var(--color-primary-hover); }
+        .empty-state { text-align: center; padding: var(--spacing-2xl); color: var(--text-tertiary); }
+        .empty-icon { font-size: 48px; margin-bottom: var(--spacing-md); }
+        .empty-text { font-size: var(--font-size-sm); }
+        @media (max-width: 768px) {
+            .project-info-page { padding: var(--spacing-md); }
+            .cards-grid { grid-template-columns: 1fr; }
+            .quick-actions { flex-wrap: wrap; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: var(--spacing-md); }
+            .color-legend { flex-direction: column; gap: var(--spacing-sm); }
+            .pointcloud-actions { flex-direction: column; gap: var(--spacing-md); align-items: flex-start; }
+            .pointcloud-hint { max-width: 100%; }
+        }
+        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.75); z-index: 1000; align-items: center; justify-content: center; padding: var(--spacing-lg); }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background-color: var(--bg-primary); border-radius: var(--radius-xl); max-width: 90vw; max-height: 90vh; overflow: hidden; position: relative; }
+        .modal-close { position: absolute; top: var(--spacing-md); right: var(--spacing-md); background: rgba(0, 0, 0, 0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; z-index: 10; transition: background var(--transition-fast); }
+        .modal-close:hover { background: rgba(0, 0, 0, 0.7); }
+        .modal-video { width: 80vw; height: 45vw; max-height: 80vh; background-color: black; }
+    </style>
+</head>
+<body>
+    <div class="project-info-page">
+        <header class="page-header">
+            <h1 class="page-title">项目信息</h1>
+            <button class="close-btn" onclick="closePage()">&times;</button>
+        </header>
+
+        <div class="status-section">
+            <span class="status-badge status-processing" id="statusBadge">
+                <span class="status-icon"></span>
+                <span id="statusText">生成中...</span>
+            </span>
+        </div>
+
+        <div class="quick-actions" id="quickActions">
+            <button class="btn btn-primary" onclick="editProject()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                编辑
+            </button>
+            <button class="btn btn-secondary" id="retryBtn" onclick="retryProject()" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                重试
+            </button>
+            <button class="btn btn-warning" id="fixBtn" onclick="fixProject()" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                修复
+            </button>
+        </div>
+
+        <div class="cards-grid">
+            <div class="card">
+                <h2 class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    基本信息
+                </h2>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">方案 ID</span>
+                        <span class="info-value" id="projectId">GS-2024-001234</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">发起时间</span>
+                        <span class="info-value" id="createdAt">2024-01-15 14:32:08</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">类型</span>
+                        <span class="info-value type-badge" id="projectType">物体</span>
+                    </div>
+                </div>
+                <div class="error-reason" id="errorReason" style="display: none;">
+                    <strong>失败原因：</strong><span id="errorText">处理超时，请重试</span>
+                </div>
+            </div>
+
+            <div class="card" id="progressCard">
+                <h2 class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    处理进度
+                </h2>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">当前阶段</span>
+                        <span class="info-value" id="currentStage">点云生成</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">预计剩余</span>
+                        <span class="info-value" id="estimatedTime">约 3 分钟</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">队列位置</span>
+                        <span class="info-value" id="queuePosition">第 2 位</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-header">
+                <h2 class="preview-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    快速预览
+                </h2>
+                <button class="btn btn-secondary view-btn" onclick="openViewer()">View</button>
+            </div>
+            <div class="preview-content">
+                <div class="preview-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span style="margin-left: var(--spacing-md);">高斯预览渲染中...</span>
+                </div>
+            </div>
+            <div class="preview-hint">
+                <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                高斯预览仅展示快速预测的结果，重建完成后生成完整结果
+            </div>
+        </div>
+
+        <div class="pointcloud-section">
+            <div class="pointcloud-header">
+                <h2 class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+                    点云预览
+                </h2>
+            </div>
+            
+            <div class="color-legend">
+                <div class="legend-item">
+                    <span class="legend-dot green"></span>
+                    <span>最佳区域</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot red"></span>
+                    <span>需补充视角</span>
+                </div>
+            </div>
+
+            <div class="pointcloud-visualization">
+                <div class="pointcloud-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+                    <span style="margin-left: var(--spacing-md); color: rgba(255,255,255,0.5);">点云数据加载中...</span>
+                </div>
+            </div>
+
+            <div class="pointcloud-actions">
+                <div class="pointcloud-hint">
+                    点云绿色最佳红色最差，推荐补充红色区域的视角
+                </div>
+                <button class="btn btn-primary" onclick="openSupplementInput()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    补充输入
+                </button>
+            </div>
+        </div>
+
+        <div class="videos-section">
+            <h2 class="card-title">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                生成视频
+            </h2>
+            <div class="videos-grid" id="videosGrid">
+                <div class="video-card">
+                    <div class="video-thumbnail" onclick="openVideoModal(0)">
+                        <div class="video-play-btn"><div class="video-play-icon"></div></div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-name">360度旋转展示.mp4</div>
+                        <div class="video-meta">
+                            <span>2.4 MB · 00:15</span>
+                            <span class="video-download" onclick="downloadVideo(0)">下载</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <div class="video-thumbnail" onclick="openVideoModal(1)" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="video-play-btn"><div class="video-play-icon"></div></div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-name">细节特写.mp4</div>
+                        <div class="video-meta">
+                            <span>1.8 MB · 00:08</span>
+                            <span class="video-download" onclick="downloadVideo(1)">下载</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeVideoModal()">&times;</button>
+            <video class="modal-video" id="modalVideo" controls>
+                <source src="" type="video/mp4">
+            </video>
+        </div>
+    </div>
+
+    <!-- Supplement Input Modal -->
+    <div class="modal-overlay" id="supplementModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 600;">补充输入</h3>
+                <button class="modal-close" onclick="closeSupplementModal()">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;">
+                请上传需要补充的视角图片或视频，以帮助改善红色区域的重建质量。
+            </p>
+            <div style="border: 2px dashed var(--border-medium); border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 20px;">
+                <input type="file" id="supplementFiles" multiple accept="image/*,video/*" style="display: none;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" style="margin: 0 auto 12px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">拖拽文件到此处，或</p>
+                <button class="btn btn-secondary" onclick="document.getElementById('supplementFiles').click()">选择文件</button>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeSupplementModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitSupplement()">确认上传</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded Viewer Overlay -->
+    <div class="modal-overlay" id="viewerOverlay" style="background: #0f172a;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10;">
+            <span style="color: white; font-size: 14px;">高斯预览 - 快速预测结果</span>
+            <button onclick="closeViewer()" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5);">
+            <div style="text-align: center;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 16px; opacity: 0.5;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <p>3D 预览加载中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const projectData = {
+            id: 'GS-2024-001234',
+            createdAt: '2024-01-15 14:32:08',
+            type: '物体',
+            status: 'processing',
+            stage: '点云生成',
+            estimatedTime: '约 3 分钟',
+            queuePosition: '第 2 位',
+            errorReason: '',
+            videos: [
+                { name: '360度旋转展示.mp4', size: '2.4 MB', duration: '00:15', url: '#' },
+                { name: '细节特写.mp4', size: '1.8 MB', duration: '00:08', url: '#' }
+            ]
+        };
+
+        function init() {
+            document.getElementById('projectId').textContent = projectData.id;
+            document.getElementById('createdAt').textContent = projectData.createdAt;
+            document.getElementById('projectType').textContent = projectData.type;
+            updateStatus(projectData.status);
+        }
+
+        function updateStatus(status) {
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            const retryBtn = document.getElementById('retryBtn');
+            const fixBtn = document.getElementById('fixBtn');
+            const errorReason = document.getElementById('errorReason');
+            const progressCard = document.getElementById('progressCard');
+
+            badge.className = 'status-badge';
+            retryBtn.style.display = 'none';
+            fixBtn.style.display = 'none';
+            errorReason.style.display = 'none';
+
+            switch(status) {
+                case 'success':
+                    badge.classList.add('status-success');
+                    text.textContent = '成功';
+                    progressCard.style.display = 'none';
+                    break;
+                case 'processing':
+                    badge.classList.add('status-processing');
+                    text.textContent = '生成中...';
+                    progressCard.style.display = 'block';
+                    break;
+                case 'error':
+                    badge.classList.add('status-error');
+                    text.textContent = '失败';
+                    retryBtn.style.display = 'inline-flex';
+                    fixBtn.style.display = 'inline-flex';
+                    errorReason.style.display = 'block';
+                    progressCard.style.display = 'none';
+                    break;
+                case 'pending':
+                    badge.classList.add('status-pending');
+                    text.textContent = '排队中';
+                    progressCard.style.display = 'block';
+                    break;
+            }
+        }
+
+        // ========== Action Functions ==========
+        function closePage() { 
+            document.getElementById('projectInfoModal').classList.remove('active');
+            // 触发关闭事件，父页面可监听
+            window.parent.postMessage({ type: 'projectInfo:closed' }, '*');
+        }
+
+        function editProject() { 
+            window.parent.postMessage({ 
+                type: 'projectInfo:action', 
+                action: 'edit',
+                projectId: projectData.id 
+            }, '*');
+        }
+
+        function retryProject() { 
+            window.parent.postMessage({ 
+                type: 'projectInfo:action', 
+                action: 'retry',
+                projectId: projectData.id 
+            }, '*');
+        }
+
+        function fixProject() { 
+            window.parent.postMessage({ 
+                type: 'projectInfo:action', 
+                action: 'fix',
+                projectId: projectData.id 
+            }, '*');
+        }
+
+        function openViewer() { 
+            document.getElementById('viewerOverlay').classList.add('active');
+            // 模拟加载高斯预览
+            console.log('[ProjectInfo] Opening viewer for project:', projectData.id);
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerOverlay').classList.remove('active');
+        }
+
+        function openSupplementInput() { 
+            document.getElementById('supplementModal').classList.add('active');
+        }
+
+        function closeSupplementModal() {
+            document.getElementById('supplementModal').classList.remove('active');
+        }
+
+        function submitSupplement() {
+            const files = document.getElementById('supplementFiles').files;
+            if (files.length === 0) {
+                alert('请选择要上传的文件');
+                return;
+            }
+            window.parent.postMessage({ 
+                type: 'projectInfo:supplement', 
+                projectId: projectData.id,
+                fileCount: files.length
+            }, '*');
+            closeSupplementModal();
+        }
+        function openVideoModal(index) {
+            const modal = document.getElementById('videoModal');
+            const video = document.getElementById('modalVideo');
+            modal.classList.add('active');
+            video.src = projectData.videos[index]?.url || '#';
+        }
+        function closeVideoModal() {
+            const modal = document.getElementById('videoModal');
+            const video = document.getElementById('modalVideo');
+            modal.classList.remove('active');
+            video.pause();
+            video.src = '';
+        }
+        function downloadVideo(index) {
+            alert('下载视频: ' + projectData.videos[index]?.name);
+        }
+
+        document.getElementById('videoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeVideoModal();
+        });
+
+        init();
+    </script>
+</body>
+</html>
