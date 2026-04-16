@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方案详情 - Project Info</title>
+    <style>
+        :root {
+            --bg-root: #141517;
+            --bg-surface: #232428;
+            --bg-surface-hover: #2D2F34;
+            --bg-element: #32343A;
+            --color-primary: #3B5BDB;
+            --color-primary-hover: #4C6EF5;
+            --color-success: #2B8A3E;
+            --color-warning: #E67700;
+            --color-danger: #E03131;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A6A7AB;
+            --text-disabled: #5C5F66;
+            --border-divider: #32343A;
+            --radius-l: 999px;
+            --radius-m: 12px;
+            --radius-xs: 8px;
+            --radius-ex: 4px;
+            --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.6);
+            --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+            background: var(--bg-root);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .main-container {
+            display: flex;
+            height: 100vh;
+            gap: 12px;
+            padding: 12px;
+        }
+        
+        /* Left Panel */
+        .left-panel {
+            width: 240px;
+            background: var(--bg-surface);
+            border-radius: var(--radius-m);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .process-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px 12px;
+        }
+        .process-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        .process-item:hover { background: var(--bg-surface-hover); }
+        .process-item.active { background: rgba(59, 91, 219, 0.15); }
+        .process-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-element);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .process-name {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .process-status {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .process-status.success { color: var(--color-success); }
+        .process-status.processing { color: var(--color-warning); }
+        
+        /* Right Panel */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+        
+        .top-bar {
+            background: var(--bg-surface);
+            border-radius: var(--radius-m);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .project-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .project-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-l);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge.success {
+            background: rgba(43, 138, 62, 0.15);
+            color: var(--color-success);
+        }
+        .status-badge.processing {
+            background: rgba(230, 119, 0, 0.15);
+            color: var(--color-warning);
+        }
+        .status-badge.failed {
+            background: rgba(224, 49, 49, 0.15);
+            color: var(--color-danger);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary {
+            background: var(--bg-element);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover { background: var(--bg-surface-hover); }
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--text-primary);
+        }
+        .btn-primary:hover { background: var(--color-primary-hover); }
+        .btn-danger {
+            background: var(--color-danger);
+            color: var(--text-primary);
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            gap: 12px;
+            overflow: hidden;
+        }
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        
+        .card {
+            background: var(--bg-surface);
+            border-radius: var(--radius-m);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-divider);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .card-action {
+            font-size: 13px;
+            color: var(--color-primary);
+            cursor: pointer;
+        }
+        .card-action:hover { color: var(--color-primary-hover); }
+        .card-body { padding: 16px; }
+        
+        .preview-media {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--bg-root);
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .preview-media:hover .preview-overlay { opacity: 1; }
+        .preview-placeholder {
+            text-align: center;
+            color: var(--text-disabled);
+        }
+        .preview-placeholder-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .view-btn {
+            padding: 10px 20px;
+            background: var(--color-primary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-xs);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .preview-hint {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: var(--bg-root);
+            border-radius: var(--radius-xs);
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .pointcloud-viewer {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--bg-root);
+            border-radius: var(--radius-xs);
+            position: relative;
+            overflow: hidden;
+        }
+        .pointcloud-canvas {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pointcloud-visual {
+            width: 75%;
+            height: 65%;
+            background: linear-gradient(135deg,
+                rgba(43, 138, 62, 0.9) 0%,
+                rgba(43, 138, 62, 0.5) 25%,
+                rgba(255, 193, 7, 0.5) 50%,
+                rgba(224, 49, 49, 0.6) 75%,
+                rgba(224, 49, 49, 0.95) 100%
+            );
+            border-radius: var(--radius-xs);
+        }
+        .pointcloud-legend {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(20, 21, 23, 0.95);
+            padding: 10px 12px;
+            border-radius: var(--radius-xs);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: var(--radius-ex);
+        }
+        .legend-color.best { background: var(--color-success); }
+        .legend-color.medium { background: var(--color-warning); }
+        .legend-color.worst { background: var(--color-danger); }
+        .pointcloud-hint {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: var(--bg-root);
+            border-radius: var(--radius-xs);
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .pointcloud-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .video-item {
+            aspect-ratio: 16/9;
+            background: var(--bg-root);
+            border-radius: var(--radius-xs);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .video-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-dropdown);
+        }
+        .video-item:hover .video-overlay { opacity: 1; }
+        .video-thumbnail {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a1f 0%, #2a2a35 100%);
+        }
+        .video-icon {
+            font-size: 24px;
+            opacity: 0.5;
+        }
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .video-action {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .video-action:hover { background: var(--color-primary); }
+        
+        .info-section {
+            width: 240px;
+            background: var(--bg-surface);
+            border-radius: var(--radius-m);
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-divider);
+        }
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .info-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .info-value.id {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            background: var(--bg-root);
+            padding: 6px 10px;
+            border-radius: var(--radius-ex);
+        }
+        .info-value.failed { color: var(--color-danger); }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-surface);
+            border-radius: var(--radius-m);
+            box-shadow: var(--shadow-modal);
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-divider);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover {
+            background: var(--bg-element);
+            color: var(--text-primary);
+        }
+        .modal-body { padding: 20px; }
+        .upload-area {
+            border: 2px dashed var(--border-divider);
+            border-radius: var(--radius-xs);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: var(--color-primary);
+            background: rgba(59, 91, 219, 0.05);
+        }
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+        .upload-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-divider);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        
+        .video-modal .modal { max-width: 680px; }
+        .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-disabled);
+        }
+        
+        .fullscreen-viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .fullscreen-viewer.show { display: flex; }
+        .viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            font-size: 20px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .viewer-content {
+            width: 90%;
+            height: 90%;
+            background: var(--bg-root);
+            border-radius: var(--radius-m);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: var(--radius-xs);
+            box-shadow: var(--shadow-dropdown);
+            font-size: 13px;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-element);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="panel-header">过程数据</div>
+            <div class="process-list">
+                <div class="process-item active" onclick="selectProcess(this, 0)">
+                    <div class="process-icon">📷</div>
+                    <div class="process-info">
+                        <div class="process-name">输入数据</div>
+                        <div class="process-status success">已完成</div>
+                    </div>
+                </div>
+                <div class="process-item" onclick="selectProcess(this, 1)">
+                    <div class="process-icon">🎯</div>
+                    <div class="process-info">
+                        <div class="process-name">前馈预测</div>
+                        <div class="process-status processing">处理中</div>
+                    </div>
+                </div>
+                <div class="process-item" onclick="selectProcess(this, 2)">
+                    <div class="process-icon">☁️</div>
+                    <div class="process-info">
+                        <div class="process-name">点云重建</div>
+                        <div class="process-status processing">生成中</div>
+                    </div>
+                </div>
+                <div class="process-item" onclick="selectProcess(this, 3)">
+                    <div class="process-icon">👁️</div>
+                    <div class="process-info">
+                        <div class="process-name">效果预览</div>
+                        <div class="process-status">等待中</div>
+                    </div>
+                </div>
+                <div class="process-item" onclick="selectProcess(this, 4)">
+                    <div class="process-icon">🎬</div>
+                    <div class="process-info">
+                        <div class="process-name">模型生成</div>
+                        <div class="process-status">等待中</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="top-bar">
+                <div class="project-info">
+                    <h1 class="project-title">连衣裙模型重建</h1>
+                    <span class="status-badge processing" id="statusBadge">生成中</span>
+                </div>
+                <div class="action-buttons" id="actionButtons">
+                    <button class="btn btn-danger" onclick="cancelProject()">取消</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="preview-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">快速预览</span>
+                            <span class="card-action" onclick="openFullscreen()">在viewer中打开</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-media" onclick="openFullscreen()">
+                                <div class="preview-placeholder">
+                                    <div class="preview-placeholder-icon">▶️</div>
+                                    <div class="preview-placeholder-text">前馈预测视频（秒级）</div>
+                                </div>
+                                <div class="preview-overlay">
+                                    <button class="view-btn">在 Viewer 中打开</button>
+                                </div>
+                            </div>
+                            <div class="preview-hint">
+                                快速预览仅展示快速预测的结果，重建完成后生成完整结果。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">点云预览</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="pointcloud-viewer">
+                                <div class="pointcloud-canvas">
+                                    <div class="pointcloud-visual"></div>
+                                </div>
+                                <div class="pointcloud-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-color best"></div>
+                                        <span>最佳</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color medium"></div>
+                                        <span>一般</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color worst"></div>
+                                        <span>较差</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pointcloud-hint">
+                                点云结果，绿色最佳红色最差，推荐补充红色区域的视角。
+                            </div>
+                            <div class="pointcloud-actions">
+                                <button class="btn btn-primary" onclick="openSupplementModal()">补充输入</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">生成视频</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="videos-grid">
+                                <div class="video-item" onclick="openVideoModal(0)">
+                                    <div class="video-thumbnail">
+                                        <span class="video-icon">🎬</span>
+                                    </div>
+                                    <div class="video-overlay">
+                                        <div class="video-action" onclick="event.stopPropagation(); openVideoModal(0)">▶</div>
+                                        <div class="video-action" onclick="event.stopPropagation(); downloadVideo(0)">⬇</div>
+                                    </div>
+                                </div>
+                                <div class="video-item" onclick="openVideoModal(1)">
+                                    <div class="video-thumbnail">
+                                        <span class="video-icon">🎬</span>
+                                    </div>
+                                    <div class="video-overlay">
+                                        <div class="video-action" onclick="event.stopPropagation(); openVideoModal(1)">▶</div>
+                                        <div class="video-action" onclick="event.stopPropagation(); downloadVideo(1)">⬇</div>
+                                    </div>
+                                </div>
+                                <div class="video-item" onclick="openVideoModal(2)">
+                                    <div class="video-thumbnail">
+                                        <span class="video-icon">🎬</span>
+                                    </div>
+                                    <div class="video-overlay">
+                                        <div class="video-action" onclick="event.stopPropagation(); openVideoModal(2)">▶</div>
+                                        <div class="video-action" onclick="event.stopPropagation(); downloadVideo(2)">⬇</div>
+                                    </div>
+                                </div>
+                                <div class="video-item" onclick="openVideoModal(3)">
+                                    <div class="video-thumbnail">
+                                        <span class="video-icon">🎬</span>
+                                    </div>
+                                    <div class="video-overlay">
+                                        <div class="video-action" onclick="event.stopPropagation(); openVideoModal(3)">▶</div>
+                                        <div class="video-action" onclick="event.stopPropagation(); downloadVideo(3)">⬇</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">基本信息</div>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">方案 ID</span>
+                            <span class="info-value id">GS-2024-001</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">发起时间</span>
+                            <span class="info-value">2024-04-16 10:23:45</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">类型</span>
+                            <span class="info-value">物体</span>
+                        </div>
+                        <div class="info-item" id="failReason" style="display: none;">
+                            <span class="info-label">失败原因</span>
+                            <span class="info-value failed">重建超时，请重试</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="supplementModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">补充输入</span>
+                <button class="modal-close" onclick="closeSupplementModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" onclick="triggerUpload()">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">点击或拖拽上传补充图片</div>
+                    <div class="upload-hint">支持 JPG、PNG 格式，单张不超过 20MB</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSupplementModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmUpload()">确认上传</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay video-modal" id="videoModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">视频预览</span>
+                <button class="modal-close" onclick="closeVideoModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="video-player">
+                    <span>视频播放区域</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeVideoModal()">关闭</button>
+                <button class="btn btn-primary" onclick="downloadCurrentVideo()">下载</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fullscreen-viewer" id="fullscreenViewer">
+        <button class="viewer-close" onclick="closeFullscreen()">×</button>
+        <div class="viewer-content">Viewer 全屏预览区域</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentStatus = 'processing';
+        let currentVideoIndex = 0;
+
+        function selectProcess(element, index) {
+            document.querySelectorAll('.process-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            showToast('已切换到: ' + element.querySelector('.process-name').textContent);
+        }
+
+        function cancelProject() {
+            if (confirm('确定要取消当前方案吗？')) {
+                showToast('方案已取消');
+                updateStatus('failed');
+            }
+        }
+
+        function editProject() {
+            showToast('进入编辑模式');
+        }
+
+        function regenerateProject() {
+            showToast('开始重新生成');
+            updateStatus('processing');
+        }
+
+        function retryProject() {
+            showToast('正在重试...');
+            updateStatus('processing');
+        }
+
+        function fixProject() {
+            showToast('进入修复模式');
+        }
+
+        function updateStatus(status) {
+            currentStatus = status;
+            const badge = document.getElementById('statusBadge');
+            const buttons = document.getElementById('actionButtons');
+            const failReason = document.getElementById('failReason');
+
+            badge.className = 'status-badge ' + status;
+
+            if (status === 'processing') {
+                badge.textContent = '生成中';
+                buttons.innerHTML = '<button class="btn btn-danger" onclick="cancelProject()">取消</button>';
+                failReason.style.display = 'none';
+            } else if (status === 'success') {
+                badge.textContent = '成功';
+                buttons.innerHTML = '<button class="btn btn-secondary" onclick="editProject()">编辑</button><button class="btn btn-primary" onclick="regenerateProject()">重新生成</button>';
+                failReason.style.display = 'none';
+            } else if (status === 'failed') {
+                badge.textContent = '失败';
+                buttons.innerHTML = '<button class="btn btn-secondary" onclick="retryProject()">重试</button><button class="btn btn-primary" onclick="fixProject()">修复</button>';
+                failReason.style.display = 'flex';
+            }
+        }
+
+        function openFullscreen() {
+            document.getElementById('fullscreenViewer').classList.add('show');
+            showToast('全屏查看器已打开');
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenViewer').classList.remove('show');
+        }
+
+        function openSupplementModal() {
+            document.getElementById('supplementModal').classList.add('show');
+        }
+
+        function closeSupplementModal() {
+            document.getElementById('supplementModal').classList.remove('show');
+        }
+
+        function triggerUpload() {
+            showToast('触发文件选择...');
+        }
+
+        function confirmUpload() {
+            closeSupplementModal();
+            showToast('上传成功！');
+        }
+
+        function openVideoModal(index) {
+            currentVideoIndex = index;
+            document.getElementById('videoModal').classList.add('show');
+        }
+
+        function closeVideoModal() {
+            document.getElementById('videoModal').classList.remove('show');
+        }
+
+        function downloadVideo(index) {
+            showToast('开始下载视频 ' + (index + 1));
+        }
+
+        function downloadCurrentVideo() {
+            showToast('开始下载当前视频');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+                closeSupplementModal();
+                closeVideoModal();
+            }
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
