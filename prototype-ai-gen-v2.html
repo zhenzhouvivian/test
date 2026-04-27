@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI空间生成 · 原型 v2</title>
+  <style>
+    :root {
+      --bg:        #1b1b1d;
+      --border:    rgba(255,255,255,.18);
+      --border-focus: rgba(59,130,246,.6);
+      --muted:     rgba(255,255,255,.5);
+      --accent:    rgba(255,255,255,.07);
+      --secondary: rgba(255,255,255,.1);
+      --cta:       #3b82f6;
+      --cta-hover: #2563eb;
+      --font:      'Poppins', Arial, sans-serif;
+      --radius:    10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topnav */
+    .topnav {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
+    .logo svg { width: 26px; height: 26px; }
+
+    /* Layout */
+    .app { display: flex; flex: 1; overflow: hidden; }
+    .sidebar {
+      width: 152px; flex-shrink: 0;
+      padding: 14px 10px;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; color: var(--muted); cursor: pointer; transition: all .15s;
+    }
+    .nav-item:hover { background: var(--accent); color: #fff; }
+    .nav-item.active { background: var(--secondary); color: #fff; }
+    .nav-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .sidebar-foot {
+      margin-top: auto; padding: 10px 12px;
+      font-size: 11px; color: rgba(255,255,255,.3);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .plan-tag {
+      display: inline-block; padding: 1px 5px; border-radius: 3px;
+      font-size: 9px; font-weight: 600;
+      background: var(--secondary); color: rgba(255,255,255,.6); margin-left: 3px;
+    }
+
+    /* Main */
+    .main {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 36px 24px 48px;
+    }
+    .hero { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 28px; }
+    .hero em {
+      font-style: normal;
+      background: linear-gradient(90deg,#60a5fa,#a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* Card */
+    .card {
+      width: 100%; max-width: 820px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* Parent Tabs */
+    .ptabs { display: flex; border-bottom: 1px solid var(--border); }
+    .ptab {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 14px 10px; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 13px; font-weight: 500; color: var(--muted); transition: all .15s;
+    }
+    .ptab:hover { color: #fff; background: rgba(255,255,255,.03); }
+    .ptab.active { color: #fff; border-bottom-color: var(--cta); background: rgba(59,130,246,.05); }
+    .ptab-icon {
+      width: 30px; height: 30px; border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ptab.active .ptab-icon { background: rgba(59,130,246,.2); }
+    .ptab-text { line-height: 1.25; }
+    .ptab-name { font-size: 13px; font-weight: 600; }
+    .ptab-sub { font-size: 10px; color: rgba(255,255,255,.35); }
+
+    /* ============================================
+       AI Gen Input Area
+       ============================================ */
+    .ai-inner { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Indoor-only notice */
+    .indoor-notice {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: rgba(59,130,246,.08);
+      border: 1px solid rgba(59,130,246,.2);
+      border-radius: 6px;
+      font-size: 12px; color: rgba(147,197,253,.9);
+    }
+    .indoor-notice svg { flex-shrink: 0; }
+
+    /* Input grid: image left, text right */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 12px;
+      min-height: 160px;
+    }
+
+    /* Image upload cell */
+    .img-cell {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; cursor: pointer;
+      background: rgba(255,255,255,.02);
+      transition: all .15s; position: relative;
+      overflow: hidden;
+    }
+    .img-cell:hover { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.04); }
+    .img-cell.has-image { border-style: solid; border-color: rgba(59,130,246,.4); }
+    .img-cell-label {
+      font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5;
+    }
+    .img-cell-icon { color: rgba(255,255,255,.3); }
+    .opt-badge {
+      position: absolute; top: 7px; right: 7px;
+      font-size: 10px; font-weight: 600;
+      padding: 2px 6px; border-radius: 3px;
+      background: rgba(255,255,255,.08); color: rgba(255,255,255,.4);
+    }
+    .img-preview {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      display: none;
+    }
+    .img-preview.visible { display: block; }
+    .img-remove {
+      position: absolute; top: 6px; left: 6px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(0,0,0,.6); border: none; color: #fff;
+      cursor: pointer; font-size: 13px; display: none;
+      align-items: center; justify-content: center;
+    }
+    .img-cell.has-image .img-remove { display: flex; }
+
+    /* Text cell */
+    .text-cell {
+      display: flex; flex-direction: column;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.02);
+      transition: border-color .15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .text-cell:focus-within { border-color: var(--border-focus); }
+    .text-cell-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 0;
+    }
+    .text-cell-label { font-size: 11px; color: var(--muted); }
+    .opt-badge-inline {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 6px; border-radius: 3px;
+      background: rgba(255,255,255,.08); color: rgba(255,255,255,.4);
+    }
+    .prompt-textarea {
+      flex: 1;
+      background: transparent;
+      border: none; outline: none; resize: none;
+      color: #fff; font-family: var(--font); font-size: 13px; line-height: 1.6;
+      padding: 8px 12px 10px;
+    }
+    .prompt-textarea::placeholder { color: rgba(255,255,255,.28); }
+    .prompt-textarea.expanded { font-size: 12px; }
+
+    /* Char count + expand button row */
+    .text-cell-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .char-count { font-size: 11px; color: rgba(255,255,255,.3); }
+    .char-count.warn { color: #f59e0b; }
+
+    /* AI Expand button */
+    .expand-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid rgba(168,85,247,.4);
+      background: rgba(168,85,247,.1); color: #c4b5fd;
+      font-family: var(--font); transition: all .15s;
+    }
+    .expand-btn:hover { background: rgba(168,85,247,.18); border-color: rgba(168,85,247,.6); }
+    .expand-btn:disabled {
+      opacity: .35; cursor: not-allowed;
+    }
+    .expand-btn svg { width: 13px; height: 13px; }
+    .expand-btn.loading { pointer-events: none; }
+    .expand-btn .spin {
+      width: 12px; height: 12px;
+      border: 1.5px solid rgba(196,181,253,.3);
+      border-top-color: #c4b5fd;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Expanded state overlay hint */
+    .expand-hint {
+      display: none;
+      font-size: 11px; color: rgba(196,181,253,.7);
+      padding: 4px 12px 6px;
+    }
+    .expand-hint.visible { display: flex; align-items: center; gap: 6px; }
+    .revert-link { color: #a78bfa; cursor: pointer; text-decoration: underline; }
+
+    /* Validation message */
+    .validation-msg {
+      display: none;
+      align-items: center; gap: 6px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .validation-msg.error {
+      display: flex;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.25);
+      color: #fca5a5;
+    }
+    .validation-msg.checking {
+      display: flex;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .validation-msg.ok {
+      display: flex;
+      background: rgba(20,184,166,.08);
+      border: 1px solid rgba(20,184,166,.2);
+      color: #5eead4;
+    }
+
+    /* At-least-one hint */
+    .atleast-hint {
+      font-size: 11px; color: rgba(255,255,255,.3);
+      text-align: center; padding: 2px 0;
+    }
+
+    /* Bottom bar */
+    .bottom-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 20px; border-top: 1px solid var(--border);
+    }
+    .autofill-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border);
+      background: rgba(255,255,255,.05); color: var(--muted);
+      font-family: var(--font); transition: all .15s;
+    }
+    .autofill-btn:hover { color: #fff; background: rgba(255,255,255,.09); }
+    .autofill-btn svg { width: 13px; height: 13px; }
+    .create-btn {
+      padding: 8px 24px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; font-family: var(--font);
+      background: var(--cta); color: #fff; transition: all .15s;
+    }
+    .create-btn:hover { background: var(--cta-hover); transform: translateY(-1px); }
+    .create-btn:disabled { opacity: .35; cursor: default; transform: none; }
+
+    /* State controls (for demo) */
+    .demo-controls {
+      width: 100%; max-width: 820px;
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    .demo-controls p { font-size: 11px; color: rgba(255,255,255,.3); width: 100%; }
+    .demo-btn {
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.05); color: rgba(255,255,255,.6);
+      font-family: var(--font); transition: all .15s;
+    }
+    .demo-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: rgba(28,28,30,.97); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px; padding: 9px 16px; font-size: 12px;
+      backdrop-filter: blur(12px); transition: transform .25s ease;
+      z-index: 9999; color: #5eead4; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Streaming cursor */
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .cursor { display: inline-block; width: 2px; height: 13px; background: #c4b5fd; animation: blink .8s infinite; vertical-align: middle; margin-left: 2px; }
+
+    /* Checking overlay on create */
+    .checking-overlay {
+      position: absolute; inset: 0;
+      background: rgba(27,27,29,.82);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; z-index: 50;
+      border-radius: 12px;
+      backdrop-filter: blur(2px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .checking-overlay.visible { opacity: 1; pointer-events: all; }
+    .checking-overlay p { font-size: 13px; color: rgba(255,255,255,.7); }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo">
+    <svg viewBox="0 0 26 26" fill="none">
+      <polygon points="13,2 24,21 2,21" fill="#3b82f6" opacity=".9"/>
+      <polygon points="13,7 21,21 5,21" fill="#1b1b1d"/>
+      <circle cx="13" cy="15.5" r="2.8" fill="#60a5fa"/>
+    </svg>
+    AHOLO
+  </div>
+</nav>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="nav-item active">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="12" height="12" rx="2"/>
+        <line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/>
+      </svg>
+      创建
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="4" width="6" height="8" rx="1"/><rect x="9" y="2" width="6" height="12" rx="1"/>
+      </svg>
+      项目
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/>
+      </svg>
+      社区
+    </div>
+    <div class="sidebar-foot">
+      <div>⬡ 55732 积分</div>
+      <div>186*xBsd<span class="plan-tag">Free</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <h1 class="hero"><em>高保真复刻</em>真实的3D物体及空间</h1>
+
+    <div class="card" style="position:relative;">
+      <!-- Checking overlay (shows during create-time validation) -->
+      <div class="checking-overlay" id="checking-overlay">
+        <div class="spin" style="width:20px;height:20px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;"></div>
+        <p id="checking-overlay-text">内容合法性检测中…</p>
+      </div>
+
+      <!-- Parent Tabs -->
+      <div class="ptabs">
+        <div class="ptab" onclick="toast('物体重建（演示）')">
+          <div class="ptab-icon">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 2L18 7L18 13L10 18L2 13L2 7Z"/>
+            </svg>
+          </div>
+          <div class="ptab-text"><div class="ptab-name">物体</div><div class="ptab-sub">物体-3DGS重建</div></div>
+        </div>
+        <div class="ptab" onclick="toast('空间重建（演示）')">
+          <div class="ptab-icon">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M2 15L10 5L18 15"/><rect x="5" y="10" width="10" height="5"/>
+            </svg>
+          </div>
+          <div class="ptab-text"><div class="ptab-name">空间</div><div class="ptab-sub">空间-3DGS重建</div></div>
+        </div>
+        <div class="ptab active">
+          <div class="ptab-icon">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10" cy="10" r="7"/><path d="M7 10Q10 6 13 10Q10 14 7 10"/>
+            </svg>
+          </div>
+          <div class="ptab-text"><div class="ptab-name">AI空间生成</div><div class="ptab-sub">图文生成三维空间</div></div>
+        </div>
+      </div>
+
+      <!-- AI Gen Inner -->
+      <div class="ai-inner">
+
+        <!-- 室内限制提示 -->
+        <div class="indoor-notice">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="6"/><line x1="8" y1="7" x2="8" y2="11"/>
+            <circle cx="8" cy="5" r=".5" fill="currentColor"/>
+          </svg>
+          AI空间生成当前仅支持<strong style="margin:0 4px">室内场景</strong>，内容须符合平台规范
+        </div>
+
+        <!-- 至少一个提示 -->
+        <p class="atleast-hint" id="atleast-hint">图片或文字描述，提供其中一个即可开始生成</p>
+
+        <!-- Input Grid -->
+        <div class="input-grid">
+
+          <!-- Left: Image upload -->
+          <!-- [交互说明] 点击上传图片，上传后显示预览，鼠标悬停显示删除按钮 -->
+          <div class="img-cell" id="img-cell" onclick="handleImgClick()">
+            <input type="file" id="img-input" accept="image/*" style="display:none" onchange="handleImgSelect(event)">
+            <div class="img-preview" id="img-preview"></div>
+            <button class="img-remove" id="img-remove" onclick="removeImg(event)">×</button>
+            <span class="opt-badge">可选</span>
+            <div class="img-cell-icon" id="img-upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div class="img-cell-label" id="img-cell-label">上传参考图片<br><span style="font-size:10px;color:rgba(255,255,255,.25)">JPG / PNG / WEBP</span></div>
+          </div>
+
+          <!-- Right: Text prompt -->
+          <div class="text-cell">
+            <div class="text-cell-top">
+              <span class="text-cell-label">文字描述</span>
+              <span class="opt-badge-inline">可选</span>
+            </div>
+
+            <!-- [交互说明] 输入文字触发字数统计；合法检测仅在「创建」和「AI扩写」时触发 -->
+            <textarea class="prompt-textarea" id="prompt-textarea"
+              placeholder="描述你想生成的3D空间，例如：一间温馨的客厅，有大窗户和木质家具…"
+              oninput="onPromptInput()"></textarea>
+
+            <!-- Expand hint (shows after Dify expand) -->
+            <div class="expand-hint" id="expand-hint">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#a78bfa" stroke-width="1.4">
+                <polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/>
+              </svg>
+              已由 AI 扩写优化
+              <span class="revert-link" onclick="revertExpand()">撤销</span>
+            </div>
+
+            <div class="text-cell-bottom">
+              <span class="char-count" id="char-count">0 / 500</span>
+              <!-- [交互说明] AI扩写按钮：有文字时可用，点击调用Dify流程流式输出扩写结果 -->
+              <button class="expand-btn" id="expand-btn" disabled onclick="triggerExpand()">
+                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/>
+                </svg>
+                AI 扩写
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /input-grid -->
+
+        <!-- Validation message (合法性检测结果) -->
+        <!-- [交互说明] 输入文字停止后延时触发；扩写前也会检测；结果内联展示 -->
+        <div class="validation-msg" id="validation-msg"></div>
+
+      </div><!-- /ai-inner -->
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <!-- [交互说明] 自动填写：用AI生成一段示例prompt填入文本框 -->
+        <button class="autofill-btn" onclick="triggerAutofill()">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M7 1 L8 5 L12 7 L8 9 L7 13 L6 9 L2 7 L6 5 Z"/>
+          </svg>
+          自动填写
+        </button>
+        <button class="create-btn" id="create-btn" disabled onclick="handleCreate()">创建</button>
+      </div>
+
+    </div><!-- /card -->
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+      <p>演示快捷操作（模拟各状态）</p>
+      <button class="demo-btn" onclick="demoState('typing')">① 输入文字</button>
+      <button class="demo-btn" onclick="demoState('checking')">② 检测中</button>
+      <button class="demo-btn" onclick="demoState('error')">③ 内容违规</button>
+      <button class="demo-btn" onclick="demoState('valid')">④ 检测通过</button>
+      <button class="demo-btn" onclick="demoState('expanding')">⑤ 扩写中</button>
+      <button class="demo-btn" onclick="demoState('expanded')">⑥ 扩写完成</button>
+      <button class="demo-btn" onclick="demoState('image')">⑦ 上传图片</button>
+      <button class="demo-btn" onclick="demoState('reset')">↺ 重置</button>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* =========================================================
+     State
+     ========================================================= */
+  const S = {
+    promptText: '',
+    originalText: '',
+    imgFile: null,
+    isExpanded: false,
+    expandState: 'idle',   // idle | loading | done
+  };
+
+  const BANNED = ['outdoor', '室外', 'sky', '天空盒', '户外', 'exterior'];
+  const EXPANDED_TEXT = `The scene is a cozy and serene living room with a rustic yet refined aesthetic, presented in a realistic style. The overall tone is peaceful and inviting, emphasizing natural light and organic textures. The room's focal point is a large window overlooking a verdant, sun-drenched field with distant hills, creating an open and airy feel. A light-colored sofa is positioned against the wall opposite the window, adorned with various throw pillows in soft, earthy tones and a light blanket draped over one arm. In the center of the room, a circular wooden coffee table holds a vase of white flowers, a tray with small items, and a book, resting on a textured cream-colored rug that covers most of the hardwood floor.`;
+  const AUTOFILL_TEXT = '一间温馨明亮的北欧风客厅，木质地板，白色墙面，大落地窗，自然光充足，简约家具，绿植点缀';
+
+  /* =========================================================
+     Prompt Input — 仅更新字数，不触发检测
+     ========================================================= */
+  function onPromptInput() {
+    const ta = document.getElementById('prompt-textarea');
+    S.promptText = ta.value;
+    S.isExpanded = false;
+    document.getElementById('expand-hint').classList.remove('visible');
+    const btn = document.getElementById('expand-btn');
+    btn.innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/></svg> AI 扩写`;
+    S.expandState = 'idle';
+    updateCharCount();
+    setValidation('idle');   // clear any prior validation result
+    updateCreateBtn();
+  }
+
+  /* =========================================================
+     Validation (合法性检测) — 触发点：创建 / AI扩写
+     返回 true = 通过，false = 违规
+     ========================================================= */
+  function checkContent(text) {
+    return !BANNED.some(w => text.toLowerCase().includes(w));
+  }
+
+  // 带 UI 动画的检测流程（用于创建按钮）
+  function runValidationThenCreate() {
+    if (!S.promptText && !S.imgFile) return;
+
+    // 如果没有文字，只有图片 → 跳过文字检测，直接提交
+    if (!S.promptText) {
+      submitTask();
+      return;
+    }
+
+    showOverlay('内容合法性检测中…');
+    setTimeout(() => {
+      const ok = checkContent(S.promptText);
+      hideOverlay();
+      if (ok) {
+        setValidation('ok');
+        submitTask();
+      } else {
+        setValidation('error');
+      }
+    }, 900);
+  }
+
+  // 带 UI 检测流程（用于 AI 扩写）
+  function runValidationThenExpand() {
+    if (S.promptText.length < 5) return;
+    showOverlay('内容合法性检测中…');
+    setTimeout(() => {
+      const ok = checkContent(S.promptText);
+      hideOverlay();
+      if (ok) {
+        setValidation('idle');
+        doExpand();
+      } else {
+        setValidation('error');
+        toast('描述包含不支持的内容，请修改后再扩写');
+      }
+    }, 900);
+  }
+
+  /* =========================================================
+     Overlay (检测中全屏遮罩)
+     ========================================================= */
+  function showOverlay(msg) {
+    document.getElementById('checking-overlay-text').textContent = msg;
+    document.getElementById('checking-overlay').classList.add('visible');
+  }
+  function hideOverlay() {
+    document.getElementById('checking-overlay').classList.remove('visible');
+  }
+
+  /* =========================================================
+     Validation UI — only show result, not trigger
+     ========================================================= */
+  function setValidation(state) {
+    const el = document.getElementById('validation-msg');
+    el.className = 'validation-msg';
+    if (state === 'error') {
+      el.classList.add('error');
+      el.innerHTML = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><line x1="7" y1="4" x2="7" y2="8"/><circle cx="7" cy="10" r=".5" fill="currentColor"/></svg> 描述包含不支持的内容（当前仅支持室内场景），请修改后重试';
+    } else if (state === 'ok') {
+      el.classList.add('ok');
+      el.innerHTML = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><polyline points="4.5,7 6.5,9 9.5,5"/></svg> 内容检测通过';
+    }
+  }
+
+  /* =========================================================
+     AI Expand (Dify) — triggered after validation passes
+     ========================================================= */
+  function triggerExpand() {
+    if (S.promptText.length < 5 || S.expandState === 'loading') return;
+    // 先做合法检测，通过后再扩写
+    runValidationThenExpand();
+  }
+
+  function doExpand() {
+    S.originalText = S.promptText;
+    S.expandState = 'loading';
+    const btn = document.getElementById('expand-btn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<div class="spin"></div> 扩写中…';
+    btn.disabled = true;
+
+    const ta = document.getElementById('prompt-textarea');
+    ta.value = '';
+    ta.classList.add('expanded');
+
+    let idx = 0;
+    const chars = EXPANDED_TEXT.split('');
+    const stream = setInterval(() => {
+      if (idx < chars.length) {
+        ta.value += chars[idx++];
+        ta.scrollTop = ta.scrollHeight;
+      } else {
+        clearInterval(stream);
+        finishExpand();
+      }
+    }, 16);
+  }
+
+  function finishExpand() {
+    S.promptText = EXPANDED_TEXT;
+    S.isExpanded = true;
+    S.expandState = 'done';
+    const btn = document.getElementById('expand-btn');
+    btn.classList.remove('loading');
+    btn.innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/></svg> 重新扩写`;
+    btn.disabled = false;
+    document.getElementById('expand-hint').classList.add('visible');
+    updateCharCount();
+    updateCreateBtn();
+  }
+
+  function revertExpand() {
+    const ta = document.getElementById('prompt-textarea');
+    ta.value = S.originalText;
+    ta.classList.remove('expanded');
+    S.promptText = S.originalText;
+    S.isExpanded = false;
+    S.expandState = 'idle';
+    document.getElementById('expand-hint').classList.remove('visible');
+    const btn = document.getElementById('expand-btn');
+    btn.innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/></svg> AI 扩写`;
+    setValidation('idle');
+    updateCharCount();
+    updateCreateBtn();
+  }
+
+  /* =========================================================
+     Image Upload
+     ========================================================= */
+  function handleImgClick() {
+    if (S.imgFile) return;
+    document.getElementById('img-input').click();
+  }
+
+  function handleImgSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    S.imgFile = file;
+    const url = URL.createObjectURL(file);
+    const preview = document.getElementById('img-preview');
+    preview.style.backgroundImage = `url(${url})`;
+    preview.classList.add('visible');
+    document.getElementById('img-cell').classList.add('has-image');
+    document.getElementById('img-upload-icon').style.display = 'none';
+    document.getElementById('img-cell-label').style.display = 'none';
+    updateCreateBtn();
+  }
+
+  function removeImg(e) {
+    e.stopPropagation();
+    S.imgFile = null;
+    document.getElementById('img-preview').classList.remove('visible');
+    document.getElementById('img-cell').classList.remove('has-image');
+    document.getElementById('img-upload-icon').style.display = '';
+    document.getElementById('img-cell-label').style.display = '';
+    document.getElementById('img-input').value = '';
+    updateCreateBtn();
+  }
+
+  /* =========================================================
+     Autofill
+     ========================================================= */
+  function triggerAutofill() {
+    const ta = document.getElementById('prompt-textarea');
+    ta.value = AUTOFILL_TEXT;
+    S.promptText = AUTOFILL_TEXT;
+    onPromptInput();
+    ta.focus();
+  }
+
+  /* =========================================================
+     Create
+     ========================================================= */
+  function updateCreateBtn() {
+    const hasInput = S.promptText.length > 0 || S.imgFile !== null;
+    document.getElementById('create-btn').disabled = !hasInput;
+    document.getElementById('expand-btn').disabled = S.promptText.length < 5;
+    const hint = document.getElementById('atleast-hint');
+    hint.style.display = hasInput ? 'none' : '';
+  }
+
+  function handleCreate() {
+    // 合法检测在这里触发
+    runValidationThenCreate();
+  }
+
+  function submitTask() {
+    toast('任务已提交 · AI空间生成中');
+  }
+
+  function updateCharCount() {
+    const len = S.promptText.length;
+    const cc = document.getElementById('char-count');
+    cc.textContent = len + ' / 500';
+    cc.classList.toggle('warn', len > 450);
+  }
+
+  /* =========================================================
+     Demo shortcuts
+     ========================================================= */
+  function demoState(s) {
+    const ta = document.getElementById('prompt-textarea');
+    if (s === 'reset') {
+      ta.value = ''; S.promptText = ''; S.imgFile = null; S.isExpanded = false; S.expandState = 'idle';
+      document.getElementById('img-preview').classList.remove('visible');
+      document.getElementById('img-cell').classList.remove('has-image');
+      document.getElementById('img-upload-icon').style.display = '';
+      document.getElementById('img-cell-label').style.display = '';
+      document.getElementById('expand-hint').classList.remove('visible');
+      document.getElementById('expand-btn').innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/></svg> AI 扩写`;
+      ta.classList.remove('expanded');
+      setValidation('idle');
+      updateCreateBtn(); updateCharCount();
+
+    } else if (s === 'typing') {
+      ta.value = '一间温馨的北欧客厅'; S.promptText = ta.value;
+      setValidation('idle');
+      updateCharCount(); updateCreateBtn();
+
+    } else if (s === 'checking') {
+      // Simulate: user clicked 创建, overlay is showing
+      ta.value = '一间温馨的北欧客厅'; S.promptText = ta.value;
+      showOverlay('内容合法性检测中…');
+      setTimeout(() => hideOverlay(), 2000);
+      updateCharCount(); updateCreateBtn();
+
+    } else if (s === 'error') {
+      ta.value = '一间室外的庭院花园 outdoor'; S.promptText = ta.value;
+      setValidation('error');
+      updateCharCount(); updateCreateBtn();
+
+    } else if (s === 'valid') {
+      ta.value = '一间温馨的北欧客厅，木质地板，大落地窗'; S.promptText = ta.value;
+      setValidation('ok');
+      updateCharCount(); updateCreateBtn();
+
+    } else if (s === 'expanding') {
+      ta.value = '一间温馨的北欧客厅'; S.promptText = ta.value; S.originalText = ta.value;
+      setValidation('idle');
+      const btn = document.getElementById('expand-btn');
+      btn.classList.add('loading');
+      btn.innerHTML = '<div class="spin"></div> 扩写中…';
+      btn.disabled = true;
+      ta.value = ''; ta.classList.add('expanded');
+      updateCreateBtn();
+
+    } else if (s === 'expanded') {
+      ta.value = EXPANDED_TEXT; S.promptText = EXPANDED_TEXT;
+      S.isExpanded = true; S.expandState = 'done'; S.originalText = '一间温馨的北欧客厅';
+      ta.classList.add('expanded');
+      document.getElementById('expand-btn').classList.remove('loading');
+      document.getElementById('expand-btn').innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="7,1 8.5,5 13,5 9.5,7.5 11,12 7,9 3,12 4.5,7.5 1,5 5.5,5"/></svg> 重新扩写`;
+      document.getElementById('expand-btn').disabled = false;
+      document.getElementById('expand-hint').classList.add('visible');
+      setValidation('idle');
+      updateCharCount(); updateCreateBtn();
+
+    } else if (s === 'image') {
+      S.imgFile = { name: 'room.jpg' };
+      const preview = document.getElementById('img-preview');
+      preview.style.backgroundImage = 'linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)';
+      preview.classList.add('visible');
+      document.getElementById('img-cell').classList.add('has-image');
+      document.getElementById('img-upload-icon').style.display = 'none';
+      document.getElementById('img-cell-label').style.display = 'none';
+      updateCreateBtn();
+    }
+  }
+
+  /* =========================================================
+     Toast
+     ========================================================= */
+  let tt;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(tt);
+    tt = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  updateCreateBtn();
+</script>
+</body>
+</html>
