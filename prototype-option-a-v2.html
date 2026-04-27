@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方案 A v2 — 空间室内/室外入口 · Aholo3D</title>
+  <style>
+    :root {
+      --bg:        #1b1b1d;
+      --border:    rgba(255,255,255,.2);
+      --muted:     rgba(255,255,255,.6);
+      --accent:    rgba(255,255,255,.08);
+      --secondary: rgba(255,255,255,.1);
+      --cta:       #3b82f6;
+      --cta-hover: #2563eb;
+      --font:      'Poppins', Arial, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Top Nav ---- */
+    .topnav {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .logo svg { width: 26px; height: 26px; }
+
+    /* ---- App Layout ---- */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ---- Sidebar ---- */
+    .sidebar {
+      width: 156px;
+      flex-shrink: 0;
+      padding: 16px 10px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .nav-item:hover { background: var(--accent); color: #fff; }
+    .nav-item.active { background: var(--secondary); color: #fff; }
+    .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .sidebar-foot {
+      margin-top: auto;
+      padding: 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .plan-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--secondary);
+      color: rgba(255,255,255,.7);
+      margin-left: 4px;
+    }
+
+    /* ---- Main ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px 48px;
+    }
+
+    .hero { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 32px; }
+    .hero em {
+      font-style: normal;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* ---- Parent Tabs ---- */
+    .parent-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .ptab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.45);
+      transition: all .15s;
+    }
+    .ptab:hover { color: #fff; background: rgba(255,255,255,.03); }
+    .ptab.active { color: #fff; border-bottom-color: var(--cta); background: rgba(59,130,246,.05); }
+    .ptab-icon {
+      width: 30px; height: 30px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ptab.active .ptab-icon { background: rgba(59,130,246,.18); }
+    .ptab-label { line-height: 1.25; }
+    .ptab-name { font-size: 13px; font-weight: 600; }
+    .ptab-desc { font-size: 11px; color: rgba(255,255,255,.35); }
+
+    /* ---- Inner content ---- */
+    .inner { padding: 20px; }
+
+    /* ---- Stage 1: Choice Cards ---- */
+    .stage-choice { display: flex; gap: 12px; }
+
+    .choice-card {
+      flex: 1;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .18s ease;
+      background: rgba(255,255,255,.025);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .choice-card:hover {
+      border-color: rgba(255,255,255,.4);
+      background: rgba(255,255,255,.05);
+      transform: translateY(-1px);
+    }
+    .choice-card.selected {
+      border-color: var(--cta);
+      background: rgba(59,130,246,.08);
+    }
+
+    .cc-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      transition: background .18s;
+    }
+    .choice-card.selected .cc-icon { background: rgba(59,130,246,.2); }
+    .choice-card.selected.outdoor-selected .cc-icon { background: rgba(59,130,246,.2); }
+
+    .cc-name { font-size: 15px; font-weight: 700; }
+    .cc-desc { font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.55; }
+
+    /* Radio dot */
+    .cc-radio {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.25);
+      margin-top: 4px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    .choice-card.selected .cc-radio {
+      border-color: var(--cta);
+      background: var(--cta);
+    }
+    .cc-radio::after {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .choice-card.selected .cc-radio::after { opacity: 1; }
+
+    /* ---- Stage 2: Upload (inline, slides in) ---- */
+    .stage-upload {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideIn .2s ease;
+    }
+    .stage-upload.visible { display: flex; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .upload-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .selected-type {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .type-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--cta);
+    }
+    .reselect-btn {
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      transition: color .15s;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .reselect-btn:hover { color: rgba(255,255,255,.7); background: var(--accent); }
+
+    /* Drop Zone */
+    .drop-zone {
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: 8px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255,255,255,.02);
+      transition: all .15s;
+      position: relative;
+    }
+    .drop-zone:hover {
+      border-color: rgba(255,255,255,.4);
+      background: rgba(255,255,255,.04);
+    }
+    .drop-zone.has-file {
+      border-color: rgba(59,130,246,.5);
+      border-style: solid;
+      background: rgba(59,130,246,.04);
+    }
+    .drop-icons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .di {
+      width: 32px; height: 32px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.4);
+    }
+    .drop-main {
+      font-size: 13px;
+      color: rgba(255,255,255,.5);
+      margin-bottom: 6px;
+    }
+    .drop-main a { color: var(--cta); }
+    .drop-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,.28);
+      line-height: 1.65;
+    }
+    .drop-sub a { color: var(--cta); text-decoration: none; }
+    .drop-sub a:hover { text-decoration: underline; }
+
+    /* File selected row */
+    .file-row {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      background: rgba(59,130,246,.1);
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .file-row.visible { display: flex; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-rm { background: none; border: none; color: rgba(255,255,255,.35); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; }
+    .file-rm:hover { color: #fff; }
+
+    /* ---- Bottom Bar ---- */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .quality-wrap { position: relative; }
+    .quality-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: var(--secondary);
+      color: rgba(255,255,255,.85);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s;
+    }
+    .quality-btn:hover { background: rgba(255,255,255,.15); }
+    .quality-dropdown {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      background: #2a2a2c;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.6);
+      min-width: 130px;
+      z-index: 100;
+      display: none;
+      overflow: hidden;
+    }
+    .quality-dropdown.open { display: block; }
+    .qopt {
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background .1s;
+    }
+    .qopt:hover { background: var(--accent); }
+    .qopt.active { color: var(--cta); }
+
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .cloud-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: transparent;
+      color: rgba(255,255,255,.45);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: var(--font);
+      display: flex; align-items: center; gap: 6px;
+      transition: all .15s;
+    }
+    .cloud-btn:hover { color: #fff; background: var(--accent); }
+    .create-btn {
+      padding: 8px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font);
+      background: var(--cta);
+      color: #fff;
+      transition: all .15s;
+    }
+    .create-btn:hover { background: var(--cta-hover); transform: translateY(-1px); }
+    .create-btn:disabled { opacity: .35; cursor: default; transform: none; }
+
+    /* ---- Showcase ---- */
+    .showcase { width: 100%; max-width: 800px; margin-top: 28px; }
+    .showcase-label { font-size: 12px; color: rgba(255,255,255,.3); margin-bottom: 12px; }
+    .showcase-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .sc {
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+      position: relative;
+      cursor: pointer;
+    }
+    .sc-thumb { width: 100%; height: 100%; }
+    .sc-tag {
+      position: absolute;
+      top: 7px; left: 7px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .tag-i { background: rgba(20,184,166,.25); color: #5eead4; border: 1px solid rgba(20,184,166,.4); }
+    .tag-o { background: rgba(59,130,246,.2); color: #93c5fd; border: 1px solid rgba(59,130,246,.35); }
+
+    /* ---- Modal ---- */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9000;
+      backdrop-filter: blur(4px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #242426;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.7);
+      padding: 26px;
+      width: 380px;
+      max-width: 90vw;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+    .modal-body { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.6; margin-bottom: 20px; }
+    .param {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,.05);
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .pk { color: rgba(255,255,255,.4); }
+    .pv { color: #93c5fd; font-weight: 700; }
+    .modal-foot { display: flex; gap: 8px; justify-content: flex-end; }
+    .m-cancel {
+      padding: 7px 14px; border-radius: 8px;
+      background: var(--secondary); color: rgba(255,255,255,.8);
+      border: 1px solid var(--border); cursor: pointer; font-family: var(--font); font-size: 13px;
+    }
+    .m-confirm {
+      padding: 7px 18px; border-radius: 8px;
+      background: var(--cta); color: #fff;
+      border: none; cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 600;
+    }
+    .m-confirm:hover { background: var(--cta-hover); }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(28,28,30,.97);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 12px;
+      backdrop-filter: blur(12px);
+      transition: transform .25s ease;
+      z-index: 9999;
+      color: #5eead4;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<nav class="topnav">
+  <div class="logo">
+    <svg viewBox="0 0 26 26" fill="none">
+      <polygon points="13,2 24,21 2,21" fill="#3b82f6" opacity=".9"/>
+      <polygon points="13,7 21,21 5,21" fill="#1b1b1d"/>
+      <circle cx="13" cy="15.5" r="2.8" fill="#60a5fa"/>
+    </svg>
+    AHOLO
+  </div>
+</nav>
+
+<!-- App Body -->
+<div class="app-body">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-item active">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="12" height="12" rx="2"/>
+        <line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/>
+      </svg>
+      创建
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="4" width="6" height="8" rx="1"/><rect x="9" y="2" width="6" height="12" rx="1"/>
+      </svg>
+      项目
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/>
+      </svg>
+      社区
+    </div>
+    <div class="sidebar-foot">
+      <div>⬡ 55732 积分</div>
+      <div>186*xBsd <span class="plan-tag">Free</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <h1 class="hero"><em>高保真复刻</em>真实的3D物体及空间</h1>
+
+    <div class="card">
+
+      <!-- Parent Tabs -->
+      <div class="parent-tabs">
+        <div class="ptab" onclick="showToast('物体重建（演示）')">
+          <div class="ptab-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 2 L18 7 L18 13 L10 18 L2 13 L2 7 Z"/>
+            </svg>
+          </div>
+          <div class="ptab-label">
+            <div class="ptab-name">物体</div>
+            <div class="ptab-desc">物体-3DGS重建</div>
+          </div>
+        </div>
+        <div class="ptab active">
+          <div class="ptab-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M2 15 L10 5 L18 15"/><rect x="5" y="10" width="10" height="5"/>
+            </svg>
+          </div>
+          <div class="ptab-label">
+            <div class="ptab-name">空间</div>
+            <div class="ptab-desc">空间-3DGS重建</div>
+          </div>
+        </div>
+        <div class="ptab" onclick="showToast('AI空间生成（演示）')">
+          <div class="ptab-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10" cy="10" r="7"/><path d="M7 10 Q10 6 13 10 Q10 14 7 10"/>
+            </svg>
+          </div>
+          <div class="ptab-label">
+            <div class="ptab-name">AI空间生成</div>
+            <div class="ptab-desc">图文生成三维空间</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inner -->
+      <div class="inner">
+
+        <!-- Stage 1: Choose indoor / outdoor -->
+        <!-- [交互说明] 点击卡片选择室内或室外，选中后下方出现上传区域 -->
+        <div class="stage-choice" id="stage-choice">
+          <div class="choice-card" id="card-indoor" onclick="selectType('indoor')">
+            <div class="cc-icon">🏠</div>
+            <div class="cc-name">室内</div>
+            <div class="cc-desc">客厅、卧室、办公室、展厅等封闭/半封闭空间</div>
+            <div class="cc-radio" id="radio-indoor"></div>
+          </div>
+          <div class="choice-card" id="card-outdoor" onclick="selectType('outdoor')">
+            <div class="cc-icon">🌄</div>
+            <div class="cc-name">室外</div>
+            <div class="cc-desc">建筑外立面、景区、广场、街道等开放场景</div>
+            <div class="cc-radio" id="radio-outdoor"></div>
+          </div>
+        </div>
+
+        <!-- Stage 2: Upload area (appears after type selection, inline below cards) -->
+        <!-- [交互说明] 选择类型后此区域出现，无页面跳转，当前卡片保持选中状态 -->
+        <div class="stage-upload" id="stage-upload">
+          <div style="height: 14px;"></div><!-- spacer -->
+
+          <!-- Upload header: shows selected type + re-select -->
+          <div class="upload-header">
+            <div class="selected-type">
+              <div class="type-dot" id="type-dot"></div>
+              <span id="type-label">室内空间</span>
+            </div>
+            <button class="reselect-btn" onclick="reselect()">重新选择</button>
+          </div>
+
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="drop-zone"
+               onclick="triggerFile()"
+               ondragover="onDragOver(event)"
+               ondragleave="onDragLeave(event)"
+               ondrop="onDrop(event)">
+            <input type="file" id="file-input" style="display:none"
+                   multiple onchange="onFileSelect(event)">
+            <div class="drop-icons">
+              <div class="di">
+                <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <rect x="1" y="2" width="16" height="13" rx="1.5"/>
+                  <circle cx="6" cy="7.5" r="1.5"/>
+                  <path d="M1 12 L5.5 8 L8.5 11 L12 7.5 L17 12"/>
+                </svg>
+              </div>
+              <div class="di">
+                <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <rect x="2" y="1" width="14" height="16" rx="1.5"/>
+                  <polygon points="7,6 7,12 13,9"/>
+                </svg>
+              </div>
+              <div class="di">
+                <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M3 3 L15 3 L15 15 L3 15 Z"/>
+                  <path d="M7 3 L7 15 M11 3 L11 15 M3 7 L15 7 M3 11 L15 11"/>
+                </svg>
+              </div>
+            </div>
+            <p class="drop-main">拖拽文件到此处，或 <a onclick="event.stopPropagation()">点击选择文件</a></p>
+            <p class="drop-sub">
+              支持上传：图片（20～2000张全角度照片）、视频（1～3个视频或全景图）<br>
+              Insta360文件（.insv）、3D点云文件（.ply/.spz）<br>
+              <a id="guide-link" href="#" onclick="event.stopPropagation(); showToast('拍摄指南（演示）')">室内拍摄指南与限额 ↗</a>
+            </p>
+            <div class="file-row" id="file-row">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3b82f6" stroke-width="1.5">
+                <path d="M3 2 L10 2 L13 5 L13 14 L3 14 Z"/>
+              </svg>
+              <span class="file-name" id="file-name"></span>
+              <button class="file-rm" onclick="removeFile(event)">×</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /inner -->
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <div class="quality-wrap">
+          <button class="quality-btn" onclick="toggleQuality(event)">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+              <polygon points="7,1 8.5,5 13,5 9.5,8 11,12 7,9.5 3,12 4.5,8 1,5 5.5,5"/>
+            </svg>
+            <span id="q-label">标准</span>
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M2 3.5 L5 6.5 L8 3.5"/>
+            </svg>
+          </button>
+          <div class="quality-dropdown" id="q-drop">
+            <div class="qopt active" onclick="setQuality('标准', this)">标准 <span>✓</span></div>
+            <div class="qopt" onclick="setQuality('专业', this)">专业</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="cloud-btn" onclick="showToast('从云盘导入（演示）')">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M3 9 C1 9 1 5 3.5 5 C3.5 2.5 7 1.5 8.5 4 C11 3.5 12.5 7 10.5 9"/>
+              <path d="M7 9 L7 13 M5.5 11.5 L7 13 L8.5 11.5"/>
+            </svg>
+            从云盘导入
+          </button>
+          <button class="create-btn" id="create-btn" disabled onclick="openModal()">创建</button>
+        </div>
+      </div>
+
+    </div><!-- /card -->
+
+    <!-- Showcase -->
+    <div class="showcase">
+      <p class="showcase-label">示例场景</p>
+      <div class="showcase-grid">
+        <div class="sc">
+          <div class="sc-thumb" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);font-size:12px;">室内示例</div>
+          <span class="sc-tag tag-i">室内</span>
+        </div>
+        <div class="sc">
+          <div class="sc-thumb" style="background:linear-gradient(135deg,#0c2340,#7db9e8);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);font-size:12px;">室外示例</div>
+          <span class="sc-tag tag-o">室外</span>
+        </div>
+        <div class="sc">
+          <div class="sc-thumb" style="background:linear-gradient(135deg,#2d1b69,#11998e);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);font-size:12px;">室外示例</div>
+          <span class="sc-tag tag-o">室外</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /app-body -->
+
+<!-- Submit Modal -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">确认创建任务</div>
+    <div class="modal-body">
+      即将开始3DGS重建，提交参数：
+      <div class="param"><span class="pk">scene_type</span> : <span class="pv">"space"</span></div>
+      <div class="param"><span class="pk">scene_subtype</span> : <span class="pv" id="m-subtype">"indoor"</span></div>
+      <div class="param"><span class="pk">quality</span> : <span class="pv" id="m-quality">"standard"</span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-cancel" onclick="closeModal()">取消</button>
+      <button class="m-confirm" onclick="confirmCreate()">确认创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // State
+  // ============================================================
+  const state = { type: null, quality: '标准', file: null };
+
+  // ============================================================
+  // Type Selection — 核心交互
+  // ============================================================
+  function selectType(type) {
+    state.type = type;
+
+    // Update card visual states
+    const cards = { indoor: document.getElementById('card-indoor'), outdoor: document.getElementById('card-outdoor') };
+    Object.values(cards).forEach(c => { c.classList.remove('selected', 'outdoor-selected'); });
+    cards[type].classList.add('selected');
+    if (type === 'outdoor') cards[type].classList.add('outdoor-selected');
+
+    // Update upload section labels
+    const dot  = document.getElementById('type-dot');
+    const label = document.getElementById('type-label');
+    const guide = document.getElementById('guide-link');
+
+    if (type === 'indoor') {
+      dot.style.background = '#2dd4bf';
+      label.textContent = '室内空间';
+      guide.textContent = '室内拍摄指南与限额 ↗';
+    } else {
+      dot.style.background = '#3b82f6';
+      label.textContent = '室外场景';
+      guide.textContent = '室外拍摄指南与限额 ↗';
+    }
+
+    // Show upload area (stays on same page, cards remain visible above)
+    document.getElementById('stage-upload').classList.add('visible');
+
+    // Enable create button only if file is also selected
+    updateCreateBtn();
+  }
+
+  function reselect() {
+    // Hide upload, deselect cards — but keep file if any
+    document.getElementById('stage-upload').classList.remove('visible');
+    document.getElementById('card-indoor').classList.remove('selected');
+    document.getElementById('card-outdoor').classList.remove('selected', 'outdoor-selected');
+    state.type = null;
+    document.getElementById('create-btn').disabled = true;
+  }
+
+  // ============================================================
+  // File Handling
+  // ============================================================
+  function triggerFile() { document.getElementById('file-input').click(); }
+
+  function onFileSelect(e) { if (e.target.files[0]) setFile(e.target.files[0]); }
+
+  function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
+  function onDragLeave(e) { document.getElementById('drop-zone').classList.remove('dragover'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('dragover');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  }
+
+  function setFile(file) {
+    state.file = file;
+    document.getElementById('drop-zone').classList.add('has-file');
+    const row = document.getElementById('file-row');
+    row.classList.add('visible');
+    document.getElementById('file-name').textContent = file.name + ' (' + fmt(file.size) + ')';
+    updateCreateBtn();
+  }
+
+  function removeFile(e) {
+    e.stopPropagation();
+    state.file = null;
+    document.getElementById('drop-zone').classList.remove('has-file');
+    document.getElementById('file-row').classList.remove('visible');
+    document.getElementById('file-input').value = '';
+    updateCreateBtn();
+  }
+
+  function fmt(b) {
+    return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+  }
+
+  function updateCreateBtn() {
+    // For demo: enable if type is selected (file not required in prototype)
+    document.getElementById('create-btn').disabled = !state.type;
+  }
+
+  // ============================================================
+  // Quality
+  // ============================================================
+  function toggleQuality(e) {
+    e.stopPropagation();
+    document.getElementById('q-drop').classList.toggle('open');
+  }
+  function setQuality(val, el) {
+    state.quality = val;
+    document.getElementById('q-label').textContent = val;
+    document.querySelectorAll('.qopt').forEach(o => { o.classList.remove('active'); o.innerHTML = o.textContent.trim(); });
+    el.classList.add('active');
+    el.innerHTML = val + ' <span>✓</span>';
+    document.getElementById('q-drop').classList.remove('open');
+  }
+  document.addEventListener('click', () => document.getElementById('q-drop').classList.remove('open'));
+
+  // ============================================================
+  // Modal
+  // ============================================================
+  function openModal() {
+    if (!state.type) return;
+    document.getElementById('m-subtype').textContent = '"' + state.type + '"';
+    document.getElementById('m-quality').textContent = '"' + (state.quality === '标准' ? 'standard' : 'professional') + '"';
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function confirmCreate() {
+    closeModal();
+    showToast('任务已提交 · scene_subtype: "' + state.type + '"');
+    setTimeout(() => { reselect(); removeFile({ stopPropagation:()=>{} }); }, 1200);
+  }
+
+  // ============================================================
+  // Toast
+  // ============================================================
+  let tt;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(tt);
+    tt = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
