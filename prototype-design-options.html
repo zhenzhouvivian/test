@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>空间入口拆分 · 3种设计方案</title>
+  <style>
+    :root {
+      --bg: #1b1b1d;
+      --border: rgba(255,255,255,.2);
+      --muted: rgba(255,255,255,.6);
+      --accent: rgba(255,255,255,.08);
+      --secondary: rgba(255,255,255,.1);
+      --cta: #3b82f6;
+      --cta-hover: #2563eb;
+      --font: 'Poppins', Arial, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: #111; color: #fff; }
+
+    /* ===== Page Nav ===== */
+    .page-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(17,17,17,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      z-index: 1000;
+    }
+    .page-nav-btn {
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: rgba(255,255,255,.5);
+      border: none;
+      font-family: var(--font);
+      transition: all .15s;
+    }
+    .page-nav-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .page-nav-btn.active {
+      background: rgba(59,130,246,.2);
+      color: #93c5fd;
+    }
+    .page-nav-label {
+      font-size: 12px;
+      color: rgba(255,255,255,.3);
+      padding: 0 12px;
+    }
+
+    /* ===== Section ===== */
+    .section {
+      display: none;
+      padding: 72px 40px 40px;
+      min-height: 100vh;
+    }
+    .section.active { display: block; }
+
+    .section-header {
+      max-width: 860px;
+      margin: 0 auto 32px;
+    }
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .badge-a { background: rgba(59,130,246,.2); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+    .badge-b { background: rgba(168,85,247,.2); color: #c4b5fd; border: 1px solid rgba(168,85,247,.3); }
+    .badge-c { background: rgba(20,184,166,.2); color: #5eead4; border: 1px solid rgba(20,184,166,.3); }
+
+    .section-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .section-desc { font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.6; }
+
+    .pros-cons {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .pros-cons span {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 4px;
+    }
+    .pro { background: rgba(20,184,166,.12); color: #5eead4; }
+    .con { background: rgba(248,113,113,.12); color: #fca5a5; }
+
+    /* ===== Shared Components ===== */
+    .demo-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .aholo-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* Parent tabs (共用) */
+    .parent-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .parent-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.5);
+      transition: all .15s;
+    }
+    .parent-tab:hover { color: #fff; background: rgba(255,255,255,.04); }
+    .parent-tab.active { color: #fff; border-bottom-color: #3b82f6; background: rgba(59,130,246,.06); }
+    .parent-tab .tab-icon {
+      width: 30px; height: 30px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .parent-tab.active .tab-icon { background: rgba(59,130,246,.2); }
+    .tab-text { line-height: 1.25; }
+    .tab-name { font-size: 13px; font-weight: 600; }
+    .tab-sub { font-size: 11px; color: rgba(255,255,255,.4); }
+
+    /* Bottom bar (共用) */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .quality-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.9);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .cloud-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: transparent;
+      color: rgba(255,255,255,.5);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .create-btn {
+      padding: 8px 24px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font);
+      background: var(--cta);
+      color: #fff;
+      transition: all .15s;
+    }
+    .create-btn:hover { background: var(--cta-hover); }
+    .create-btn.disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    /* Drop zone (共用) */
+    .drop-zone {
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255,255,255,.02);
+      transition: all .15s;
+    }
+    .drop-zone:hover { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.04); }
+    .drop-icons { display: flex; justify-content: center; gap: 12px; margin-bottom: 12px; }
+    .di {
+      width: 32px; height: 32px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.5);
+      font-size: 14px;
+    }
+    .drop-main { font-size: 13px; color: rgba(255,255,255,.5); margin-bottom: 6px; }
+    .drop-main a { color: #3b82f6; }
+    .drop-sub { font-size: 11px; color: rgba(255,255,255,.3); line-height: 1.6; }
+    .drop-sub a { color: #3b82f6; text-decoration: none; }
+
+    /* Notice inline */
+    .notice {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+    .notice.indoor { background: rgba(255,255,255,.05); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.1); }
+    .notice.outdoor { background: rgba(59,130,246,.1); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+
+    /* =============================================
+       方案 A：选择卡片（进空间Tab后全屏选择）
+       ============================================= */
+    .choice-screen {
+      padding: 32px 20px;
+      display: flex;
+      gap: 16px;
+    }
+    .choice-card {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all .2s;
+      background: rgba(255,255,255,.03);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .choice-card:hover {
+      border-color: rgba(255,255,255,.35);
+      background: rgba(255,255,255,.06);
+    }
+    .choice-card.selected-indoor {
+      border-color: rgba(20,184,166,.6);
+      background: rgba(20,184,166,.07);
+    }
+    .choice-card.selected-outdoor {
+      border-color: rgba(59,130,246,.6);
+      background: rgba(59,130,246,.07);
+    }
+    .choice-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .choice-icon.indoor-icon { background: rgba(20,184,166,.15); }
+    .choice-icon.outdoor-icon { background: rgba(59,130,246,.15); }
+    .choice-name { font-size: 16px; font-weight: 700; }
+    .choice-desc { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.6; }
+    .choice-tag {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      align-self: flex-start;
+    }
+    .choice-tag.no-skybox { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); }
+    .choice-tag.with-skybox { background: rgba(59,130,246,.15); color: #93c5fd; }
+    .choice-check {
+      margin-top: auto;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      transition: all .15s;
+    }
+    .selected-indoor .choice-check { border-color: #2dd4bf; background: #2dd4bf; color: #000; }
+    .selected-outdoor .choice-check { border-color: #3b82f6; background: #3b82f6; color: #000; }
+
+    /* after selection — upload area appears */
+    .choice-upload { padding: 0 20px 20px; display: none; }
+    .choice-upload.visible { display: block; }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: rgba(255,255,255,.4);
+      cursor: pointer; margin-bottom: 14px;
+      background: none; border: none; font-family: var(--font);
+    }
+    .back-btn:hover { color: #fff; }
+    .selected-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .selected-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* =============================================
+       方案 B：分步 Stepper
+       ============================================= */
+    .stepper-wrap { padding: 24px 20px; }
+    .step-indicator {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 28px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+    }
+    .step-item.active { color: #fff; }
+    .step-item.done { color: rgba(255,255,255,.5); }
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .step-item.active .step-num { border-color: #3b82f6; background: #3b82f6; color: #fff; }
+    .step-item.done .step-num { border-color: #2dd4bf; background: #2dd4bf; color: #000; font-size: 12px; }
+    .step-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,.15);
+      margin: 0 8px;
+    }
+    .step-line.done { background: #2dd4bf; }
+
+    .stepper-content { min-height: 160px; }
+
+    /* Step 1: type select (inline, 2 buttons) */
+    .type-select-row {
+      display: flex; gap: 10px;
+      margin-bottom: 0;
+    }
+    .type-select-btn {
+      flex: 1;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.7);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      transition: all .15s;
+    }
+    .type-select-btn:hover { border-color: rgba(255,255,255,.4); color: #fff; background: rgba(255,255,255,.07); }
+    .type-select-btn.selected-indoor-btn {
+      border-color: #2dd4bf;
+      background: rgba(20,184,166,.08);
+      color: #fff;
+    }
+    .type-select-btn.selected-outdoor-btn {
+      border-color: #3b82f6;
+      background: rgba(59,130,246,.08);
+      color: #fff;
+    }
+    .type-btn-icon { font-size: 20px; }
+    .type-btn-text { line-height: 1.3; text-align: left; }
+    .type-btn-name { font-size: 13px; font-weight: 600; }
+    .type-btn-hint { font-size: 11px; color: rgba(255,255,255,.4); }
+    .type-select-btn.selected-indoor-btn .type-btn-hint { color: rgba(45,212,191,.6); }
+    .type-select-btn.selected-outdoor-btn .type-btn-hint { color: rgba(147,197,253,.6); }
+
+    .stepper-upload { display: none; }
+    .stepper-upload.visible { display: block; }
+
+    /* =============================================
+       方案 C：Toggle Switch
+       ============================================= */
+    .toggle-wrap { padding: 20px; }
+    .toggle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .toggle-label { font-size: 13px; color: rgba(255,255,255,.6); }
+    .toggle-switch-group {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255,255,255,.05);
+    }
+    .toggle-option {
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: rgba(255,255,255,.45);
+      transition: all .15s;
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .toggle-option:not(:last-child) { border-right: 1px solid var(--border); }
+    .toggle-option.active-indoor {
+      background: rgba(20,184,166,.15);
+      color: #2dd4bf;
+    }
+    .toggle-option.active-outdoor {
+      background: rgba(59,130,246,.15);
+      color: #93c5fd;
+    }
+
+    /* =============================================
+       Shared interaction helpers
+       ============================================= */
+    .hidden { display: none !important; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(30,30,32,.97);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 12px;
+      backdrop-filter: blur(16px);
+      transition: transform .25s ease;
+      z-index: 9999;
+      color: #93c5fd;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- Page Nav -->
+<nav class="page-nav">
+  <span class="page-nav-label">设计方案</span>
+  <button class="page-nav-btn active" onclick="showSection('a', this)">方案 A · 选择卡片</button>
+  <button class="page-nav-btn" onclick="showSection('b', this)">方案 B · 分步引导</button>
+  <button class="page-nav-btn" onclick="showSection('c', this)">方案 C · Toggle 切换</button>
+</nav>
+
+<!-- ============================================================
+     方案 A：进入空间Tab后展示大卡片选择，选完后出上传区
+     ============================================================ -->
+<section class="section active" id="section-a">
+  <div class="section-header">
+    <div class="section-badge badge-a">方案 A</div>
+    <div class="section-title">选择卡片 — 两张大卡片，选完才进上传</div>
+    <div class="section-desc">点击「空间」Tab后，先全屏展示室内/室外选择。用户明确点选后，卡片收起并出现上传区域。<br>决策优先，信息传递最清晰，适合首次使用用户。</div>
+    <div class="pros-cons">
+      <span class="pro">✓ 最清晰，两个选项对比明确</span>
+      <span class="pro">✓ 天空盒差异可直观展示</span>
+      <span class="con">✗ 多一次点击</span>
+      <span class="con">✗ 熟练用户觉得多余</span>
+    </div>
+  </div>
+
+  <div class="demo-wrap">
+    <div class="aholo-card">
+      <!-- Parent Tabs -->
+      <div class="parent-tabs">
+        <div class="parent-tab" onclick="toast('物体重建 (演示)')">
+          <div class="tab-icon">📦</div>
+          <div class="tab-text"><div class="tab-name">物体</div><div class="tab-sub">物体-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab active">
+          <div class="tab-icon">🏠</div>
+          <div class="tab-text"><div class="tab-name">空间</div><div class="tab-sub">空间-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab" onclick="toast('AI空间生成 (演示)')">
+          <div class="tab-icon">✨</div>
+          <div class="tab-text"><div class="tab-name">AI空间生成</div><div class="tab-sub">图文生成三维空间</div></div>
+        </div>
+      </div>
+
+      <!-- Step 1: Choice Cards (default state) -->
+      <div id="a-choice" class="choice-screen">
+        <div class="choice-card" id="a-card-indoor" onclick="aSelect('indoor')">
+          <div class="choice-icon indoor-icon">🏠</div>
+          <div class="choice-name">室内</div>
+          <div class="choice-desc">客厅、卧室、办公室、展厅等封闭/半封闭空间</div>
+          <div class="choice-tag no-skybox">不生成天空盒</div>
+          <div class="choice-check" id="a-check-indoor"></div>
+        </div>
+        <div class="choice-card" id="a-card-outdoor" onclick="aSelect('outdoor')">
+          <div class="choice-icon outdoor-icon">🌄</div>
+          <div class="choice-name">室外</div>
+          <div class="choice-desc">建筑外立面、景区、广场、街道等开放场景</div>
+          <div class="choice-tag with-skybox">自动生成天空盒</div>
+          <div class="choice-check" id="a-check-outdoor"></div>
+        </div>
+      </div>
+
+      <!-- Step 2: Upload (shows after selection) -->
+      <div class="choice-upload" id="a-upload">
+        <button class="back-btn" onclick="aBack()">← 重新选择</button>
+        <div class="selected-label">
+          <div class="selected-dot" id="a-dot"></div>
+          <span id="a-selected-text"></span>
+        </div>
+        <div class="notice" id="a-notice"></div>
+        <div class="drop-zone">
+          <div class="drop-icons">
+            <div class="di">🖼</div><div class="di">🎬</div><div class="di">📦</div>
+          </div>
+          <p class="drop-main">拖拽文件到此处，或 <a href="#">点击选择文件</a></p>
+          <p class="drop-sub">图片（20～2000张）· 视频（1～3个）· .insv · .ply/.spz<br><a href="#">拍摄指南 ↗</a></p>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="quality-btn">★ 标准 ▾</button>
+        <div class="actions">
+          <button class="cloud-btn">从云盘导入</button>
+          <button class="create-btn disabled" id="a-create">创建</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     方案 B：分步 Stepper，Step1 选类型，Step2 上传
+     ============================================================ -->
+<section class="section" id="section-b">
+  <div class="section-header">
+    <div class="section-badge badge-b">方案 B</div>
+    <div class="section-title">分步引导 — 步骤指示器，类型选择和上传各一步</div>
+    <div class="section-desc">进入空间Tab后出现步骤指示器：第一步选室内/室外（两个横排按钮），选完后点「下一步」进入第二步上传。<br>流程感强，适合需要强引导的场景；步骤指示器也让用户知道还有几步。</div>
+    <div class="pros-cons">
+      <span class="pro">✓ 流程明确，操作不会出错</span>
+      <span class="pro">✓ 可后续增加更多步骤</span>
+      <span class="con">✗ 增加一次「下一步」点击</span>
+      <span class="con">✗ 轻量任务感觉流程偏重</span>
+    </div>
+  </div>
+
+  <div class="demo-wrap">
+    <div class="aholo-card">
+      <div class="parent-tabs">
+        <div class="parent-tab" onclick="toast('物体重建 (演示)')">
+          <div class="tab-icon">📦</div>
+          <div class="tab-text"><div class="tab-name">物体</div><div class="tab-sub">物体-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab active">
+          <div class="tab-icon">🏠</div>
+          <div class="tab-text"><div class="tab-name">空间</div><div class="tab-sub">空间-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab" onclick="toast('AI空间生成 (演示)')">
+          <div class="tab-icon">✨</div>
+          <div class="tab-text"><div class="tab-name">AI空间生成</div><div class="tab-sub">图文生成三维空间</div></div>
+        </div>
+      </div>
+
+      <div class="stepper-wrap">
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step-item active" id="b-step1-indicator">
+            <div class="step-num" id="b-num1">1</div>
+            <span>选择场景类型</span>
+          </div>
+          <div class="step-line" id="b-line1"></div>
+          <div class="step-item" id="b-step2-indicator">
+            <div class="step-num" id="b-num2">2</div>
+            <span>上传素材</span>
+          </div>
+        </div>
+
+        <div class="stepper-content">
+          <!-- Step 1 -->
+          <div id="b-step1">
+            <div class="type-select-row">
+              <button class="type-select-btn" id="b-btn-indoor" onclick="bSelect('indoor')">
+                <span class="type-btn-icon">🏠</span>
+                <span class="type-btn-text">
+                  <span class="type-btn-name">室内</span><br>
+                  <span class="type-btn-hint">不生成天空盒</span>
+                </span>
+              </button>
+              <button class="type-select-btn" id="b-btn-outdoor" onclick="bSelect('outdoor')">
+                <span class="type-btn-icon">🌄</span>
+                <span class="type-btn-text">
+                  <span class="type-btn-name">室外</span><br>
+                  <span class="type-btn-hint">自动生成天空盒</span>
+                </span>
+              </button>
+            </div>
+            <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+              <button class="create-btn disabled" id="b-next-btn" onclick="bNext()"
+                      style="padding:8px 20px; font-size:13px;">
+                下一步 →
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div id="b-step2" class="stepper-upload">
+            <div class="selected-label" style="margin-bottom:14px;">
+              <div class="selected-dot" id="b-dot"></div>
+              <span id="b-selected-text" style="font-size:13px; font-weight:600;"></span>
+              <button onclick="bBack()" style="margin-left:auto; background:none; border:none; color:rgba(255,255,255,.4); font-size:12px; cursor:pointer; font-family:var(--font)">← 重选</button>
+            </div>
+            <div class="notice" id="b-notice"></div>
+            <div class="drop-zone">
+              <div class="drop-icons">
+                <div class="di">🖼</div><div class="di">🎬</div><div class="di">📦</div>
+              </div>
+              <p class="drop-main">拖拽文件到此处，或 <a href="#">点击选择文件</a></p>
+              <p class="drop-sub">图片（20～2000张）· 视频（1～3个）· .insv · .ply/.spz<br><a href="#">拍摄指南 ↗</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="quality-btn">★ 标准 ▾</button>
+        <div class="actions">
+          <button class="cloud-btn">从云盘导入</button>
+          <button class="create-btn disabled" id="b-create">创建</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     方案 C：Toggle Switch，上传区顶部一个左右切换
+     ============================================================ -->
+<section class="section" id="section-c">
+  <div class="section-header">
+    <div class="section-badge badge-c">方案 C</div>
+    <div class="section-title">Toggle 切换 — 上传区上方一个横向开关</div>
+    <div class="section-desc">进入空间Tab后直接出现上传区，顶部一个「室内 | 室外」Toggle。上传区和引导文案随切换实时更新，无需额外点击。<br>操作最少，和「物体」Tab下的体验保持一致，熟练用户最友好。</div>
+    <div class="pros-cons">
+      <span class="pro">✓ 零额外点击，直接上传</span>
+      <span class="pro">✓ 与整体设计风格最一致</span>
+      <span class="con">✗ 默认值若错误用户可能不注意</span>
+      <span class="con">✗ 天空盒差异没有前两种直观</span>
+    </div>
+  </div>
+
+  <div class="demo-wrap">
+    <div class="aholo-card">
+      <div class="parent-tabs">
+        <div class="parent-tab" onclick="toast('物体重建 (演示)')">
+          <div class="tab-icon">📦</div>
+          <div class="tab-text"><div class="tab-name">物体</div><div class="tab-sub">物体-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab active">
+          <div class="tab-icon">🏠</div>
+          <div class="tab-text"><div class="tab-name">空间</div><div class="tab-sub">空间-3DGS重建</div></div>
+        </div>
+        <div class="parent-tab" onclick="toast('AI空间生成 (演示)')">
+          <div class="tab-icon">✨</div>
+          <div class="tab-text"><div class="tab-name">AI空间生成</div><div class="tab-sub">图文生成三维空间</div></div>
+        </div>
+      </div>
+
+      <div class="toggle-wrap">
+        <div class="toggle-header">
+          <span class="toggle-label">场景类型</span>
+          <div class="toggle-switch-group">
+            <button class="toggle-option active-indoor" id="c-indoor" onclick="cSwitch('indoor')">
+              🏠 室内
+            </button>
+            <button class="toggle-option" id="c-outdoor" onclick="cSwitch('outdoor')">
+              🌄 室外
+            </button>
+          </div>
+        </div>
+
+        <div class="notice indoor" id="c-notice">
+          🏠 室内模式 · 不生成天空盒数据
+        </div>
+
+        <div class="drop-zone">
+          <div class="drop-icons">
+            <div class="di">🖼</div><div class="di">🎬</div><div class="di">📦</div>
+          </div>
+          <p class="drop-main">拖拽文件到此处，或 <a href="#">点击选择文件</a></p>
+          <p class="drop-sub" id="c-drop-sub">
+            图片（20～2000张）· 视频（1～3个）· .insv · .ply/.spz<br>
+            <a href="#">室内拍摄指南 ↗</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="quality-btn">★ 标准 ▾</button>
+        <div class="actions">
+          <button class="cloud-btn">从云盘导入</button>
+          <button class="create-btn" onclick="toast('提交参数: scene_subtype=&quot;' + cState + '&quot;')">创建</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- Page Switch ----
+  function showSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ---- Toast ----
+  let tt;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(tt);
+    tt = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // ============================================================
+  // 方案 A Logic
+  // ============================================================
+  let aSelected = null;
+  function aSelect(type) {
+    aSelected = type;
+    const cards = { indoor: document.getElementById('a-card-indoor'), outdoor: document.getElementById('a-card-outdoor') };
+    const checks = { indoor: document.getElementById('a-check-indoor'), outdoor: document.getElementById('a-check-outdoor') };
+
+    Object.keys(cards).forEach(k => {
+      cards[k].className = 'choice-card';
+      checks[k].textContent = '';
+    });
+    cards[type].classList.add('selected-' + type);
+    checks[type].textContent = '✓';
+
+    // After short delay, transition to upload
+    setTimeout(() => {
+      document.getElementById('a-choice').style.display = 'none';
+      const upload = document.getElementById('a-upload');
+      upload.classList.add('visible');
+
+      const dot = document.getElementById('a-dot');
+      const text = document.getElementById('a-selected-text');
+      const notice = document.getElementById('a-notice');
+      const createBtn = document.getElementById('a-create');
+
+      if (type === 'indoor') {
+        dot.style.background = '#2dd4bf';
+        text.textContent = '室内空间';
+        notice.className = 'notice indoor';
+        notice.textContent = '🏠 不生成天空盒数据 · 适用于封闭空间';
+      } else {
+        dot.style.background = '#3b82f6';
+        text.textContent = '室外场景';
+        notice.className = 'notice outdoor';
+        notice.textContent = '🌄 自动生成天空盒 · 提升室外场景真实感';
+      }
+      createBtn.classList.remove('disabled');
+      createBtn.onclick = () => toast('提交 scene_subtype="' + type + '"' + (type==='outdoor' ? ' generate_skybox=true' : ''));
+    }, 200);
+  }
+
+  function aBack() {
+    aSelected = null;
+    document.getElementById('a-choice').style.display = 'flex';
+    document.getElementById('a-upload').classList.remove('visible');
+    document.getElementById('a-card-indoor').className = 'choice-card';
+    document.getElementById('a-card-outdoor').className = 'choice-card';
+    document.getElementById('a-check-indoor').textContent = '';
+    document.getElementById('a-check-outdoor').textContent = '';
+    document.getElementById('a-create').classList.add('disabled');
+  }
+
+  // ============================================================
+  // 方案 B Logic
+  // ============================================================
+  let bSelected = null;
+  function bSelect(type) {
+    bSelected = type;
+    document.getElementById('b-btn-indoor').className = 'type-select-btn';
+    document.getElementById('b-btn-outdoor').className = 'type-select-btn';
+    document.getElementById('b-btn-' + type).className = 'type-select-btn selected-' + type + '-btn';
+    document.getElementById('b-next-btn').classList.remove('disabled');
+  }
+
+  function bNext() {
+    if (!bSelected) return;
+    // Mark step 1 done, activate step 2
+    document.getElementById('b-step1-indicator').className = 'step-item done';
+    document.getElementById('b-num1').textContent = '✓';
+    document.getElementById('b-line1').classList.add('done');
+    document.getElementById('b-step2-indicator').className = 'step-item active';
+    document.getElementById('b-num2').style.cssText = 'background:#3b82f6; border-color:#3b82f6; color:#fff;';
+
+    document.getElementById('b-step1').style.display = 'none';
+    const step2 = document.getElementById('b-step2');
+    step2.classList.add('visible');
+
+    const dot = document.getElementById('b-dot');
+    const text = document.getElementById('b-selected-text');
+    const notice = document.getElementById('b-notice');
+    const createBtn = document.getElementById('b-create');
+
+    if (bSelected === 'indoor') {
+      dot.style.cssText = 'background:#2dd4bf; width:8px; height:8px; border-radius:50%; display:inline-block;';
+      text.textContent = '室内空间';
+      notice.className = 'notice indoor';
+      notice.textContent = '🏠 不生成天空盒数据';
+    } else {
+      dot.style.cssText = 'background:#3b82f6; width:8px; height:8px; border-radius:50%; display:inline-block;';
+      text.textContent = '室外场景';
+      notice.className = 'notice outdoor';
+      notice.textContent = '🌄 将自动生成天空盒';
+    }
+    createBtn.classList.remove('disabled');
+    createBtn.onclick = () => toast('提交 scene_subtype="' + bSelected + '"' + (bSelected==='outdoor' ? ' generate_skybox=true' : ''));
+  }
+
+  function bBack() {
+    bSelected = null;
+    document.getElementById('b-step1-indicator').className = 'step-item active';
+    document.getElementById('b-num1').textContent = '1';
+    document.getElementById('b-line1').classList.remove('done');
+    document.getElementById('b-step2-indicator').className = 'step-item';
+    document.getElementById('b-num2').style.cssText = '';
+
+    document.getElementById('b-step1').style.display = 'block';
+    document.getElementById('b-step2').classList.remove('visible');
+    document.getElementById('b-btn-indoor').className = 'type-select-btn';
+    document.getElementById('b-btn-outdoor').className = 'type-select-btn';
+    document.getElementById('b-next-btn').classList.add('disabled');
+    document.getElementById('b-create').classList.add('disabled');
+  }
+
+  // ============================================================
+  // 方案 C Logic
+  // ============================================================
+  let cState = 'indoor';
+  function cSwitch(type) {
+    cState = type;
+    document.getElementById('c-indoor').className = 'toggle-option' + (type === 'indoor' ? ' active-indoor' : '');
+    document.getElementById('c-outdoor').className = 'toggle-option' + (type === 'outdoor' ? ' active-outdoor' : '');
+
+    const notice = document.getElementById('c-notice');
+    const sub = document.getElementById('c-drop-sub');
+    if (type === 'indoor') {
+      notice.className = 'notice indoor';
+      notice.textContent = '🏠 室内模式 · 不生成天空盒数据';
+      sub.innerHTML = '图片（20～2000张）· 视频（1～3个）· .insv · .ply/.spz<br><a href="#">室内拍摄指南 ↗</a>';
+    } else {
+      notice.className = 'notice outdoor';
+      notice.textContent = '🌄 室外模式 · 自动生成天空盒，提升场景真实感';
+      sub.innerHTML = '图片（20～2000张）· 视频（1～3个）· .insv · .ply/.spz<br><a href="#">室外拍摄指南 ↗</a>';
+    }
+  }
+</script>
+</body>
+</html>
