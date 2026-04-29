@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walk Path · Aholo3D</title>
+  <style>
+    :root {
+      --bg:        #1b1b1d;
+      --border:    rgba(255,255,255,.18);
+      --muted:     rgba(255,255,255,.55);
+      --accent:    rgba(255,255,255,.08);
+      --secondary: rgba(255,255,255,.1);
+      --cta:       #3b82f6;
+      --font:      'Poppins', Arial, sans-serif;
+      --radius-m:  12px;
+      --radius-xs: 8px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:var(--font); }
+
+    /* Full-screen canvas background */
+    #bg-canvas {
+      position:fixed; inset:0; width:100%; height:100%;
+      display:block;
+    }
+
+    /* Overlay canvas for path & points */
+    #path-canvas {
+      position:fixed; inset:0; width:100%; height:100%;
+      display:block; cursor:default;
+    }
+
+    /* Top bar */
+    .topbar {
+      position:fixed; top:0; left:0; right:0; height:52px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px;
+      background:linear-gradient(to bottom, rgba(0,0,0,.7) 0%, rgba(0,0,0,0) 100%);
+      z-index:10; pointer-events:none;
+    }
+    .logo { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:700; color:#fff; pointer-events:all; }
+    .logo svg { width:22px; height:22px; }
+    .topbar-right { display:flex; gap:8px; pointer-events:all; }
+
+    /* Bottom control panel */
+    .ctrl-panel {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      z-index:10;
+      display:flex; align-items:center; gap:12px;
+      background:rgba(27,27,29,.82);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius: 40px;
+      padding:10px 20px;
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      box-shadow:0 8px 32px rgba(0,0,0,.5);
+    }
+
+    /* Play / Pause button */
+    .play-btn {
+      width:40px; height:40px;
+      border-radius:50%;
+      background:var(--cta);
+      border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .15s;
+      flex-shrink:0;
+    }
+    .play-btn:hover { background:#2563eb; transform:scale(1.06); }
+    .play-btn svg { width:16px; height:16px; fill:#fff; }
+
+    /* Progress bar */
+    .progress-wrap {
+      display:flex; align-items:center; gap:10px;
+      min-width:220px;
+    }
+    .progress-bar-bg {
+      flex:1; height:3px; background:rgba(255,255,255,.15); border-radius:2px; cursor:pointer;
+      position:relative; overflow:visible;
+    }
+    .progress-bar-fill {
+      height:100%; background:var(--cta); border-radius:2px;
+      transition:width .05s linear;
+      pointer-events:none;
+    }
+    .progress-thumb {
+      position:absolute; top:50%; right:0;
+      width:10px; height:10px; border-radius:50%;
+      background:#fff; border:2px solid var(--cta);
+      transform:translate(50%,-50%);
+      pointer-events:none;
+      box-shadow:0 0 6px rgba(59,130,246,.6);
+    }
+    .time-label { font-size:11px; color:var(--muted); white-space:nowrap; min-width:32px; }
+
+    .ctrl-divider { width:1px; height:20px; background:rgba(255,255,255,.12); }
+
+    /* Speed toggle */
+    .speed-btn {
+      font-size:12px; font-weight:600;
+      color:var(--muted); background:transparent;
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:6px; padding:4px 10px;
+      cursor:pointer; font-family:var(--font);
+      transition:all .15s;
+    }
+    .speed-btn:hover { color:#fff; border-color:rgba(255,255,255,.3); }
+
+    /* Point count indicator */
+    .point-counter {
+      font-size:11px; color:var(--muted);
+      display:flex; align-items:center; gap:5px;
+    }
+    .point-dot { width:7px; height:7px; border-radius:50%; background:var(--cta); }
+
+    /* Tooltip */
+    .tooltip {
+      position:fixed; z-index:20;
+      background:rgba(27,27,29,.95);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:var(--radius-xs);
+      padding:6px 12px;
+      font-size:11px; color:#fff;
+      pointer-events:none;
+      display:none;
+      backdrop-filter:blur(8px);
+    }
+    .tooltip.visible { display:block; }
+    .tooltip .t-title { font-weight:600; margin-bottom:2px; }
+    .tooltip .t-sub { color:var(--muted); }
+
+    /* Reset hint */
+    .reset-hint {
+      position:fixed; top:20px; right:20px; z-index:10;
+      font-size:11px; color:rgba(255,255,255,.4);
+      background:rgba(0,0,0,.4);
+      padding:6px 12px; border-radius:20px;
+      pointer-events:none;
+      transition:opacity .3s;
+    }
+    .reset-hint.hidden { opacity:0; }
+
+    /* Restore btn (appears when a point is cancelled) */
+    .restore-btn {
+      position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+      z-index:10; display:none;
+      align-items:center; gap:7px;
+      background:rgba(27,27,29,.88);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:20px;
+      padding:7px 16px;
+      font-size:12px; color:rgba(255,255,255,.8);
+      cursor:pointer;
+      backdrop-filter:blur(12px);
+      font-family:var(--font);
+      transition:all .15s;
+    }
+    .restore-btn:hover { color:#fff; background:rgba(40,40,42,.9); }
+    .restore-btn.visible { display:flex; }
+    .restore-btn svg { width:13px; height:13px; }
+
+    /* Walk indicator */
+    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.15)} }
+    .walk-indicator {
+      width:12px; height:12px; border-radius:50%;
+      background:var(--cta);
+      box-shadow:0 0 0 4px rgba(59,130,246,.3);
+      position:absolute; pointer-events:none;
+      animation:pulse 1.2s ease-in-out infinite;
+      transition:left .05s linear, top .05s linear;
+      display:none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background canvas: 3DGS hall rendering -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Path & waypoints canvas -->
+<canvas id="path-canvas"></canvas>
+
+<!-- Walk indicator dot -->
+<div class="walk-indicator" id="walk-indicator"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <polygon points="12,2 22,20 2,20" fill="#3b82f6" opacity=".9"/>
+      <polygon points="12,7 20,20 4,20" fill="#1b1b1d"/>
+      <circle cx="12" cy="14.5" r="2.5" fill="#60a5fa"/>
+    </svg>
+    Walk Path Editor
+  </div>
+  <div class="topbar-right">
+    <div class="reset-hint" id="reset-hint">点击路径点可取消</div>
+  </div>
+</div>
+
+<!-- Restore button -->
+<button class="restore-btn" id="restore-btn">
+  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M2 7 C2 4 4.5 2 7 2 C9.5 2 12 4 12 7 C12 10 9.5 12 7 12"/>
+    <polyline points="2,4.5 2,7 4.5,7"/>
+  </svg>
+  恢复已取消的点
+</button>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="t-title" id="tooltip-title"></div>
+  <div class="t-sub" id="tooltip-sub"></div>
+</div>
+
+<!-- Bottom control panel -->
+<div class="ctrl-panel">
+  <button class="play-btn" id="play-btn" onclick="togglePlay()">
+    <svg id="play-icon" viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>
+  </button>
+
+  <div class="ctrl-divider"></div>
+
+  <div class="progress-wrap">
+    <span class="time-label" id="time-cur">0:00</span>
+    <div class="progress-bar-bg" id="progress-bg" onclick="seekProgress(event)">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      <div class="progress-thumb" id="progress-thumb"></div>
+    </div>
+    <span class="time-label" id="time-total">0:20</span>
+  </div>
+
+  <div class="ctrl-divider"></div>
+
+  <button class="speed-btn" id="speed-btn" onclick="cycleSpeed()">1×</button>
+
+  <div class="ctrl-divider"></div>
+
+  <div class="point-counter">
+    <div class="point-dot"></div>
+    <span id="point-count">5 点</span>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   BACKGROUND: 3DGS Hall Rendering (Canvas)
+   Faithfully recreates the provided image:
+   - Large beige/tan ballroom
+   - Grid ceiling with circular chandeliers
+   - Perspective floor with dark stains
+   - Back wall with dark rack units
+   - Green plant lower right
+   ================================================================ */
+
+const bgC = document.getElementById('bg-canvas');
+const bgX = bgC.getContext('2d');
+
+function resizeBg() {
+  bgC.width  = window.innerWidth;
+  bgC.height = window.innerHeight;
+  drawHall();
+}
+
+function drawHall() {
+  const W = bgC.width, H = bgC.height;
+  const cx = W * 0.5;
+  const vy = H * 0.30;   // vanishing point y (horizon)
+  const vx = cx;         // vanishing point x
+
+  /* ---- Sky / upper half fill ---- */
+  const skyGrad = bgX.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0,    '#c9a98e');
+  skyGrad.addColorStop(0.28, '#d4b49a');
+  skyGrad.addColorStop(1,    '#c2a488');
+  bgX.fillStyle = skyGrad;
+  bgX.fillRect(0, 0, W, H);
+
+  /* ---- Floor ---- */
+  const floorGrad = bgX.createLinearGradient(0, vy, 0, H);
+  floorGrad.addColorStop(0,   '#c5a882');
+  floorGrad.addColorStop(0.3, '#bda07a');
+  floorGrad.addColorStop(1,   '#b09070');
+  bgX.fillStyle = floorGrad;
+  bgX.beginPath();
+  bgX.moveTo(0, vy); bgX.lineTo(W, vy); bgX.lineTo(W, H); bgX.lineTo(0, H);
+  bgX.fill();
+
+  /* ---- Floor perspective tiles / grout lines ---- */
+  bgX.strokeStyle = 'rgba(160,130,100,.18)';
+  bgX.lineWidth = 0.8;
+  // Horizontal lines (converging)
+  for (let i = 1; i <= 12; i++) {
+    const t = i / 12;
+    const y = vy + (H - vy) * (t * t * 0.9 + t * 0.1);
+    bgX.beginPath(); bgX.moveTo(0, y); bgX.lineTo(W, y); bgX.stroke();
+  }
+  // Vertical perspective lines from bottom corners to VP
+  for (let i = -8; i <= 8; i++) {
+    const bx = cx + i * (W / 16);
+    bgX.beginPath(); bgX.moveTo(vx, vy); bgX.lineTo(bx, H); bgX.stroke();
+  }
+
+  /* ---- Floor dark stain marks ---- */
+  const stains = [
+    { x: 0.4, y: 0.72, rx: 0.18, ry: 0.06, a: -0.2 },
+    { x: 0.5, y: 0.78, rx: 0.14, ry: 0.04, a: 0.1  },
+    { x: 0.35, y: 0.85, rx: 0.1, ry: 0.035, a: -0.1 },
+    { x: 0.6, y: 0.68, rx: 0.08, ry: 0.025, a: 0.15 },
+    { x: 0.28, y: 0.65, rx: 0.06, ry: 0.02, a: -0.05 },
+  ];
+  stains.forEach(s => {
+    bgX.save();
+    bgX.translate(s.x * W, s.y * H);
+    bgX.rotate(s.a);
+    const g = bgX.createRadialGradient(0,0,0, 0,0, s.rx*W);
+    g.addColorStop(0,   'rgba(100,75,55,.30)');
+    g.addColorStop(0.6, 'rgba(100,75,55,.12)');
+    g.addColorStop(1,   'rgba(100,75,55,0)');
+    bgX.fillStyle = g;
+    bgX.scale(1, s.ry / s.rx);
+    bgX.beginPath(); bgX.arc(0,0, s.rx*W, 0, Math.PI*2); bgX.fill();
+    bgX.restore();
+  });
+
+  /* ---- Left wall ---- */
+  bgX.fillStyle = '#c5a882';
+  bgX.beginPath();
+  bgX.moveTo(0, 0); bgX.lineTo(W * 0.08, vy); bgX.lineTo(0, vy);
+  bgX.fill();
+  bgX.fillStyle = '#c8ab88';
+  bgX.beginPath();
+  bgX.moveTo(0, 0); bgX.lineTo(0, H); bgX.lineTo(W * 0.06, vy + (H - vy) * 0.7); bgX.lineTo(W * 0.08, vy);
+  bgX.fill();
+
+  /* ---- Right wall ---- */
+  bgX.fillStyle = '#c5a882';
+  bgX.beginPath();
+  bgX.moveTo(W, 0); bgX.lineTo(W * 0.92, vy); bgX.lineTo(W, vy);
+  bgX.fill();
+  bgX.fillStyle = '#c0a07c';
+  bgX.beginPath();
+  bgX.moveTo(W, 0); bgX.lineTo(W, H); bgX.lineTo(W * 0.94, vy + (H - vy) * 0.7); bgX.lineTo(W * 0.92, vy);
+  bgX.fill();
+
+  /* ---- Ceiling ---- */
+  bgX.fillStyle = '#d4b89a';
+  bgX.fillRect(0, 0, W, vy);
+
+  /* ---- Ceiling beams grid ---- */
+  bgX.strokeStyle = 'rgba(160,120,85,.35)'; bgX.lineWidth = 1.5;
+  const cols = 6, rows = 4;
+  for (let c = 0; c <= cols; c++) {
+    const t = c / cols;
+    const bx = vx + (t * 2 - 1) * W * 0.5;
+    // Perspective convergence to vx,vy
+    bgX.beginPath(); bgX.moveTo(vx, vy); bgX.lineTo(bx, 0); bgX.stroke();
+  }
+  for (let r = 0; r <= rows; r++) {
+    const y = (r / rows) * vy;
+    bgX.beginPath(); bgX.moveTo(0, y); bgX.lineTo(W, y); bgX.stroke();
+  }
+
+  /* ---- Ceiling circular chandeliers ---- */
+  const chandPositions = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const px = (c + 0.5) / cols;
+      const py = (r + 0.5) / rows;
+      // Perspective mapping
+      const t = py;
+      const perspX = vx + (px * 2 - 1) * W * 0.5 * (1 - t * 0.3);
+      const screenY = py * vy;
+      chandPositions.push({ x: perspX, y: screenY, t });
+    }
+  }
+  chandPositions.forEach(p => {
+    const scale = 0.4 + p.t * 0.6;
+    const rx = 28 * scale, ry = 7 * scale;
+    // Glow
+    const g = bgX.createRadialGradient(p.x, p.y, 0, p.x, p.y, rx * 1.8);
+    g.addColorStop(0,   `rgba(255,240,200,${0.25 * scale})`);
+    g.addColorStop(1,   'rgba(255,240,200,0)');
+    bgX.fillStyle = g;
+    bgX.save(); bgX.translate(p.x, p.y); bgX.scale(1, ry/rx);
+    bgX.beginPath(); bgX.arc(0,0, rx*1.8, 0, Math.PI*2); bgX.fill();
+    bgX.restore();
+    // Outer ring
+    bgX.strokeStyle = `rgba(200,180,140,${0.7 * scale})`;
+    bgX.lineWidth = 1.5 * scale;
+    bgX.save(); bgX.translate(p.x, p.y); bgX.scale(1, ry/rx);
+    bgX.beginPath(); bgX.arc(0,0, rx, 0, Math.PI*2); bgX.stroke();
+    bgX.restore();
+    // Inner ring
+    bgX.strokeStyle = `rgba(220,210,180,${0.9 * scale})`;
+    bgX.lineWidth = 1 * scale;
+    bgX.save(); bgX.translate(p.x, p.y); bgX.scale(1, ry/rx);
+    bgX.beginPath(); bgX.arc(0,0, rx * 0.55, 0, Math.PI*2); bgX.stroke();
+    bgX.restore();
+    // Light dots
+    const dotCount = Math.round(6 * scale);
+    for (let i = 0; i < dotCount; i++) {
+      const a = (i / dotCount) * Math.PI * 2;
+      const dx = Math.cos(a) * rx * 0.78;
+      const dy = Math.sin(a) * ry * 0.78;
+      bgX.fillStyle = `rgba(255,248,220,${0.85 * scale})`;
+      bgX.beginPath(); bgX.arc(p.x + dx, p.y + dy, 2 * scale, 0, Math.PI*2); bgX.fill();
+    }
+    // Center dot
+    bgX.fillStyle = `rgba(255,255,200,${scale})`;
+    bgX.beginPath(); bgX.arc(p.x, p.y, 2.5 * scale, 0, Math.PI*2); bgX.fill();
+  });
+
+  /* ---- Back wall ---- */
+  const bwTop = vy * 0.15;
+  const bwH   = vy - bwTop;
+  // Main wall color
+  bgX.fillStyle = '#c5a882';
+  bgX.fillRect(0, 0, W, vy);
+
+  // Back wall panel strips (darker vertical)
+  const panelW = W * 0.06;
+  const panels = [
+    { x: 0.05 }, { x: 0.12 }, { x: 0.18 },
+    { x: 0.82 }, { x: 0.88 }, { x: 0.94 },
+  ];
+  panels.forEach(p => {
+    bgX.fillStyle = 'rgba(140,100,70,.22)';
+    bgX.fillRect(p.x * W - panelW/4, bwTop, panelW/2, bwH * 0.9);
+  });
+
+  /* ---- Wine racks / server racks (back center) ---- */
+  const rackX = W * 0.32, rackY = vy * 0.35;
+  const rackW = W * 0.18, rackH = vy * 0.6;
+  // Two rack units side by side
+  [0, 1].forEach(i => {
+    const rx = rackX + i * (rackW * 0.55);
+    const rw = rackW * 0.48;
+    // Frame
+    bgX.fillStyle = 'rgba(50,38,28,.85)';
+    bgX.fillRect(rx, rackY, rw, rackH);
+    // Grid cells
+    const gridCols = 5, gridRows = 8;
+    const cw = rw / gridCols, ch = rackH / gridRows;
+    for (let gr = 0; gr < gridRows; gr++) {
+      for (let gc = 0; gc < gridCols; gc++) {
+        bgX.strokeStyle = 'rgba(100,80,60,.6)';
+        bgX.lineWidth = 0.5;
+        bgX.strokeRect(rx + gc*cw + 1, rackY + gr*ch + 1, cw-2, ch-2);
+        // Contents (bottle / equipment)
+        bgX.fillStyle = `rgba(80,60,40,${0.3 + Math.random()*0.3})`;
+        bgX.fillRect(rx + gc*cw + 3, rackY + gr*ch + 3, cw-6, ch-6);
+      }
+    }
+    // Dark border
+    bgX.strokeStyle = 'rgba(30,20,10,.8)';
+    bgX.lineWidth = 1.5;
+    bgX.strokeRect(rx, rackY, rw, rackH);
+  });
+
+  /* ---- Back wall door frames ---- */
+  const doors = [
+    { x: 0.62, w: 0.08, h: 0.65 },
+    { x: 0.72, w: 0.06, h: 0.55 },
+  ];
+  doors.forEach(d => {
+    const dx = d.x * W, dw = d.w * W;
+    const dh = d.h * vy, dt = vy - dh;
+    bgX.fillStyle = 'rgba(100,75,50,.5)';
+    bgX.fillRect(dx, dt, dw, dh);
+    bgX.strokeStyle = 'rgba(80,55,30,.8)';
+    bgX.lineWidth = 2;
+    bgX.strokeRect(dx, dt, dw, dh);
+    // Door handle
+    bgX.fillStyle = 'rgba(200,170,120,.9)';
+    bgX.beginPath(); bgX.arc(dx + dw - 5, dt + dh * 0.5, 3, 0, Math.PI*2); bgX.fill();
+  });
+
+  /* ---- Wall light strips (left) ---- */
+  for (let i = 0; i < 5; i++) {
+    const ly = vy * (0.2 + i * 0.15);
+    const lx = W * 0.03;
+    bgX.fillStyle = `rgba(255,240,200,${0.6 - i * 0.08})`;
+    bgX.beginPath(); bgX.arc(lx, ly, 3, 0, Math.PI*2); bgX.fill();
+    const lg = bgX.createRadialGradient(lx, ly, 0, lx, ly, 20);
+    lg.addColorStop(0, 'rgba(255,240,200,.25)');
+    lg.addColorStop(1, 'rgba(255,240,200,0)');
+    bgX.fillStyle = lg;
+    bgX.beginPath(); bgX.arc(lx, ly, 20, 0, Math.PI*2); bgX.fill();
+  }
+
+  /* ---- Green plant (lower right) ---- */
+  const px = W * 0.92, py = H * 0.82;
+  // Pot
+  bgX.fillStyle = 'rgba(60,120,50,.9)';
+  bgX.fillRect(px - 18, py - 5, 36, 18);
+  bgX.fillStyle = 'rgba(40,90,35,.95)';
+  bgX.fillRect(px - 20, py + 8, 40, 12);
+  // Leaves
+  const leafColors = ['#2d7a1e','#3a8f25','#4aa32e','#5cb33c','#1e6015'];
+  for (let i = 0; i < 18; i++) {
+    const a = (i / 18) * Math.PI * 2 + 0.3;
+    const r = 22 + Math.random() * 20;
+    const lx = px + Math.cos(a) * r * (0.7 + Math.random() * 0.3);
+    const ly = py - 20 - Math.random() * 25 + Math.sin(a) * r * 0.4;
+    bgX.fillStyle = leafColors[i % leafColors.length];
+    bgX.save(); bgX.translate(lx, ly); bgX.rotate(a + Math.PI/2);
+    bgX.beginPath(); bgX.ellipse(0,0, 6+Math.random()*4, 14+Math.random()*8, 0, 0, Math.PI*2); bgX.fill();
+    bgX.restore();
+  }
+
+  /* ---- Subtle vignette ---- */
+  const vig = bgX.createRadialGradient(W/2, H/2, H * 0.3, W/2, H/2, H * 0.85);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.35)');
+  bgX.fillStyle = vig;
+  bgX.fillRect(0,0,W,H);
+}
+
+/* ================================================================
+   PATH & WAYPOINTS
+   ================================================================ */
+const pathC  = document.getElementById('path-canvas');
+const pathX  = pathC.getContext('2d');
+
+// 5 waypoints in screen-proportional coordinates
+let allPoints = [
+  { id:1, px:0.18, py:0.88, label:'点 1', active:true },
+  { id:2, px:0.32, py:0.72, label:'点 2', active:true },
+  { id:3, px:0.50, py:0.62, label:'点 3', active:true },
+  { id:4, px:0.68, py:0.72, label:'点 4', active:true },
+  { id:5, px:0.82, py:0.60, label:'点 5', active:true },
+];
+
+const POINT_R   = 10;  // hit radius
+const POINT_VIS = 14;  // visual radius
+
+let walkT       = 0;     // 0..1 walk progress
+let isPlaying   = false;
+let speed       = 1;     // 1x, 1.5x, 2x
+let animId      = null;
+let lastTime    = null;
+const WALK_DUR  = 20;    // total seconds at 1x
+
+function getActivePoints() {
+  return allPoints.filter(p => p.active);
+}
+
+function pointXY(p) {
+  return { x: p.px * pathC.width, y: p.py * pathC.height };
+}
+
+/* Catmull-Rom spline through control points */
+function catmullRom(pts, t) {
+  if (pts.length === 0) return null;
+  if (pts.length === 1) return { ...pts[0] };
+  if (pts.length === 2) {
+    return {
+      x: pts[0].x + (pts[1].x - pts[0].x) * t,
+      y: pts[0].y + (pts[1].y - pts[0].y) * t,
+    };
+  }
+
+  // Extend with phantom points at ends
+  const ext = [
+    { x: pts[0].x * 2 - pts[1].x, y: pts[0].y * 2 - pts[1].y },
+    ...pts,
+    { x: pts[pts.length-1].x * 2 - pts[pts.length-2].x, y: pts[pts.length-1].y * 2 - pts[pts.length-2].y },
+  ];
+  const segments = pts.length - 1;
+  const seg = Math.min(Math.floor(t * segments), segments - 1);
+  const st  = t * segments - seg;
+  const p0 = ext[seg], p1 = ext[seg+1], p2 = ext[seg+2], p3 = ext[seg+3];
+
+  const t2 = st * st, t3 = t2 * st;
+  return {
+    x: 0.5 * ((2*p1.x) + (-p0.x + p2.x)*st + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3),
+    y: 0.5 * ((2*p1.y) + (-p0.y + p2.y)*st + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3),
+  };
+}
+
+function drawPath() {
+  const W = pathC.width, H = pathC.height;
+  pathX.clearRect(0, 0, W, H);
+
+  const active = getActivePoints();
+  if (active.length < 1) return;
+
+  const coords = active.map(p => pointXY(p));
+
+  /* ---- Draw smooth path ---- */
+  if (coords.length >= 2) {
+    const steps = 200;
+
+    // Shadow/glow trail
+    pathX.save();
+    pathX.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const pos = catmullRom(coords, i / steps);
+      if (i === 0) pathX.moveTo(pos.x, pos.y);
+      else pathX.lineTo(pos.x, pos.y);
+    }
+    pathX.strokeStyle = 'rgba(59,130,246,.18)';
+    pathX.lineWidth = 12;
+    pathX.lineCap = 'round';
+    pathX.lineJoin = 'round';
+    pathX.stroke();
+    pathX.restore();
+
+    // Main path line
+    pathX.save();
+    pathX.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const pos = catmullRom(coords, i / steps);
+      if (i === 0) pathX.moveTo(pos.x, pos.y);
+      else pathX.lineTo(pos.x, pos.y);
+    }
+    // Dashed style
+    pathX.strokeStyle = 'rgba(255,255,255,.85)';
+    pathX.lineWidth = 2.5;
+    pathX.setLineDash([8, 6]);
+    pathX.lineDashOffset = -walkT * 60;
+    pathX.lineCap = 'round';
+    pathX.stroke();
+    pathX.setLineDash([]);
+    pathX.restore();
+
+    // Progress highlight (walked portion)
+    if (walkT > 0) {
+      pathX.save();
+      pathX.beginPath();
+      const walkSteps = Math.round(steps * walkT);
+      for (let i = 0; i <= walkSteps; i++) {
+        const pos = catmullRom(coords, i / steps);
+        if (i === 0) pathX.moveTo(pos.x, pos.y);
+        else pathX.lineTo(pos.x, pos.y);
+      }
+      pathX.strokeStyle = 'rgba(59,130,246,.8)';
+      pathX.lineWidth = 3;
+      pathX.lineCap = 'round';
+      pathX.stroke();
+      pathX.restore();
+    }
+  }
+
+  /* ---- Draw waypoints ---- */
+  active.forEach((p, idx) => {
+    const { x, y } = pointXY(p);
+    const isWalked = isPlaying && idx / (active.length - 1) < walkT;
+
+    // Outer glow
+    const glow = pathX.createRadialGradient(x, y, 0, x, y, POINT_VIS * 2.5);
+    glow.addColorStop(0, isWalked ? 'rgba(59,130,246,.4)' : 'rgba(255,255,255,.2)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    pathX.fillStyle = glow;
+    pathX.beginPath();
+    pathX.arc(x, y, POINT_VIS * 2.5, 0, Math.PI*2);
+    pathX.fill();
+
+    // Outer ring
+    pathX.fillStyle = isWalked ? 'rgba(59,130,246,.3)' : 'rgba(255,255,255,.25)';
+    pathX.beginPath();
+    pathX.arc(x, y, POINT_VIS, 0, Math.PI*2);
+    pathX.fill();
+
+    // Inner fill
+    pathX.fillStyle = isWalked ? '#3b82f6' : '#ffffff';
+    pathX.beginPath();
+    pathX.arc(x, y, POINT_VIS * 0.55, 0, Math.PI*2);
+    pathX.fill();
+
+    // Number label
+    pathX.fillStyle = isWalked ? '#ffffff' : '#1b1b1d';
+    pathX.font = `bold ${10}px Poppins, Arial, sans-serif`;
+    pathX.textAlign = 'center';
+    pathX.textBaseline = 'middle';
+    pathX.fillText(idx + 1, x, y);
+
+    // Point label above
+    pathX.fillStyle = 'rgba(255,255,255,.85)';
+    pathX.font = `500 11px Poppins, Arial, sans-serif`;
+    pathX.textAlign = 'center';
+    pathX.textBaseline = 'bottom';
+    pathX.fillText(p.label, x, y - POINT_VIS - 5);
+  });
+
+  /* ---- Inactive/cancelled points (shown as ghost) ---- */
+  allPoints.filter(p => !p.active).forEach(p => {
+    const { x, y } = pointXY(p);
+    pathX.save();
+    pathX.globalAlpha = 0.25;
+    pathX.fillStyle = '#fff';
+    pathX.beginPath();
+    pathX.arc(x, y, POINT_VIS * 0.5, 0, Math.PI*2);
+    pathX.fill();
+    pathX.setLineDash([3,3]);
+    pathX.strokeStyle = '#fff';
+    pathX.lineWidth = 1.5;
+    pathX.beginPath();
+    pathX.arc(x, y, POINT_VIS, 0, Math.PI*2);
+    pathX.stroke();
+    pathX.setLineDash([]);
+    pathX.restore();
+  });
+
+  /* ---- Walk camera position indicator ---- */
+  if (isPlaying && walkT > 0 && coords.length >= 2) {
+    const pos = catmullRom(coords, walkT);
+    const wi = document.getElementById('walk-indicator');
+    wi.style.display = 'block';
+    wi.style.left = (pos.x - 6) + 'px';
+    wi.style.top  = (pos.y - 6) + 'px';
+
+    // Direction arrow
+    const nextPos = catmullRom(coords, Math.min(walkT + 0.01, 1));
+    const angle = Math.atan2(nextPos.y - pos.y, nextPos.x - pos.x);
+    const ax = pos.x + Math.cos(angle) * 22;
+    const ay = pos.y + Math.sin(angle) * 22;
+    pathX.save();
+    pathX.strokeStyle = 'rgba(59,130,246,.8)';
+    pathX.lineWidth = 2;
+    pathX.setLineDash([]);
+    pathX.beginPath(); pathX.moveTo(pos.x, pos.y); pathX.lineTo(ax, ay); pathX.stroke();
+    // Arrowhead
+    pathX.fillStyle = '#3b82f6';
+    pathX.translate(ax, ay); pathX.rotate(angle);
+    pathX.beginPath(); pathX.moveTo(0,0); pathX.lineTo(-6,-4); pathX.lineTo(-6,4);
+    pathX.closePath(); pathX.fill();
+    pathX.restore();
+  } else if (!isPlaying) {
+    document.getElementById('walk-indicator').style.display = 'none';
+  }
+}
+
+/* ================================================================
+   INTERACTION: click on points
+   ================================================================ */
+let hoveredPoint = null;
+
+pathC.addEventListener('mousemove', e => {
+  const rect = pathC.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  hoveredPoint = null;
+
+  allPoints.forEach(p => {
+    const { x, y } = pointXY(p);
+    const dist = Math.hypot(mx - x, my - y);
+    if (dist < POINT_R * 2) {
+      hoveredPoint = p;
+      pathC.style.cursor = 'pointer';
+      showTooltip(p, e.clientX, e.clientY);
+    }
+  });
+
+  if (!hoveredPoint) {
+    pathC.style.cursor = 'default';
+    hideTooltip();
+  }
+  drawPath();
+});
+
+pathC.addEventListener('click', e => {
+  const rect = pathC.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  for (const p of allPoints) {
+    const { x, y } = pointXY(p);
+    const dist = Math.hypot(mx - x, my - y);
+    if (dist < POINT_R * 2) {
+      togglePoint(p);
+      return;
+    }
+  }
+});
+
+function togglePoint(p) {
+  const active = getActivePoints();
+  if (p.active && active.length <= 2) {
+    // Don't remove if only 2 remain
+    showFlash('至少保留 2 个路径点');
+    return;
+  }
+  p.active = !p.active;
+  updateUI();
+  drawPath();
+
+  // Reset walk if playing
+  if (isPlaying) pauseWalk();
+  walkT = 0;
+  updateProgress();
+}
+
+function showFlash(msg) {
+  const t = document.getElementById('tooltip');
+  const title = document.getElementById('tooltip-title');
+  const sub   = document.getElementById('tooltip-sub');
+  title.textContent = msg;
+  sub.textContent   = '';
+  t.style.left = (window.innerWidth / 2 - 80) + 'px';
+  t.style.top  = (window.innerHeight / 2) + 'px';
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 1500);
+}
+
+function updateUI() {
+  const active = getActivePoints();
+  document.getElementById('point-count').textContent = active.length + ' 点';
+  const hasInactive = allPoints.some(p => !p.active);
+  const rb = document.getElementById('restore-btn');
+  if (hasInactive) rb.classList.add('visible');
+  else rb.classList.remove('visible');
+}
+
+/* Restore all points */
+document.getElementById('restore-btn').addEventListener('click', () => {
+  allPoints.forEach(p => p.active = true);
+  walkT = 0;
+  updateUI();
+  updateProgress();
+  drawPath();
+});
+
+/* ================================================================
+   TOOLTIP
+   ================================================================ */
+function showTooltip(p, cx, cy) {
+  const tt    = document.getElementById('tooltip');
+  const title = document.getElementById('tooltip-title');
+  const sub   = document.getElementById('tooltip-sub');
+  title.textContent = p.label + (p.active ? '' : '（已取消）');
+  sub.textContent   = p.active ? '点击取消此路径点' : '点击重新启用';
+  tt.style.left = (cx + 14) + 'px';
+  tt.style.top  = (cy - 30) + 'px';
+  tt.classList.add('visible');
+}
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('visible');
+}
+
+/* ================================================================
+   PLAY / WALK SIMULATION
+   ================================================================ */
+function togglePlay() {
+  if (isPlaying) pauseWalk(); else startWalk();
+}
+
+function startWalk() {
+  const active = getActivePoints();
+  if (active.length < 2) { showFlash('需要至少 2 个路径点'); return; }
+  if (walkT >= 1) walkT = 0;
+  isPlaying = true;
+  lastTime  = null;
+
+  document.getElementById('play-icon').innerHTML =
+    '<rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/>';
+
+  requestAnimationFrame(walkFrame);
+}
+
+function pauseWalk() {
+  isPlaying = false;
+  if (animId) cancelAnimationFrame(animId);
+  document.getElementById('play-icon').innerHTML = '<polygon points="4,2 14,8 4,14"/>';
+  document.getElementById('walk-indicator').style.display = 'none';
+}
+
+function walkFrame(ts) {
+  if (!isPlaying) return;
+  if (!lastTime) lastTime = ts;
+  const dt = (ts - lastTime) / 1000;
+  lastTime = ts;
+
+  walkT += (dt * speed) / WALK_DUR;
+  if (walkT >= 1) {
+    walkT = 1;
+    pauseWalk();
+  }
+
+  updateProgress();
+  drawPath();
+  animId = requestAnimationFrame(walkFrame);
+}
+
+function updateProgress() {
+  const pct = walkT * 100;
+  document.getElementById('progress-fill').style.width  = pct + '%';
+  document.getElementById('progress-thumb').style.right = (100 - pct) + '%';
+  const elapsed = walkT * WALK_DUR / speed;
+  document.getElementById('time-cur').textContent  = fmtTime(walkT * WALK_DUR);
+  document.getElementById('time-total').textContent = fmtTime(WALK_DUR);
+}
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function seekProgress(e) {
+  const rect = document.getElementById('progress-bg').getBoundingClientRect();
+  walkT = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  updateProgress();
+  drawPath();
+}
+
+const speeds = [1, 1.5, 2];
+let speedIdx = 0;
+function cycleSpeed() {
+  speedIdx = (speedIdx + 1) % speeds.length;
+  speed = speeds[speedIdx];
+  document.getElementById('speed-btn').textContent = speed + '×';
+}
+
+/* ================================================================
+   RESIZE
+   ================================================================ */
+function onResize() {
+  bgC.width   = window.innerWidth;
+  bgC.height  = window.innerHeight;
+  pathC.width  = window.innerWidth;
+  pathC.height = window.innerHeight;
+  drawHall();
+  drawPath();
+}
+
+window.addEventListener('resize', onResize);
+onResize();
+updateProgress();
+updateUI();
+
+/* Hide resize hint after 3s */
+setTimeout(() => {
+  document.getElementById('reset-hint').classList.add('hidden');
+}, 4000);
+</script>
+</body>
+</html>
