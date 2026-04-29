@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walk Path · Aholo3D</title>
+  <style>
+    :root {
+      --cta:   #3b82f6;
+      --cta-h: #2563eb;
+      --font:  'Poppins', Arial, sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#0a0a0a; font-family:var(--font); }
+
+    /* ---- Background image ---- */
+    #bg {
+      position:fixed; inset:0;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+    }
+
+    /* ---- Drop overlay (shown before image loaded) ---- */
+    #drop-overlay {
+      position:fixed; inset:0; z-index:100;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:16px;
+      background:rgba(0,0,0,.85);
+      cursor:pointer;
+      transition:background .15s;
+    }
+    #drop-overlay.hidden { display:none; }
+    #drop-overlay.drag-active { background:rgba(59,130,246,.15); }
+    #drop-overlay svg { width:48px; height:48px; color:rgba(255,255,255,.3); }
+    #drop-overlay h2 { font-size:17px; font-weight:600; color:rgba(255,255,255,.7); }
+    #drop-overlay p  { font-size:12px; color:rgba(255,255,255,.35); }
+    #file-input { display:none; }
+
+    /* ---- Path canvas (full-screen overlay) ---- */
+    #path-canvas {
+      position:fixed; inset:0; width:100%; height:100%;
+      display:block;
+    }
+
+    /* ---- Walk position dot ---- */
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 4px rgba(59,130,246,.3)} 50%{box-shadow:0 0 0 8px rgba(59,130,246,.1)} }
+    #walk-dot {
+      position:fixed; width:14px; height:14px; border-radius:50%;
+      background:var(--cta); pointer-events:none; display:none;
+      transform:translate(-50%,-50%);
+      animation:pulse 1.2s ease-in-out infinite;
+    }
+
+    /* ---- Top bar ---- */
+    .topbar {
+      position:fixed; top:0; left:0; right:0; height:52px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; z-index:10; pointer-events:none;
+      background:linear-gradient(to bottom, rgba(0,0,0,.6) 0%, transparent 100%);
+    }
+    .logo {
+      display:flex; align-items:center; gap:8px;
+      font-size:14px; font-weight:700; color:#fff; pointer-events:all;
+    }
+    .logo svg { width:22px; height:22px; }
+    .change-img-btn {
+      pointer-events:all;
+      font-size:11px; color:rgba(255,255,255,.4);
+      background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.12);
+      border-radius:20px; padding:5px 12px; cursor:pointer;
+      font-family:var(--font); transition:all .15s;
+    }
+    .change-img-btn:hover { color:rgba(255,255,255,.8); border-color:rgba(255,255,255,.25); }
+    .change-img-btn.hidden { display:none; }
+
+    /* ---- Bottom control bar ---- */
+    .ctrl {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      z-index:10;
+      display:flex; align-items:center; gap:12px;
+      background:rgba(18,18,20,.88);
+      border:1px solid rgba(255,255,255,.13);
+      border-radius:40px; padding:9px 20px;
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(0,0,0,.5);
+    }
+    .play-btn {
+      width:38px; height:38px; border-radius:50%;
+      background:var(--cta); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:all .15s;
+    }
+    .play-btn:hover { background:var(--cta-h); transform:scale(1.06); }
+    .play-btn svg { width:15px; height:15px; fill:#fff; }
+
+    .div { width:1px; height:18px; background:rgba(255,255,255,.1); }
+
+    .prog-wrap { display:flex; align-items:center; gap:10px; min-width:200px; }
+    .prog-bg {
+      flex:1; height:3px; background:rgba(255,255,255,.12); border-radius:2px;
+      cursor:pointer; position:relative;
+    }
+    .prog-fill { height:100%; background:var(--cta); border-radius:2px; pointer-events:none; }
+    .prog-thumb {
+      position:absolute; top:50%; right:0;
+      width:10px; height:10px; border-radius:50%;
+      background:#fff; border:2px solid var(--cta);
+      transform:translate(50%,-50%); pointer-events:none;
+      box-shadow:0 0 6px rgba(59,130,246,.5);
+    }
+    .t { font-size:11px; color:rgba(255,255,255,.45); white-space:nowrap; min-width:30px; }
+
+    .speed-btn {
+      font-size:12px; font-weight:600; color:rgba(255,255,255,.5);
+      background:transparent; border:1px solid rgba(255,255,255,.13);
+      border-radius:6px; padding:4px 9px; cursor:pointer; font-family:var(--font);
+      transition:all .15s;
+    }
+    .speed-btn:hover { color:#fff; border-color:rgba(255,255,255,.28); }
+
+    .pt-count { font-size:11px; color:rgba(255,255,255,.45); display:flex; align-items:center; gap:5px; }
+    .pt-dot { width:6px; height:6px; border-radius:50%; background:var(--cta); }
+
+    /* ---- Restore button ---- */
+    #restore-btn {
+      position:fixed; bottom:84px; left:50%; transform:translateX(-50%);
+      z-index:10; display:none; align-items:center; gap:7px;
+      background:rgba(18,18,20,.9); border:1px solid rgba(255,255,255,.15);
+      border-radius:20px; padding:7px 16px;
+      font-size:12px; color:rgba(255,255,255,.75); cursor:pointer;
+      font-family:var(--font); backdrop-filter:blur(12px);
+      transition:all .15s;
+    }
+    #restore-btn:hover { color:#fff; }
+    #restore-btn.show { display:flex; }
+
+    /* ---- Tooltip ---- */
+    #tip {
+      position:fixed; z-index:20; display:none;
+      background:rgba(18,18,20,.95); border:1px solid rgba(255,255,255,.13);
+      border-radius:8px; padding:6px 12px;
+      font-size:11px; color:#fff; pointer-events:none;
+      backdrop-filter:blur(8px);
+    }
+    #tip.show { display:block; }
+    #tip-title { font-weight:600; margin-bottom:1px; }
+    #tip-sub   { color:rgba(255,255,255,.45); }
+
+    /* ---- Hint (fade out) ---- */
+    #hint {
+      position:fixed; top:58px; left:50%; transform:translateX(-50%);
+      z-index:10; font-size:11px; color:rgba(255,255,255,.35);
+      background:rgba(0,0,0,.3); padding:5px 14px; border-radius:20px;
+      pointer-events:none; transition:opacity .5s;
+    }
+    #hint.gone { opacity:0; }
+  </style>
+</head>
+<body>
+
+<!-- Background image (set via JS) -->
+<div id="bg"></div>
+
+<!-- Drop / load image overlay -->
+<div id="drop-overlay" onclick="document.getElementById('file-input').click()">
+  <input type="file" id="file-input" accept="image/*">
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="4" y="4" width="40" height="40" rx="6"/>
+    <path d="M24 16 L24 32 M16 24 L32 24"/>
+  </svg>
+  <h2>拖入或点击加载 3DGS 图片</h2>
+  <p>将你的 3DGS 渲染截图拖到这里，即可作为背景</p>
+</div>
+
+<!-- Path canvas -->
+<canvas id="path-canvas"></canvas>
+
+<!-- Walk position dot -->
+<div id="walk-dot"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <polygon points="12,2 22,20 2,20" fill="#3b82f6" opacity=".9"/>
+      <polygon points="12,7 20,20 4,20" fill="#1b1b1d"/>
+      <circle cx="12" cy="14.5" r="2.5" fill="#60a5fa"/>
+    </svg>
+    Walk Path Editor
+  </div>
+  <button class="change-img-btn hidden" id="change-img-btn"
+          onclick="document.getElementById('file-input').click()">更换图片</button>
+</div>
+
+<!-- Hint -->
+<div id="hint">点击路径点可取消</div>
+
+<!-- Bottom controls -->
+<div class="ctrl">
+  <button class="play-btn" onclick="togglePlay()">
+    <svg id="play-icon" viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>
+  </button>
+  <div class="div"></div>
+  <div class="prog-wrap">
+    <span class="t" id="t-cur">0:00</span>
+    <div class="prog-bg" id="prog-bg" onclick="seek(event)">
+      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+      <div class="prog-thumb" id="prog-thumb" style="right:100%"></div>
+    </div>
+    <span class="t" id="t-tot">0:20</span>
+  </div>
+  <div class="div"></div>
+  <button class="speed-btn" onclick="cycleSpeed()">1×</button>
+  <div class="div"></div>
+  <div class="pt-count"><div class="pt-dot"></div><span id="pt-count">5 点</span></div>
+</div>
+
+<!-- Restore cancelled points -->
+<button id="restore-btn" onclick="restoreAll()">
+  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M2 7C2 4 4.5 2 7 2c2.5 0 5 2 5 5s-2.5 5-5 5"/>
+    <polyline points="2,4.5 2,7 4.5,7"/>
+  </svg>
+  恢复已取消的点
+</button>
+
+<!-- Tooltip -->
+<div id="tip"><div id="tip-title"></div><div id="tip-sub"></div></div>
+
+<script>
+/* ================================================================
+   Image loading
+   ================================================================ */
+const fileInput   = document.getElementById('file-input');
+const dropOverlay = document.getElementById('drop-overlay');
+const bgEl        = document.getElementById('bg');
+const changeBtn   = document.getElementById('change-img-btn');
+
+function loadImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  bgEl.style.backgroundImage = `url(${url})`;
+  dropOverlay.classList.add('hidden');
+  changeBtn.classList.remove('hidden');
+  setTimeout(() => document.getElementById('hint').classList.add('gone'), 4000);
+}
+
+fileInput.addEventListener('change', e => loadImageFile(e.target.files[0]));
+
+// Drag & drop on the overlay
+dropOverlay.addEventListener('dragover', e => { e.preventDefault(); dropOverlay.classList.add('drag-active'); });
+dropOverlay.addEventListener('dragleave', () => dropOverlay.classList.remove('drag-active'));
+dropOverlay.addEventListener('drop', e => {
+  e.preventDefault();
+  dropOverlay.classList.remove('drag-active');
+  loadImageFile(e.dataTransfer.files[0]);
+});
+
+// Also allow drag on the whole window after image is loaded
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  loadImageFile(e.dataTransfer.files[0]);
+});
+
+/* ================================================================
+   Canvas & waypoints
+   ================================================================ */
+const canvas = document.getElementById('path-canvas');
+const ctx    = canvas.getContext('2d');
+
+const TOTAL_SEC = 20;
+const POINT_HIT = 20;
+const POINT_R   = 11;
+
+let pts = [
+  { id:1, px:.18, py:.88, label:'点 1', on:true },
+  { id:2, px:.32, py:.72, label:'点 2', on:true },
+  { id:3, px:.50, py:.60, label:'点 3', on:true },
+  { id:4, px:.68, py:.72, label:'点 4', on:true },
+  { id:5, px:.82, py:.58, label:'点 5', on:true },
+];
+
+let walkT    = 0;
+let playing  = false;
+let speed    = 1;
+let lastTS   = null;
+let rafId    = null;
+const speeds = [1, 1.5, 2];
+let speedIdx = 0;
+
+function active()  { return pts.filter(p => p.on); }
+function pxy(p)    { return { x: p.px * canvas.width, y: p.py * canvas.height }; }
+
+/* Catmull-Rom spline */
+function crPos(pts4, t) {
+  const [p0,p1,p2,p3] = pts4;
+  const t2=t*t, t3=t2*t;
+  return {
+    x: .5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+    y: .5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3),
+  };
+}
+
+function splineAt(coords, t) {
+  if (coords.length === 0) return null;
+  if (coords.length === 1) return {...coords[0]};
+  if (coords.length === 2) return { x:coords[0].x+(coords[1].x-coords[0].x)*t, y:coords[0].y+(coords[1].y-coords[0].y)*t };
+  const ext = [
+    { x:coords[0].x*2-coords[1].x,   y:coords[0].y*2-coords[1].y },
+    ...coords,
+    { x:coords[coords.length-1].x*2-coords[coords.length-2].x, y:coords[coords.length-1].y*2-coords[coords.length-2].y },
+  ];
+  const segs = coords.length - 1;
+  const seg  = Math.min(Math.floor(t * segs), segs - 1);
+  const st   = t * segs - seg;
+  return crPos([ext[seg], ext[seg+1], ext[seg+2], ext[seg+3]], st);
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const on   = active();
+  const coords = on.map(pxy);
+  const N    = 300;
+
+  if (coords.length >= 2) {
+    /* glow */
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const p = splineAt(coords, i/N);
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,.15)';
+    ctx.lineWidth   = 14;
+    ctx.lineCap     = ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.restore();
+
+    /* dashed path (unwalked) */
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const p = splineAt(coords, i/N);
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.75)';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([7, 6]);
+    ctx.lineDashOffset = -(walkT * 80);
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    /* walked portion */
+    if (walkT > 0) {
+      ctx.save();
+      ctx.beginPath();
+      const wN = Math.round(N * walkT);
+      for (let i = 0; i <= wN; i++) {
+        const p = splineAt(coords, i/N);
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'rgba(59,130,246,.9)';
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap = ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  /* Active waypoints */
+  on.forEach((p, idx) => {
+    const {x, y} = pxy(p);
+    const walked = playing && idx / Math.max(on.length-1,1) < walkT;
+
+    /* glow ring */
+    const g = ctx.createRadialGradient(x,y,0,x,y,POINT_R*2.5);
+    g.addColorStop(0, walked ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.18)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, POINT_R*2.5, 0, Math.PI*2); ctx.fill();
+
+    /* outer circle */
+    ctx.fillStyle = walked ? 'rgba(59,130,246,.28)' : 'rgba(255,255,255,.22)';
+    ctx.beginPath(); ctx.arc(x, y, POINT_R, 0, Math.PI*2); ctx.fill();
+
+    /* inner circle */
+    ctx.fillStyle = walked ? '#3b82f6' : '#fff';
+    ctx.beginPath(); ctx.arc(x, y, POINT_R*.55, 0, Math.PI*2); ctx.fill();
+
+    /* number */
+    ctx.fillStyle   = walked ? '#fff' : '#111';
+    ctx.font        = `bold 10px Poppins, Arial, sans-serif`;
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(idx+1, x, y);
+
+    /* label above */
+    ctx.fillStyle   = 'rgba(255,255,255,.8)';
+    ctx.font        = `500 11px Poppins, Arial, sans-serif`;
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(p.label, x, y - POINT_R - 5);
+  });
+
+  /* Ghost waypoints (cancelled) */
+  pts.filter(p => !p.on).forEach(p => {
+    const {x, y} = pxy(p);
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.setLineDash([3,3]);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, POINT_R, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x, y, POINT_R*.4, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  /* Walk position dot */
+  const wd = document.getElementById('walk-dot');
+  if (playing && walkT > 0 && coords.length >= 2) {
+    const pos = splineAt(coords, walkT);
+    wd.style.display = 'block';
+    wd.style.left = pos.x + 'px';
+    wd.style.top  = pos.y + 'px';
+
+    /* direction arrow */
+    const next = splineAt(coords, Math.min(walkT + 0.008, 1));
+    const ang  = Math.atan2(next.y - pos.y, next.x - pos.x);
+    const ax = pos.x + Math.cos(ang)*22, ay = pos.y + Math.sin(ang)*22;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(59,130,246,.7)'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(ax, ay); ctx.stroke();
+    ctx.fillStyle = '#3b82f6';
+    ctx.translate(ax, ay); ctx.rotate(ang);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-7,-4); ctx.lineTo(-7,4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  } else {
+    wd.style.display = 'none';
+  }
+}
+
+/* ================================================================
+   Mouse interaction
+   ================================================================ */
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let hit = null;
+  pts.forEach(p => {
+    const {x,y} = pxy(p);
+    if (Math.hypot(mx-x, my-y) < POINT_HIT) hit = p;
+  });
+
+  if (hit) {
+    canvas.style.cursor = 'pointer';
+    document.getElementById('tip-title').textContent = hit.label + (hit.on ? '' : '（已取消）');
+    document.getElementById('tip-sub').textContent   = hit.on ? '点击取消此路径点' : '点击重新启用';
+    const tip = document.getElementById('tip');
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top  = (e.clientY - 32) + 'px';
+    tip.classList.add('show');
+  } else {
+    canvas.style.cursor = 'default';
+    document.getElementById('tip').classList.remove('show');
+  }
+  draw();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  document.getElementById('tip').classList.remove('show');
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  for (const p of pts) {
+    const {x,y} = pxy(p);
+    if (Math.hypot(mx-x, my-y) < POINT_HIT) {
+      const on = active();
+      if (p.on && on.length <= 2) { flash('至少保留 2 个路径点'); return; }
+      p.on = !p.on;
+      if (playing) pause();
+      walkT = 0;
+      syncUI(); draw();
+      return;
+    }
+  }
+});
+
+function flash(msg) {
+  const tip = document.getElementById('tip');
+  document.getElementById('tip-title').textContent = msg;
+  document.getElementById('tip-sub').textContent   = '';
+  tip.style.left = (window.innerWidth/2 - 80) + 'px';
+  tip.style.top  = (window.innerHeight/2) + 'px';
+  tip.classList.add('show');
+  setTimeout(() => tip.classList.remove('show'), 1500);
+}
+
+function restoreAll() {
+  pts.forEach(p => p.on = true);
+  walkT = 0;
+  syncUI(); syncProgress(); draw();
+}
+
+function syncUI() {
+  const n = active().length;
+  document.getElementById('pt-count').textContent = n + ' 点';
+  const hasOff = pts.some(p => !p.on);
+  document.getElementById('restore-btn').classList.toggle('show', hasOff);
+}
+
+/* ================================================================
+   Playback
+   ================================================================ */
+function togglePlay() { playing ? pause() : play(); }
+
+function play() {
+  if (active().length < 2) { flash('需要至少 2 个路径点'); return; }
+  if (walkT >= 1) walkT = 0;
+  playing = true; lastTS = null;
+  document.getElementById('play-icon').innerHTML =
+    '<rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/>';
+  rafId = requestAnimationFrame(frame);
+}
+
+function pause() {
+  playing = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  document.getElementById('play-icon').innerHTML = '<polygon points="4,2 14,8 4,14"/>';
+  document.getElementById('walk-dot').style.display = 'none';
+}
+
+function frame(ts) {
+  if (!playing) return;
+  if (!lastTS) lastTS = ts;
+  const dt = (ts - lastTS) / 1000; lastTS = ts;
+  walkT += dt * speed / TOTAL_SEC;
+  if (walkT >= 1) { walkT = 1; pause(); }
+  syncProgress(); draw();
+  rafId = requestAnimationFrame(frame);
+}
+
+function syncProgress() {
+  const pct = walkT * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-thumb').style.right = (100 - pct) + '%';
+  document.getElementById('t-cur').textContent = fmt(walkT * TOTAL_SEC);
+  document.getElementById('t-tot').textContent = fmt(TOTAL_SEC);
+}
+
+function fmt(s) {
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+}
+
+function seek(e) {
+  const r = document.getElementById('prog-bg').getBoundingClientRect();
+  walkT = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  syncProgress(); draw();
+}
+
+function cycleSpeed() {
+  speedIdx = (speedIdx+1) % speeds.length;
+  speed    = speeds[speedIdx];
+  document.querySelectorAll('.speed-btn').forEach(b => b.textContent = speed + '×');
+}
+
+/* ================================================================
+   Resize
+   ================================================================ */
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  draw();
+}
+window.addEventListener('resize', resize);
+resize();
+syncUI();
+syncProgress();
+</script>
+</body>
+</html>

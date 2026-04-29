@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>空间重建 · 室内/室外入口拆分 - Aholo3D</title>
+  <style>
+    /* =============================================
+       Aholo3D Design Tokens — Dark Theme (生产值)
+       ============================================= */
+    :root {
+      --background:           #1b1b1d;
+      --card:                 #1b1b1d;
+      --popover:              rgba(33,33,35,.85);
+      --muted:                rgba(33,33,35,.4);
+      --accent:               rgba(255,255,255,.08);
+      --foreground:           #ffffff;
+      --muted-foreground:     rgba(255,255,255,.6);
+      --accent-foreground:    #ffffff;
+      --border:               rgba(255,255,255,.2);
+      --input:                rgba(255,255,255,.2);
+      --color-cta:            #3b82f6;
+      --color-cta-hover:      #2563eb;
+      --secondary:            rgba(255,255,255,.1);
+      --secondary-foreground: rgba(255,255,255,.9);
+      --destructive:          #e62323;
+      --color-success:        #009588;
+      --color-warning:        #f99c00;
+      --radius:               .625rem;   /* 10px */
+      --radius-m:             12px;
+      --radius-xs:            8px;
+      --radius-ex:            4px;
+      --radius-l:             999px;
+      --shadow-dropdown:      0 8px 24px rgba(0,0,0,.6);
+      --font-sans:            'Poppins', 'Arial', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Top Nav ---- */
+    .topnav {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .topnav-logo svg { width: 28px; height: 28px; }
+    .topnav-right { display: flex; align-items: center; gap: 12px; }
+    .btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-xs);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-sans);
+      transition: all .15s ease;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--accent); }
+    .btn-primary {
+      background: var(--color-cta);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--color-cta-hover); }
+
+    /* ---- App Layout ---- */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ---- Sidebar ---- */
+    .sidebar {
+      width: 160px;
+      flex-shrink: 0;
+      padding: 16px 12px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-xs);
+      font-size: 14px;
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: all .15s;
+      text-decoration: none;
+    }
+    .sidebar-item:hover { background: var(--accent); color: var(--foreground); }
+    .sidebar-item.active {
+      background: var(--secondary);
+      color: var(--foreground);
+    }
+    .sidebar-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .credits-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+    .user-badge:hover { background: var(--accent); color: var(--foreground); }
+    .plan-tag {
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: var(--radius-ex);
+    }
+
+    /* ---- Main Content ---- */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px;
+    }
+
+    /* ---- Hero Title ---- */
+    .hero-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 36px;
+      background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-title em {
+      font-style: normal;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ---- Card Container ---- */
+    .card-container {
+      width: 100%;
+      max-width: 820px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-m);
+      overflow: hidden;
+    }
+
+    /* ---- Parent Tabs (物体 / 空间 / AI空间生成) ---- */
+    .parent-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .parent-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 18px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all .15s;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      position: relative;
+    }
+    .parent-tab:hover { color: var(--foreground); background: var(--accent); }
+    .parent-tab.active {
+      color: var(--foreground);
+      border-bottom-color: var(--color-cta);
+      background: rgba(59,130,246,.06);
+    }
+    .parent-tab .tab-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-ex);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary);
+    }
+    .parent-tab.active .tab-icon { background: rgba(59,130,246,.2); }
+    .parent-tab .tab-label { line-height: 1.2; }
+    .parent-tab .tab-label .tab-name { font-size: 14px; font-weight: 600; }
+    .parent-tab .tab-label .tab-desc { font-size: 11px; color: var(--muted-foreground); }
+    .parent-tab.active .tab-label .tab-desc { color: rgba(255,255,255,.5); }
+
+    /* ---- Upload Area ---- */
+    .upload-section {
+      padding: 24px;
+    }
+
+    /* ---- Sub Tabs (室内 / 室外) — 核心新增 ---- */
+    .sub-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      background: var(--muted);
+      border-radius: var(--radius-xs);
+      padding: 3px;
+      width: fit-content;
+    }
+    .sub-tab {
+      padding: 7px 20px;
+      border-radius: calc(var(--radius-xs) - 2px);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--muted-foreground);
+      transition: all .15s;
+      border: none;
+      background: transparent;
+      font-family: var(--font-sans);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sub-tab:hover { color: var(--foreground); }
+    .sub-tab.active {
+      background: var(--secondary);
+      color: var(--foreground);
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .sub-tab svg { width: 14px; height: 14px; }
+
+    /* ---- Upload Drop Zone ---- */
+    .drop-zone {
+      border: 1px dashed rgba(255,255,255,.25);
+      border-radius: var(--radius-xs);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      background: rgba(255,255,255,.02);
+    }
+    .drop-zone:hover {
+      border-color: rgba(255,255,255,.4);
+      background: rgba(255,255,255,.04);
+    }
+    .drop-zone.has-file {
+      border-color: rgba(59,130,246,.5);
+      border-style: solid;
+      background: rgba(59,130,246,.05);
+    }
+    .drop-zone.dragover {
+      border-color: var(--color-cta);
+      background: rgba(59,130,246,.08);
+    }
+    .drop-icons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .drop-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-ex);
+      background: var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+    }
+    .drop-text-main {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      margin-bottom: 8px;
+    }
+    .drop-text-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      line-height: 1.6;
+    }
+    .drop-text-sub a {
+      color: var(--color-cta);
+      text-decoration: none;
+    }
+    .drop-text-sub a:hover { text-decoration: underline; }
+    .file-selected {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(59,130,246,.1);
+      border-radius: var(--radius-ex);
+      margin-top: 12px;
+      text-align: left;
+    }
+    .file-selected.visible { display: flex; }
+    .file-selected svg { color: var(--color-cta); flex-shrink: 0; }
+    .file-name { font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-remove {
+      background: none;
+      border: none;
+      color: var(--muted-foreground);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 4px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .file-remove:hover { color: var(--foreground); }
+    .upload-btn-link {
+      color: var(--color-cta);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* ---- Skybox Notice ---- */
+    .notice-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-ex);
+      font-size: 12px;
+      margin-bottom: 16px;
+      transition: all .2s;
+    }
+    .notice-bar.indoor {
+      background: rgba(33,33,35,.5);
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+    }
+    .notice-bar.outdoor {
+      background: rgba(59,130,246,.1);
+      color: rgba(147,197,253,1);
+      border: 1px solid rgba(59,130,246,.3);
+    }
+    .notice-bar svg { flex-shrink: 0; }
+    .notice-bar .tooltip-icon {
+      margin-left: auto;
+      cursor: pointer;
+      opacity: .6;
+    }
+    .notice-bar .tooltip-icon:hover { opacity: 1; }
+
+    /* ---- Applicable Scenes ---- */
+    .scene-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      margin-bottom: 16px;
+    }
+    .scene-hint strong { color: var(--muted-foreground); }
+
+    /* ---- Bottom Actions ---- */
+    .bottom-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+    .quality-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .quality-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: var(--radius-xs);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border: 1px solid var(--border);
+      font-family: var(--font-sans);
+      transition: all .15s;
+    }
+    .quality-btn:hover { background: rgba(255,255,255,.15); }
+    .quality-dropdown {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      background: var(--popover);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-dropdown);
+      min-width: 150px;
+      z-index: 100;
+      overflow: hidden;
+      display: none;
+    }
+    .quality-dropdown.open { display: block; }
+    .quality-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--foreground);
+      transition: background .1s;
+    }
+    .quality-option:hover { background: var(--accent); }
+    .quality-option.selected { color: var(--color-cta); }
+    .quality-option .check { color: var(--color-cta); }
+    .quality-wrap { position: relative; }
+    .actions-right { display: flex; align-items: center; gap: 10px; }
+    .cloud-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-xs);
+      font-size: 12px;
+      background: transparent;
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all .15s;
+    }
+    .cloud-btn:hover { color: var(--foreground); background: var(--accent); }
+    .create-btn {
+      padding: 8px 24px;
+      border-radius: var(--radius-xs);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-sans);
+      transition: all .15s;
+      background: var(--color-cta);
+      color: #fff;
+    }
+    .create-btn:hover { background: var(--color-cta-hover); transform: translateY(-1px); }
+    .create-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ---- Sample Showcase (bottom) ---- */
+    .showcase {
+      width: 100%;
+      max-width: 820px;
+      margin-top: 32px;
+    }
+    .showcase-title {
+      font-size: 13px;
+      color: var(--muted-foreground);
+      margin-bottom: 16px;
+    }
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .showcase-card {
+      border-radius: var(--radius-xs);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 16/10;
+      cursor: pointer;
+    }
+    .showcase-card:hover .showcase-overlay { opacity: 1; }
+    .showcase-thumb {
+      width: 100%;
+      height: 100%;
+    }
+    .showcase-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .showcase-label {
+      font-size: 11px;
+      color: #fff;
+      background: rgba(0,0,0,.5);
+      padding: 3px 8px;
+      border-radius: var(--radius-ex);
+    }
+    .scene-type-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-ex);
+    }
+    .tag-indoor {
+      background: rgba(0,149,136,.25);
+      color: #4fd1c5;
+      border: 1px solid rgba(0,149,136,.4);
+    }
+    .tag-outdoor {
+      background: rgba(59,130,246,.2);
+      color: #93c5fd;
+      border: 1px solid rgba(59,130,246,.3);
+    }
+
+    /* ---- Toast Notification ---- */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(33,33,35,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 12px 20px;
+      font-size: 13px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-dropdown);
+      transition: transform .3s ease;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(0,149,136,.4); color: #4fd1c5; }
+    .toast.info { border-color: rgba(59,130,246,.4); color: #93c5fd; }
+
+    /* ---- Modal: Submit Confirm ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #242426;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-m);
+      box-shadow: 0 16px 48px rgba(0,0,0,.7);
+      padding: 28px;
+      width: 420px;
+      max-width: 90vw;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .modal-body {
+      font-size: 13px;
+      color: var(--muted-foreground);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .modal-body .param-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--muted);
+      border-radius: var(--radius-ex);
+      margin-top: 12px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .param-key { color: var(--muted-foreground); }
+    .param-val { color: #93c5fd; font-weight: 600; }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn-modal-cancel {
+      padding: 8px 16px;
+      border-radius: var(--radius-xs);
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--font-sans);
+    }
+    .btn-modal-confirm {
+      padding: 8px 20px;
+      border-radius: var(--radius-xs);
+      background: var(--color-cta);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+    }
+    .btn-modal-confirm:hover { background: var(--color-cta-hover); }
+
+    /* ---- Tooltip ---- */
+    .tooltip-container { position: relative; display: inline-flex; }
+    .tooltip-box {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: rgba(33,33,35,.97);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-ex);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--foreground);
+      white-space: nowrap;
+      box-shadow: var(--shadow-dropdown);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 200;
+    }
+    .tooltip-container:hover .tooltip-box { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Nav -->
+  <nav class="topnav">
+    <div class="topnav-logo">
+      <!-- [交互说明] Logo点击返回首页 -->
+      <svg viewBox="0 0 28 28" fill="none">
+        <polygon points="14,2 26,22 2,22" fill="#3b82f6" opacity=".9"/>
+        <polygon points="14,8 22,22 6,22" fill="#1b1b1d"/>
+        <circle cx="14" cy="16" r="3" fill="#60a5fa"/>
+      </svg>
+      AHOLO
+    </div>
+    <div class="topnav-right">
+      <button class="btn btn-ghost" onclick="showToast('功能演示中，暂不可用', 'info')">帮助中心</button>
+    </div>
+  </nav>
+
+  <!-- App Body -->
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- [交互说明] 侧边栏导航，创建页为当前激活项 -->
+      <a class="sidebar-item active">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="2" width="12" height="12" rx="2"/>
+          <line x1="8" y1="5" x2="8" y2="11"/>
+          <line x1="5" y1="8" x2="11" y2="8"/>
+        </svg>
+        创建
+      </a>
+      <a class="sidebar-item" onclick="showToast('演示模式，跳转项目页', 'info')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="4" width="6" height="8" rx="1"/>
+          <rect x="9" y="2" width="6" height="12" rx="1"/>
+        </svg>
+        项目
+      </a>
+      <a class="sidebar-item" onclick="showToast('演示模式，跳转社区', 'info')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"/>
+          <circle cx="8" cy="8" r="2.5"/>
+        </svg>
+        社区
+      </a>
+
+      <div class="sidebar-footer">
+        <div class="credits-badge">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="8,1 10,6 16,6 11,10 13,15 8,12 3,15 5,10 0,6 6,6"/>
+          </svg>
+          55732 积分
+        </div>
+        <div class="user-badge">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="6" r="3"/>
+            <path d="M2,14 C2,11 5,9 8,9 C11,9 14,11 14,14"/>
+          </svg>
+          186*xBsd
+          <span class="plan-tag">Free</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Hero Title -->
+      <h1 class="hero-title"><em>高保真复刻</em>真实的3D物体及空间</h1>
+
+      <!-- Card Container -->
+      <div class="card-container">
+
+        <!-- Parent Tabs: 物体 / 空间 / AI空间生成 -->
+        <div class="parent-tabs">
+          <!-- [交互说明] 点击物体Tab切换，此为演示，仅展示空间Tab内容变化 -->
+          <div class="parent-tab" onclick="switchParentTab('object', this)">
+            <div class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M10 2 L18 7 L18 13 L10 18 L2 13 L2 7 Z"/>
+                <line x1="10" y1="2" x2="10" y2="18"/>
+                <line x1="2" y1="7" x2="18" y2="7"/>
+              </svg>
+            </div>
+            <div class="tab-label">
+              <div class="tab-name">物体</div>
+              <div class="tab-desc">物体-3DGS重建</div>
+            </div>
+          </div>
+          <div class="parent-tab active" id="tab-space">
+            <div class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 15 L10 5 L18 15"/>
+                <rect x="5" y="10" width="10" height="5"/>
+              </svg>
+            </div>
+            <div class="tab-label">
+              <div class="tab-name">空间</div>
+              <div class="tab-desc">空间-3DGS重建</div>
+            </div>
+          </div>
+          <div class="parent-tab" onclick="switchParentTab('ai', this)">
+            <div class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="10" cy="10" r="7"/>
+                <path d="M7 10 Q10 6 13 10 Q10 14 7 10"/>
+              </svg>
+            </div>
+            <div class="tab-label">
+              <div class="tab-name">AI空间生成</div>
+              <div class="tab-desc">图文生成三维空间</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Section (空间 Tab 内容) -->
+        <div class="upload-section" id="upload-section-space">
+
+          <!-- ★ 核心新增：室内/室外子Tab ★ -->
+          <div class="sub-tabs" role="tablist" aria-label="场景类型">
+            <!-- [交互说明] 默认室内选中 -->
+            <button class="sub-tab active" id="subtab-indoor"
+                    role="tab" aria-selected="true"
+                    onclick="switchSubTab('indoor')">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M1 7 L7 2 L13 7 L13 13 L9 13 L9 9 L5 9 L5 13 L1 13 Z"/>
+              </svg>
+              室内
+            </button>
+            <button class="sub-tab" id="subtab-outdoor"
+                    role="tab" aria-selected="false"
+                    onclick="switchSubTab('outdoor')">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="7" cy="5" r="2.5"/>
+                <path d="M1 11 C3 7 11 7 13 11"/>
+                <line x1="7" y1="1" x2="7" y2="2.5"/>
+                <line x1="11.5" y1="2" x2="10.4" y2="3.1"/>
+                <line x1="2.5" y1="2" x2="3.6" y2="3.1"/>
+              </svg>
+              室外
+            </button>
+          </div>
+
+          <!-- 天空盒提示 Notice Bar (根据子Tab切换) -->
+          <div class="notice-bar indoor" id="notice-bar">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" id="notice-icon">
+              <path d="M1 7 L7 2 L13 7 L13 13 L9 13 L9 9 L5 9 L5 13 L1 13 Z"/>
+            </svg>
+            <span id="notice-text">室内模式 · 不生成天空盒数据 · 适用于封闭/半封闭空间</span>
+            <div class="tooltip-container tooltip-icon">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="8" cy="8" r="6"/>
+                <line x1="8" y1="7" x2="8" y2="11"/>
+                <circle cx="8" cy="5" r=".5" fill="currentColor"/>
+              </svg>
+              <div class="tooltip-box" id="notice-tooltip">室内场景封闭，天空盒无意义且会影响重建质量</div>
+            </div>
+          </div>
+
+          <!-- 适用场景提示 -->
+          <p class="scene-hint" id="scene-hint">
+            <strong>适用场景：</strong>客厅、卧室、办公室、展厅、博物馆等封闭/半封闭空间
+          </p>
+
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="drop-zone"
+               ondragover="handleDragOver(event)"
+               ondragleave="handleDragLeave(event)"
+               ondrop="handleDrop(event)"
+               onclick="triggerFileInput()">
+            <input type="file" id="file-input" style="display:none"
+                   accept=".jpg,.jpeg,.png,.mp4,.mov,.insv,.ply,.spz"
+                   multiple onchange="handleFileSelect(event)">
+            <div class="drop-icons">
+              <div class="drop-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="3" width="16" height="13" rx="1.5"/>
+                  <circle cx="7" cy="8" r="1.5"/>
+                  <path d="M2 13 L6 9 L9 12 L13 8 L18 13"/>
+                </svg>
+              </div>
+              <div class="drop-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="2" width="14" height="16" rx="1.5"/>
+                  <polygon points="8,7 8,13 14,10"/>
+                </svg>
+              </div>
+              <div class="drop-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 4 L16 4 L16 16 L4 16 Z"/>
+                  <path d="M8 4 L8 16 M12 4 L12 16 M4 8 L16 8 M4 12 L16 12"/>
+                </svg>
+              </div>
+            </div>
+            <p class="drop-text-main">
+              拖拽文件到此处，或
+              <span class="upload-btn-link">点击选择文件</span>
+            </p>
+            <p class="drop-text-sub">
+              支持上传：图片（20～2000张全角度照片）、视频（1～3个视频或全景图）<br>
+              Insta360文件（.insv）、3D点云文件（.ply/.spz）<br>
+              <a href="#" onclick="showToast('拍摄指南功能演示中', 'info'); return false;" id="guide-link">室内拍摄指南与限额 ↗</a>
+            </p>
+
+            <!-- 已选文件显示 -->
+            <div class="file-selected" id="file-selected">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 2 L10 2 L13 5 L13 14 L3 14 Z"/>
+                <line x1="6" y1="8" x2="10" y2="8"/>
+                <line x1="6" y1="10.5" x2="10" y2="10.5"/>
+              </svg>
+              <span class="file-name" id="file-name-display"></span>
+              <button class="file-remove" onclick="removeFile(event)">×</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="bottom-actions">
+          <div class="quality-selector">
+            <!-- [交互说明] 点击展开质量选项下拉 -->
+            <div class="quality-wrap">
+              <button class="quality-btn" onclick="toggleQualityDropdown(event)">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M8 2 L9.5 6 L14 6 L10.5 9 L12 13 L8 10.5 L4 13 L5.5 9 L2 6 L6.5 6 Z"/>
+                </svg>
+                <span id="quality-label">标准</span>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 3.5 L5 6.5 L8 3.5"/>
+                </svg>
+              </button>
+              <div class="quality-dropdown" id="quality-dropdown">
+                <div class="quality-option selected" onclick="selectQuality('标准', this)">
+                  标准 <span class="check">✓</span>
+                </div>
+                <div class="quality-option" onclick="selectQuality('专业', this)">
+                  专业
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-right">
+            <button class="cloud-btn" onclick="showToast('从云盘导入功能演示中', 'info')">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 10 C1.5 10 1 6 4 6 C4 3 8 2 10 5 C13 4.5 14.5 8 12 10"/>
+                <path d="M8 10 L8 14 M6 12 L8 14 L10 12"/>
+              </svg>
+              从云盘导入
+            </button>
+            <!-- [交互说明] 点击创建按钮触发提交确认弹窗 -->
+            <button class="create-btn" id="create-btn" onclick="handleCreate()">
+              创建
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /card-container -->
+
+      <!-- Sample Showcase -->
+      <div class="showcase">
+        <p class="showcase-title">示例场景</p>
+        <div class="showcase-grid">
+          <div class="showcase-card" onclick="showToast('点击查看3D效果（演示）', 'info')">
+            <div class="showcase-thumb" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%); display:flex; align-items:center; justify-content:center;">
+              <div style="text-align:center; color:rgba(255,255,255,.3)">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px; display:block">
+                  <path d="M4 30 L20 10 L36 30"/>
+                  <rect x="12" y="20" width="16" height="10"/>
+                  <rect x="16" y="24" width="4" height="6"/>
+                  <rect x="22" y="22" width="4" height="8"/>
+                </svg>
+                室内空间
+              </div>
+            </div>
+            <span class="scene-type-tag tag-indoor">室内</span>
+            <div class="showcase-overlay"><span class="showcase-label">童趣暖调卧室</span></div>
+          </div>
+          <div class="showcase-card" onclick="showToast('点击查看3D效果（演示）', 'info')">
+            <div class="showcase-thumb" style="background: linear-gradient(135deg, #0c2340 0%, #1e5799 50%, #7db9e8 100%); display:flex; align-items:center; justify-content:center;">
+              <div style="text-align:center; color:rgba(255,255,255,.4)">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px; display:block">
+                  <circle cx="20" cy="12" r="6"/>
+                  <path d="M2 32 C8 20 32 20 38 32"/>
+                  <line x1="20" y1="2" x2="20" y2="6"/>
+                  <line x1="32" y1="5" x2="29" y2="8"/>
+                  <line x1="8" y1="5" x2="11" y2="8"/>
+                </svg>
+                室外场景
+              </div>
+            </div>
+            <span class="scene-type-tag tag-outdoor">室外</span>
+            <div class="showcase-overlay"><span class="showcase-label">林径废车厢</span></div>
+          </div>
+          <div class="showcase-card" onclick="showToast('点击查看3D效果（演示）', 'info')">
+            <div class="showcase-thumb" style="background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%); display:flex; align-items:center; justify-content:center;">
+              <div style="text-align:center; color:rgba(255,255,255,.3)">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px; display:block">
+                  <rect x="6" y="6" width="28" height="28" rx="3"/>
+                  <line x1="6" y1="16" x2="34" y2="16"/>
+                  <line x1="16" y1="6" x2="16" y2="34"/>
+                </svg>
+                室外建筑
+              </div>
+            </div>
+            <span class="scene-type-tag tag-outdoor">室外</span>
+            <div class="showcase-overlay"><span class="showcase-label">星际旅居舱</span></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /app-body -->
+
+  <!-- Submit Confirm Modal -->
+  <div class="modal-overlay" id="submit-modal">
+    <div class="modal">
+      <div class="modal-title">确认创建任务</div>
+      <div class="modal-body">
+        即将提交以下参数，开始3DGS重建任务：
+        <div class="param-row">
+          <span class="param-key">scene_type</span>
+          <span>:</span>
+          <span class="param-val">"space"</span>
+        </div>
+        <div class="param-row">
+          <span class="param-key">scene_subtype</span>
+          <span>:</span>
+          <span class="param-val" id="modal-subtype-val">"indoor"</span>
+        </div>
+        <div class="param-row">
+          <span class="param-key">quality</span>
+          <span>:</span>
+          <span class="param-val" id="modal-quality-val">"standard"</span>
+        </div>
+        <div class="param-row" id="modal-skybox-row" style="display:none">
+          <span class="param-key">generate_skybox</span>
+          <span>:</span>
+          <span class="param-val" id="modal-skybox-val">true</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="closeModal()">取消</button>
+        <button class="btn-modal-confirm" onclick="confirmCreate()">确认创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============================================================
+    // State
+    // ============================================================
+    const state = {
+      parentTab: 'space',
+      subTab: 'indoor',       // 'indoor' | 'outdoor'
+      quality: '标准',
+      selectedFile: null,
+    };
+
+    // ============================================================
+    // Sub Tab Switch — 核心交互
+    // ============================================================
+    function switchSubTab(type) {
+      state.subTab = type;
+
+      // Update tab active states
+      document.getElementById('subtab-indoor').classList.toggle('active', type === 'indoor');
+      document.getElementById('subtab-outdoor').classList.toggle('active', type === 'outdoor');
+      document.getElementById('subtab-indoor').setAttribute('aria-selected', type === 'indoor');
+      document.getElementById('subtab-outdoor').setAttribute('aria-selected', type === 'outdoor');
+
+      const noticeBar = document.getElementById('notice-bar');
+      const noticeText = document.getElementById('notice-text');
+      const noticeTooltip = document.getElementById('notice-tooltip');
+      const noticeIcon = document.getElementById('notice-icon');
+      const sceneHint = document.getElementById('scene-hint');
+      const guideLink = document.getElementById('guide-link');
+
+      if (type === 'indoor') {
+        // Indoor state
+        noticeBar.className = 'notice-bar indoor';
+        noticeText.textContent = '室内模式 · 不生成天空盒数据 · 适用于封闭/半封闭空间';
+        noticeTooltip.textContent = '室内场景封闭，天空盒无意义且会影响重建质量';
+        noticeIcon.innerHTML = '<path d="M1 7 L7 2 L13 7 L13 13 L9 13 L9 9 L5 9 L5 13 L1 13 Z"/>';
+        sceneHint.innerHTML = '<strong>适用场景：</strong>客厅、卧室、办公室、展厅、博物馆等封闭/半封闭空间';
+        guideLink.textContent = '室内拍摄指南与限额 ↗';
+      } else {
+        // Outdoor state
+        noticeBar.className = 'notice-bar outdoor';
+        noticeText.textContent = '室外模式 · 自动生成天空盒数据，提升场景真实感';
+        noticeTooltip.textContent = '室外场景将生成天空盒数据，使3D场景拥有真实天空环境';
+        noticeIcon.innerHTML = '<circle cx="7" cy="5" r="2.5"/><path d="M1 11 C3 7 11 7 13 11"/><line x1="7" y1="1" x2="7" y2="2.5"/>';
+        sceneHint.innerHTML = '<strong>适用场景：</strong>建筑外立面、景区、广场、街道、文物遗址等开放场景';
+        guideLink.textContent = '室外拍摄指南与限额 ↗';
+      }
+
+      // Note: file is NOT cleared when switching tabs (TC-004)
+    }
+
+    // ============================================================
+    // Parent Tab Switch
+    // ============================================================
+    function switchParentTab(type, el) {
+      if (type === state.parentTab) return;
+      state.parentTab = type;
+      document.querySelectorAll('.parent-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      showToast(type === 'object' ? '物体重建模式（演示）' : 'AI空间生成模式（演示）', 'info');
+    }
+
+    // ============================================================
+    // File Handling
+    // ============================================================
+    function triggerFileInput() {
+      document.getElementById('file-input').click();
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) setFile(file);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('drop-zone').classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      document.getElementById('drop-zone').classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('drop-zone').classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) setFile(file);
+    }
+
+    function setFile(file) {
+      state.selectedFile = file;
+      const dz = document.getElementById('drop-zone');
+      dz.classList.add('has-file');
+      const fs = document.getElementById('file-selected');
+      fs.classList.add('visible');
+      document.getElementById('file-name-display').textContent = file.name + ' (' + formatSize(file.size) + ')';
+    }
+
+    function removeFile(e) {
+      e.stopPropagation();
+      state.selectedFile = null;
+      document.getElementById('drop-zone').classList.remove('has-file');
+      document.getElementById('file-selected').classList.remove('visible');
+      document.getElementById('file-input').value = '';
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    // ============================================================
+    // Quality Dropdown
+    // ============================================================
+    function toggleQualityDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('quality-dropdown').classList.toggle('open');
+    }
+
+    function selectQuality(val, el) {
+      state.quality = val;
+      document.getElementById('quality-label').textContent = val;
+      document.querySelectorAll('.quality-option').forEach(o => {
+        o.classList.remove('selected');
+        o.innerHTML = o.textContent.trim();
+      });
+      el.classList.add('selected');
+      el.innerHTML = val + ' <span class="check">✓</span>';
+      document.getElementById('quality-dropdown').classList.remove('open');
+    }
+
+    document.addEventListener('click', () => {
+      document.getElementById('quality-dropdown').classList.remove('open');
+    });
+
+    // ============================================================
+    // Create Flow
+    // ============================================================
+    function handleCreate() {
+      // Show confirm modal with current params
+      document.getElementById('modal-subtype-val').textContent = '"' + state.subTab + '"';
+      document.getElementById('modal-quality-val').textContent = '"' + (state.quality === '标准' ? 'standard' : 'professional') + '"';
+
+      const skyboxRow = document.getElementById('modal-skybox-row');
+      const skyboxVal = document.getElementById('modal-skybox-val');
+      if (state.subTab === 'outdoor') {
+        skyboxRow.style.display = 'flex';
+        skyboxVal.textContent = 'true';
+      } else {
+        skyboxRow.style.display = 'none';
+      }
+
+      document.getElementById('submit-modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('submit-modal').classList.remove('open');
+    }
+
+    function confirmCreate() {
+      closeModal();
+      showToast(
+        '任务已提交！scene_subtype: "' + state.subTab + '"' + (state.subTab === 'outdoor' ? ' · 天空盒生成中' : ''),
+        'success'
+      );
+      // Reset file after submit
+      setTimeout(() => {
+        removeFile({ stopPropagation: () => {} });
+      }, 1500);
+    }
+
+    // Click outside modal to close
+    document.getElementById('submit-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ============================================================
+    // Toast
+    // ============================================================
+    let toastTimer;
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type + ' show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.classList.remove('show'); }, 2800);
+    }
+  </script>
+</body>
+</html>
