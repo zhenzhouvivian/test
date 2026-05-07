@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aholo — 3D World Creator</title>
+  <style>
+    :root {
+      --bg-root:       #09090c;
+      --bg-surface:    #111218;
+      --bg-card:       #16171f;
+      --bg-element:    #1d1e28;
+      --bg-input:      #13141b;
+
+      --accent:        #4f6ef7;
+      --accent-dim:    rgba(79,110,247,.18);
+      --accent-border: rgba(79,110,247,.38);
+      --accent-glow:   rgba(79,110,247,.14);
+      --accent2:       #8b5cf6;
+
+      --success:  #22c55e;
+      --warning:  #f59e0b;
+      --danger:   #ef4444;
+
+      --text-1:  #eef0f8;
+      --text-2:  #8b8fa8;
+      --text-3:  #4c4f68;
+
+      --border:        rgba(255,255,255,.055);
+      --border-hover:  rgba(255,255,255,.10);
+
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 16px;
+      --r-xl: 20px;
+      --r-2xl: 28px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter','PingFang SC','Helvetica Neue',system-ui,sans-serif;
+      background: var(--bg-root);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content:'';
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(79,110,247,.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,110,247,.028) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events:none; z-index:0;
+    }
+
+    /* radial gradient vignette */
+    body::after {
+      content:'';
+      position:fixed; inset:0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,110,247,.07) 0%, transparent 65%);
+      pointer-events:none; z-index:0;
+    }
+
+    /* ══════════════════════════════════════
+       NAV
+    ══════════════════════════════════════ */
+    .nav {
+      position: sticky; top:0; z-index:200;
+      height: 56px;
+      background: rgba(9,9,12,.82);
+      backdrop-filter: blur(20px) saturate(150%);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px;
+    }
+    .nav-logo {
+      display:flex; align-items:center; gap:10px;
+      font-size:17px; font-weight:700; letter-spacing:-.4px;
+      text-decoration:none; color:var(--text-1);
+    }
+    .nav-logo-mark {
+      width:30px; height:30px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 0 16px rgba(79,110,247,.35);
+    }
+    .nav-logo-mark svg { width:16px; height:16px; }
+
+    .nav-right { display:flex; align-items:center; gap:12px; }
+
+    .nav-link {
+      color:var(--text-2); font-size:14px; text-decoration:none;
+      padding:6px 12px; border-radius:var(--r-sm);
+      transition:all .15s;
+    }
+    .nav-link:hover { color:var(--text-1); background:var(--bg-element); }
+
+    .nav-btn {
+      padding:7px 16px; border-radius:var(--r-md);
+      background:var(--accent); color:#fff;
+      font-size:13px; font-weight:600; border:none; cursor:pointer;
+      transition:all .15s;
+    }
+    .nav-btn:hover { background:#5f7cf8; }
+
+    .nav-avatar {
+      width:32px; height:32px; border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:600; cursor:pointer;
+      border: 1.5px solid var(--accent-border);
+    }
+
+    /* ══════════════════════════════════════
+       MAIN CONTAINER
+    ══════════════════════════════════════ */
+    .main {
+      position:relative; z-index:1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 32px 80px;
+    }
+
+    /* ══════════════════════════════════════
+       CREATE SECTION (collapsible)
+    ══════════════════════════════════════ */
+    .create-section {
+      margin-bottom: 36px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-2xl);
+      overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .create-section.open {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 1px rgba(79,110,247,.12), 0 24px 64px rgba(79,110,247,.09);
+    }
+
+    /* header row */
+    .create-hd {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 18px 24px;
+      cursor: pointer; user-select:none;
+      transition: background .15s;
+    }
+    .create-hd:hover { background: rgba(255,255,255,.02); }
+
+    .create-hd-left { display:flex; align-items:center; gap:14px; }
+
+    .create-hd-icon {
+      width:38px; height:38px;
+      background: linear-gradient(135deg, rgba(79,110,247,.22), rgba(139,92,246,.22));
+      border: 1px solid var(--accent-border);
+      border-radius:11px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+
+    .create-hd-text {}
+    .create-hd-title { font-size:15px; font-weight:600; }
+    .create-hd-sub { font-size:12px; color:var(--text-2); margin-top:2px; }
+
+    .create-hd-right { display:flex; align-items:center; gap:10px; }
+
+    .create-badge {
+      padding:4px 10px; border-radius:20px;
+      font-size:11px; font-weight:600; letter-spacing:.4px;
+      background:var(--accent-dim); color:var(--accent);
+      border:1px solid rgba(79,110,247,.25);
+    }
+
+    .chevron-btn {
+      width:30px; height:30px; border-radius:var(--r-sm);
+      background:var(--bg-element); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-2); cursor:pointer; transition:all .2s;
+    }
+    .chevron-btn:hover { background:var(--bg-card); color:var(--text-1); }
+    .chevron-icon { transition:transform .35s cubic-bezier(.4,0,.2,1); }
+    .create-section.open .chevron-icon { transform:rotate(180deg); }
+
+    /* collapsible body */
+    .create-body {
+      max-height:0; overflow:hidden;
+      transition:max-height .45s cubic-bezier(.4,0,.2,1);
+    }
+    .create-section.open .create-body { max-height:900px; }
+
+    .create-inner {
+      border-top:1px solid var(--border);
+      padding: 22px 24px 26px;
+    }
+
+    /* ── Mode selector ── */
+    .mode-row {
+      display:flex; align-items:center; gap:8px;
+      margin-bottom:22px;
+    }
+    .mode-pill {
+      display:flex; align-items:center; gap:8px;
+      padding:9px 18px; border-radius:var(--r-md);
+      border:1px solid var(--border); background:var(--bg-element);
+      color:var(--text-2); font-size:14px; font-weight:500;
+      cursor:pointer; transition:all .2s;
+    }
+    .mode-pill:hover { border-color:var(--accent-border); color:var(--text-1); }
+    .mode-pill.active {
+      background:var(--accent-dim); border-color:var(--accent);
+      color:var(--text-1);
+      box-shadow:0 0 12px rgba(79,110,247,.15);
+    }
+    .mode-pill svg { width:16px; height:16px; flex-shrink:0; }
+
+    /* ── Mode panels ── */
+    .mode-panel { display:none; }
+    .mode-panel.active { display:block; }
+
+    /* ══════════════════════════════════════
+       CAPTURE MODE
+    ══════════════════════════════════════ */
+    .capture-wrap {
+      display:grid;
+      grid-template-columns:1fr 320px;
+      gap:20px;
+      align-items:start;
+    }
+    @media(max-width:900px){ .capture-wrap{ grid-template-columns:1fr; } }
+
+    /* Upload zone */
+    .upload-zone {
+      border:2px dashed var(--border-hover);
+      border-radius:var(--r-lg);
+      background:var(--bg-input);
+      padding:36px 24px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .25s;
+      position:relative; overflow:hidden;
+    }
+    .upload-zone::before {
+      content:'';
+      position:absolute; inset:0;
+      background:radial-gradient(ellipse 60% 40% at 50% 50%, rgba(79,110,247,.06) 0%, transparent 70%);
+      opacity:0; transition:opacity .25s;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color:var(--accent);
+      background:rgba(79,110,247,.04);
+    }
+    .upload-zone:hover::before,
+    .upload-zone.drag-over::before { opacity:1; }
+
+    .upload-icon-wrap {
+      width:56px; height:56px; border-radius:14px;
+      background:var(--bg-element); border:1px solid var(--border-hover);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 16px;
+    }
+    .upload-icon-wrap svg { width:24px; height:24px; color:var(--accent); }
+
+    .upload-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+    .upload-sub { font-size:13px; color:var(--text-2); line-height:1.6; }
+
+    .upload-formats {
+      display:flex; flex-wrap:wrap; gap:6px;
+      justify-content:center; margin-top:16px;
+    }
+    .fmt-tag {
+      padding:3px 9px; border-radius:6px;
+      background:var(--bg-element); border:1px solid var(--border);
+      font-size:11px; font-weight:600; color:var(--text-2);
+      letter-spacing:.3px;
+    }
+
+    .upload-limits {
+      margin-top:12px; font-size:11px; color:var(--text-3);
+      line-height:1.7;
+    }
+
+    #fileInput { display:none; }
+
+    /* file selected state */
+    .file-selected-bar {
+      display:none; align-items:center; gap:12px;
+      margin-top:16px; padding:12px 16px;
+      background:var(--bg-element); border:1px solid var(--border);
+      border-radius:var(--r-md);
+    }
+    .file-selected-bar.show { display:flex; }
+    .file-icon {
+      width:36px; height:36px; border-radius:8px;
+      background:var(--accent-dim); border:1px solid var(--accent-border);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .file-icon svg { width:16px; height:16px; color:var(--accent); }
+    .file-info { flex:1; min-width:0; }
+    .file-name {
+      font-size:13px; font-weight:500;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .file-size { font-size:11px; color:var(--text-2); margin-top:1px; }
+    .file-remove {
+      width:24px; height:24px; border-radius:6px;
+      background:none; border:none; color:var(--text-3);
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .15s;
+    }
+    .file-remove:hover { background:rgba(239,68,68,.12); color:var(--danger); }
+
+    /* ── Shoot mode cards ── */
+    .shoot-section {
+      margin-top:20px;
+      display:none;
+    }
+    .shoot-section.show { display:block; }
+    .shoot-label {
+      font-size:12px; font-weight:600; color:var(--text-2);
+      letter-spacing:.6px; text-transform:uppercase;
+      margin-bottom:12px;
+    }
+    .shoot-cards {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    }
+    @media(max-width:640px){ .shoot-cards{ grid-template-columns:1fr; } }
+
+    .shoot-card {
+      border:1.5px solid var(--border);
+      border-radius:var(--r-md);
+      background:var(--bg-element);
+      padding:16px;
+      cursor:pointer; transition:all .2s;
+      position:relative; overflow:hidden;
+    }
+    .shoot-card::after {
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(135deg, rgba(79,110,247,.08), rgba(139,92,246,.04));
+      opacity:0; transition:opacity .2s;
+    }
+    .shoot-card:hover { border-color:var(--accent-border); }
+    .shoot-card:hover::after { opacity:1; }
+    .shoot-card.selected {
+      border-color:var(--accent);
+      background:var(--accent-dim);
+      box-shadow:0 0 0 3px rgba(79,110,247,.08);
+    }
+    .shoot-card.selected::after { opacity:1; }
+
+    .shoot-card-icon {
+      width:40px; height:40px; border-radius:10px;
+      background:var(--bg-surface); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:10px; font-size:20px;
+      transition:border-color .2s;
+      position:relative; z-index:1;
+    }
+    .shoot-card.selected .shoot-card-icon { border-color:var(--accent-border); }
+    .shoot-card-title {
+      font-size:13px; font-weight:600; margin-bottom:4px;
+      position:relative; z-index:1;
+    }
+    .shoot-card-desc {
+      font-size:11.5px; color:var(--text-2); line-height:1.55;
+      position:relative; z-index:1;
+    }
+    .shoot-check {
+      position:absolute; top:10px; right:10px;
+      width:18px; height:18px; border-radius:50%;
+      background:var(--accent); display:none;
+      align-items:center; justify-content:center;
+      z-index:1;
+    }
+    .shoot-card.selected .shoot-check { display:flex; }
+    .shoot-check svg { width:10px; height:10px; color:#fff; }
+
+    /* ── Options sidebar ── */
+    .options-box {
+      background:var(--bg-element);
+      border:1px solid var(--border);
+      border-radius:var(--r-lg);
+      padding:20px;
+    }
+    .options-title {
+      font-size:13px; font-weight:600; color:var(--text-2);
+      letter-spacing:.5px; text-transform:uppercase;
+      margin-bottom:16px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .opt-group { margin-bottom:18px; }
+    .opt-group:last-child { margin-bottom:0; }
+    .opt-label { font-size:12px; color:var(--text-2); margin-bottom:8px; font-weight:500; }
+    .opt-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .opt-btn {
+      padding:5px 12px; border-radius:var(--r-sm);
+      background:var(--bg-card); border:1px solid var(--border);
+      color:var(--text-2); font-size:12px; font-weight:500;
+      cursor:pointer; transition:all .15s;
+    }
+    .opt-btn:hover { border-color:var(--border-hover); color:var(--text-1); }
+    .opt-btn.sel {
+      background:var(--accent-dim); border-color:var(--accent);
+      color:var(--text-1);
+    }
+
+    /* checkbox row */
+    .opt-check-row {
+      display:flex; align-items:center; gap:8px;
+      cursor:pointer; margin-bottom:8px;
+    }
+    .opt-check-row:last-child { margin-bottom:0; }
+    .opt-check-box {
+      width:16px; height:16px; border-radius:4px;
+      border:1.5px solid var(--border-hover); background:var(--bg-card);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:all .15s;
+    }
+    .opt-check-row.checked .opt-check-box {
+      background:var(--accent); border-color:var(--accent);
+    }
+    .opt-check-box svg { width:10px; height:10px; color:#fff; display:none; }
+    .opt-check-row.checked .opt-check-box svg { display:block; }
+    .opt-check-text { font-size:12px; color:var(--text-2); }
+
+    /* start btn */
+    .capture-start-btn {
+      margin-top:20px; width:100%;
+      padding:12px; border-radius:var(--r-md);
+      background:var(--accent); color:#fff;
+      font-size:14px; font-weight:600; border:none; cursor:pointer;
+      transition:all .2s;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .capture-start-btn:hover { background:#5f7cf8; box-shadow:0 4px 20px rgba(79,110,247,.3); }
+    .capture-start-btn:disabled {
+      background:var(--bg-element); color:var(--text-3); cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    /* ══════════════════════════════════════
+       AI GENERATE MODE
+    ══════════════════════════════════════ */
+    .ai-wrap {
+      display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;
+    }
+    @media(max-width:900px){ .ai-wrap{ grid-template-columns:1fr; } }
+
+    .ai-prompt-box {
+      background:var(--bg-input);
+      border:1.5px solid var(--border-hover);
+      border-radius:var(--r-lg); padding:20px;
+      transition:border-color .2s;
+      position:relative;
+    }
+    .ai-prompt-box:focus-within {
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(79,110,247,.08);
+    }
+
+    .ai-prompt-label {
+      font-size:11px; font-weight:700; color:var(--accent);
+      letter-spacing:.8px; text-transform:uppercase;
+      margin-bottom:10px;
+    }
+
+    .ai-prompt-textarea {
+      width:100%; background:none; border:none; outline:none;
+      color:var(--text-1); font-size:15px; line-height:1.65;
+      font-family:inherit; resize:none;
+      min-height:88px;
+    }
+    .ai-prompt-textarea::placeholder { color:var(--text-3); }
+
+    .ai-prompt-footer {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:14px; padding-top:14px;
+      border-top:1px solid var(--border);
+    }
+
+    .ai-chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .ai-chip {
+      padding:4px 10px; border-radius:20px;
+      background:var(--bg-element); border:1px solid var(--border);
+      color:var(--text-2); font-size:11.5px;
+      cursor:pointer; transition:all .15s;
+    }
+    .ai-chip:hover { border-color:var(--accent-border); color:var(--text-1); }
+
+    .ai-char-count { font-size:11px; color:var(--text-3); flex-shrink:0; }
+
+    /* image upload toggle */
+    .ai-img-toggle {
+      display:flex; align-items:center; gap:8px;
+      cursor:pointer; margin-bottom:12px;
+    }
+    .ai-img-toggle-box {
+      width:36px; height:20px; border-radius:10px;
+      background:var(--bg-element); border:1px solid var(--border);
+      position:relative; transition:all .2s;
+    }
+    .ai-img-toggle-box::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:14px; height:14px; border-radius:50%;
+      background:var(--text-3); transition:all .2s;
+    }
+    .ai-img-toggle.on .ai-img-toggle-box {
+      background:var(--accent); border-color:var(--accent);
+    }
+    .ai-img-toggle.on .ai-img-toggle-box::after {
+      left:18px; background:#fff;
+    }
+    .ai-img-toggle-label { font-size:12px; color:var(--text-2); }
+
+    .ai-img-upload {
+      display:none; border:1.5px dashed var(--border-hover);
+      border-radius:var(--r-md); padding:20px;
+      text-align:center; cursor:pointer;
+      background:var(--bg-input);
+      transition:all .2s;
+    }
+    .ai-img-upload.show { display:block; }
+    .ai-img-upload:hover { border-color:var(--accent); }
+    .ai-img-upload svg { color:var(--accent); margin-bottom:8px; }
+    .ai-img-upload-text { font-size:12px; color:var(--text-2); }
+
+    .ai-img-preview {
+      display:none; position:relative;
+      border-radius:var(--r-md); overflow:hidden;
+      aspect-ratio:4/3; background:var(--bg-element);
+      border:1px solid var(--border);
+    }
+    .ai-img-preview.show { display:block; }
+    .ai-img-preview img {
+      width:100%; height:100%; object-fit:cover;
+    }
+    .ai-img-preview-remove {
+      position:absolute; top:6px; right:6px;
+      width:24px; height:24px; border-radius:6px;
+      background:rgba(0,0,0,.6); border:none; color:#fff;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      font-size:14px;
+    }
+
+    .ai-right { display:flex; flex-direction:column; gap:14px; }
+
+    .ai-options-box {
+      background:var(--bg-element); border:1px solid var(--border);
+      border-radius:var(--r-lg); padding:18px;
+    }
+    .ai-opt-title {
+      font-size:12px; font-weight:600; color:var(--text-2);
+      letter-spacing:.5px; text-transform:uppercase;
+      margin-bottom:14px;
+    }
+
+    .ai-generate-btn {
+      width:100%; padding:14px;
+      border-radius:var(--r-md);
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#fff; font-size:14px; font-weight:600;
+      border:none; cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      position:relative; overflow:hidden;
+    }
+    .ai-generate-btn::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(135deg, rgba(255,255,255,.1), transparent);
+      opacity:0; transition:opacity .2s;
+    }
+    .ai-generate-btn:hover {
+      box-shadow:0 6px 24px rgba(79,110,247,.35);
+      transform:translateY(-1px);
+    }
+    .ai-generate-btn:hover::before { opacity:1; }
+
+    .ai-generate-btn svg { width:16px; height:16px; }
+
+    /* sparkle animation */
+    @keyframes sparkle {
+      0%,100% { transform:scale(1) rotate(0deg); }
+      50% { transform:scale(1.15) rotate(15deg); }
+    }
+    .ai-generate-btn:hover svg { animation: sparkle .6s ease infinite; }
+
+    /* ══════════════════════════════════════
+       COMMUNITY SECTION
+    ══════════════════════════════════════ */
+    .section-hd {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:20px;
+    }
+    .section-title-wrap { display:flex; align-items:center; gap:12px; }
+    .section-title { font-size:18px; font-weight:700; }
+    .section-count {
+      padding:3px 10px; border-radius:20px;
+      background:var(--bg-element); border:1px solid var(--border);
+      font-size:12px; color:var(--text-2);
+    }
+    .section-right { display:flex; align-items:center; gap:8px; }
+
+    .filter-btn {
+      padding:7px 14px; border-radius:var(--r-md);
+      background:var(--bg-element); border:1px solid var(--border);
+      color:var(--text-2); font-size:13px; cursor:pointer; transition:all .15s;
+    }
+    .filter-btn:hover { color:var(--text-1); border-color:var(--border-hover); }
+    .filter-btn.active {
+      background:var(--accent-dim); border-color:var(--accent); color:var(--text-1);
+    }
+
+    /* project cards grid */
+    .cards-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap:18px;
+    }
+
+    .project-card {
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:var(--r-lg);
+      overflow:hidden; cursor:pointer;
+      transition:all .22s;
+      position:relative;
+    }
+    .project-card:hover {
+      border-color:var(--border-hover);
+      transform:translateY(-3px);
+      box-shadow:0 16px 48px rgba(0,0,0,.35);
+    }
+
+    .card-thumb {
+      aspect-ratio:16/10; position:relative; overflow:hidden;
+    }
+    .card-thumb-bg {
+      width:100%; height:100%;
+      transition:transform .35s ease;
+    }
+    .project-card:hover .card-thumb-bg { transform:scale(1.04); }
+
+    /* type badge on thumb */
+    .card-type-badge {
+      position:absolute; top:10px; left:10px;
+      padding:3px 9px; border-radius:20px;
+      font-size:10.5px; font-weight:600; letter-spacing:.3px;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.9);
+    }
+    .card-type-badge.ai { background:rgba(79,110,247,.6); border-color:rgba(79,110,247,.4); }
+    .card-type-badge.capture { background:rgba(34,197,94,.45); border-color:rgba(34,197,94,.35); }
+
+    /* 3D preview icon */
+    .card-3d-badge {
+      position:absolute; top:10px; right:10px;
+      width:28px; height:28px; border-radius:8px;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.12);
+      display:flex; align-items:center; justify-content:center;
+      color:rgba(255,255,255,.7); font-size:12px;
+    }
+
+    .card-body { padding:14px 16px 16px; }
+    .card-title { font-size:14px; font-weight:600; margin-bottom:8px; }
+
+    .card-meta { display:flex; align-items:center; justify-content:space-between; }
+    .card-author { display:flex; align-items:center; gap:6px; }
+    .card-avatar {
+      width:20px; height:20px; border-radius:50%;
+      font-size:10px; font-weight:600; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .card-author-name { font-size:12px; color:var(--text-2); }
+
+    .card-stats { display:flex; gap:10px; }
+    .card-stat {
+      display:flex; align-items:center; gap:4px;
+      font-size:11.5px; color:var(--text-3);
+    }
+    .card-stat svg { width:12px; height:12px; }
+
+    /* status overlay for processing cards */
+    .card-processing-overlay {
+      position:absolute; inset:0;
+      background:rgba(9,9,12,.65); backdrop-filter:blur(2px);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:8px;
+    }
+    .card-spinner {
+      width:32px; height:32px; border-radius:50%;
+      border:2.5px solid var(--bg-element);
+      border-top-color:var(--accent);
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .card-processing-text { font-size:12px; color:var(--text-2); }
+
+    /* ══════════════════════════════════════
+       TOAST
+    ══════════════════════════════════════ */
+    .toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+      padding:11px 22px; border-radius:var(--r-md);
+      background:var(--bg-surface); border:1px solid var(--border-hover);
+      color:var(--text-1); font-size:13px; font-weight:500;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);
+      z-index:1000; opacity:0;
+      transition:all .3s cubic-bezier(.4,0,.2,1);
+      white-space:nowrap; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* ══════════════════════════════════════
+       UPLOAD PROGRESS (in card)
+    ══════════════════════════════════════ */
+    .upload-progress-bar {
+      height:3px; background:var(--bg-element); border-radius:2px;
+      margin-top:8px; overflow:hidden; display:none;
+    }
+    .upload-progress-bar.show { display:block; }
+    .upload-progress-fill {
+      height:100%;
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius:2px; width:0;
+      transition:width .4s ease;
+    }
+
+    /* ── Animated dots ── */
+    @keyframes blink { 0%,100%{opacity:.2} 40%{opacity:1} }
+    .dots span { animation:blink 1.4s infinite both; }
+    .dots span:nth-child(2){animation-delay:.2s}
+    .dots span:nth-child(3){animation-delay:.4s}
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media(max-width:768px){
+      .main { padding:20px 16px 60px; }
+      .nav { padding:0 16px; }
+      .create-hd { padding:14px 16px; }
+      .create-inner { padding:16px 16px 20px; }
+      .nav-link { display:none; }
+      .cards-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ════════════════ NAV ════════════════ -->
+<nav class="nav">
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    Aholo
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="#">探索</a>
+    <a class="nav-link" href="#">我的项目</a>
+    <div class="nav-avatar">A</div>
+  </div>
+</nav>
+
+<!-- ════════════════ MAIN ════════════════ -->
+<main class="main">
+
+  <!-- ── CREATE SECTION ── -->
+  <section class="create-section open" id="createSection">
+
+    <!-- header / toggle row -->
+    <div class="create-hd" onclick="toggleCreate()">
+      <div class="create-hd-left">
+        <div class="create-hd-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="url(#grad1)" stroke-width="2.2">
+            <defs>
+              <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4f6ef7"/>
+                <stop offset="100%" stop-color="#8b5cf6"/>
+              </linearGradient>
+            </defs>
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="create-hd-text">
+          <div class="create-hd-title">开始创建</div>
+          <div class="create-hd-sub">拍摄素材重建 · 或用 AI 直接生成 3D 场景</div>
+        </div>
+      </div>
+      <div class="create-hd-right">
+        <span class="create-badge">NEW</span>
+        <div class="chevron-btn" id="chevronBtn">
+          <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- collapsible body -->
+    <div class="create-body">
+      <div class="create-inner">
+
+        <!-- mode pills -->
+        <div class="mode-row">
+          <button class="mode-pill active" id="pillCapture" onclick="setMode('capture')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            拍摄重建
+          </button>
+          <button class="mode-pill" id="pillAI" onclick="setMode('ai')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            AI 生成
+          </button>
+        </div>
+
+        <!-- ── CAPTURE PANEL ── -->
+        <div class="mode-panel active" id="panelCapture">
+          <div class="capture-wrap">
+
+            <div>
+              <!-- upload zone -->
+              <div class="upload-zone" id="uploadZone"
+                   onclick="triggerUpload()"
+                   ondragover="handleDragOver(event)"
+                   ondragleave="handleDragLeave(event)"
+                   ondrop="handleDrop(event)">
+
+                <div class="upload-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+
+                <div class="upload-title">拖拽或点击上传素材</div>
+                <div class="upload-sub">支持连续视频或多角度图片序列</div>
+
+                <div class="upload-formats">
+                  <span class="fmt-tag">MP4</span>
+                  <span class="fmt-tag">MOV</span>
+                  <span class="fmt-tag">AVI</span>
+                  <span class="fmt-tag">JPG</span>
+                  <span class="fmt-tag">PNG</span>
+                  <span class="fmt-tag">HEIC</span>
+                  <span class="fmt-tag">WEBP</span>
+                </div>
+
+                <div class="upload-limits">
+                  视频：单文件 ≤ 2 GB · 时长建议 30 秒–5 分钟<br>
+                  图片：每次最多 200 张 · 单张 ≤ 20 MB
+                </div>
+
+                <input type="file" id="fileInput" multiple
+                       accept="video/mp4,video/quicktime,video/avi,image/jpeg,image/png,image/heic,image/webp"
+                       onchange="handleFileSelect(event)">
+              </div>
+
+              <!-- file selected bar -->
+              <div class="file-selected-bar" id="fileBar">
+                <div class="file-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="file-info">
+                  <div class="file-name" id="fileName">-</div>
+                  <div class="file-size" id="fileSize">-</div>
+                  <div class="upload-progress-bar show" id="uploadProgress">
+                    <div class="upload-progress-fill" id="uploadFill"></div>
+                  </div>
+                </div>
+                <button class="file-remove" onclick="removeFile()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- shoot mode selection -->
+              <div class="shoot-section" id="shootSection">
+                <div class="shoot-label">选择拍摄方式</div>
+                <div class="shoot-cards">
+
+                  <div class="shoot-card" id="shootOrbit" onclick="selectShoot('orbit', this)">
+                    <div class="shoot-check">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="shoot-card-icon">🔄</div>
+                    <div class="shoot-card-title">环拍物体</div>
+                    <div class="shoot-card-desc">围绕单件物品 360° 拍摄，适合产品、文物、模型</div>
+                  </div>
+
+                  <div class="shoot-card" id="shootIndoor" onclick="selectShoot('indoor', this)">
+                    <div class="shoot-check">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="shoot-card-icon">🏠</div>
+                    <div class="shoot-card-title">室内行走拍摄</div>
+                    <div class="shoot-card-desc">在空间内缓慢行走录制，适合房间、商铺、展厅</div>
+                  </div>
+
+                  <div class="shoot-card" id="shootOutdoor" onclick="selectShoot('outdoor', this)">
+                    <div class="shoot-check">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="shoot-card-icon">🌳</div>
+                    <div class="shoot-card-title">室外行走拍摄</div>
+                    <div class="shoot-card-desc">户外建筑物外立面或街景，适合建筑、庭院、遗址</div>
+                  </div>
+
+                </div>
+              </div>
+            </div><!-- /left col -->
+
+            <!-- options sidebar -->
+            <div class="options-box">
+              <div class="options-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M2 12h2m16 0h2M4.93 4.93l1.41 1.41M18.66 18.66l1.41 1.41M12 2v2m0 16v2"/>
+                </svg>
+                重建选项
+              </div>
+
+              <div class="opt-group">
+                <div class="opt-label">精度</div>
+                <div class="opt-btns">
+                  <button class="opt-btn" onclick="toggleOpt(this,'quality')">标准</button>
+                  <button class="opt-btn sel" onclick="toggleOpt(this,'quality')">高精</button>
+                  <button class="opt-btn" onclick="toggleOpt(this,'quality')">极致</button>
+                </div>
+              </div>
+
+              <div class="opt-group">
+                <div class="opt-label">输出格式</div>
+                <div class="opt-btns">
+                  <button class="opt-btn sel" onclick="toggleOpt(this,'format')">3DGS</button>
+                  <button class="opt-btn" onclick="toggleOpt(this,'format')">NeRF</button>
+                  <button class="opt-btn" onclick="toggleOpt(this,'format')">Mesh</button>
+                </div>
+              </div>
+
+              <div class="opt-group">
+                <div class="opt-label">附加选项</div>
+                <label class="opt-check-row checked" onclick="toggleCheck(this)">
+                  <div class="opt-check-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <span class="opt-check-text">生成预览视频</span>
+                </label>
+                <label class="opt-check-row checked" onclick="toggleCheck(this)">
+                  <div class="opt-check-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <span class="opt-check-text">点云质量分析</span>
+                </label>
+                <label class="opt-check-row" onclick="toggleCheck(this)">
+                  <div class="opt-check-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <span class="opt-check-text">自动去背景</span>
+                </label>
+              </div>
+
+              <button class="capture-start-btn" id="captureStartBtn"
+                      onclick="startCapture()" disabled>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5">
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                </svg>
+                开始重建
+              </button>
+            </div>
+
+          </div>
+        </div><!-- /panelCapture -->
+
+        <!-- ── AI PANEL ── -->
+        <div class="mode-panel" id="panelAI">
+          <div class="ai-wrap">
+
+            <!-- left: prompt -->
+            <div>
+              <div class="ai-prompt-box">
+                <div class="ai-prompt-label">✦ 创意提示词</div>
+                <textarea class="ai-prompt-textarea" id="aiPrompt"
+                  rows="4"
+                  placeholder="描述你脑海中的三维世界——一座悬浮在云端的宫殿、一片发光的水晶洞穴、或是某个童年记忆里的角落…"
+                  oninput="updateCharCount()"></textarea>
+                <div class="ai-prompt-footer">
+                  <div class="ai-chips">
+                    <span class="ai-chip" onclick="fillPrompt('赛博朋克街道，霓虹灯雨夜')">赛博朋克街道</span>
+                    <span class="ai-chip" onclick="fillPrompt('古典中式庭院，晨雾缭绕')">中式庭院</span>
+                    <span class="ai-chip" onclick="fillPrompt('极简现代客厅，落地窗与阳光')">极简客厅</span>
+                    <span class="ai-chip" onclick="fillPrompt('深海珊瑚礁，五彩鱼群穿梭')">深海珊瑚</span>
+                  </div>
+                  <span class="ai-char-count" id="charCount">0 / 500</span>
+                </div>
+              </div>
+
+              <!-- reference image -->
+              <div style="margin-top:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                  <label class="ai-img-toggle" id="imgToggle" onclick="toggleImgUpload()">
+                    <div class="ai-img-toggle-box"></div>
+                    <span class="ai-img-toggle-label">参考图片（可选）</span>
+                  </label>
+                  <span style="font-size:11px;color:var(--text-3)">提供参考可大幅提升匹配度</span>
+                </div>
+
+                <div class="ai-img-upload" id="aiImgUpload" onclick="triggerImgUpload()">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 8px;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <div class="ai-img-upload-text">上传一张参考图片</div>
+                  <input type="file" id="aiImgInput" accept="image/*"
+                         style="display:none" onchange="previewAIImage(event)">
+                </div>
+
+                <div class="ai-img-preview" id="aiImgPreview">
+                  <img id="aiImgPreviewImg" src="" alt="">
+                  <button class="ai-img-preview-remove" onclick="removeAIImage()">×</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- right: options + generate -->
+            <div class="ai-right">
+              <div class="ai-options-box">
+                <div class="ai-opt-title">生成设置</div>
+
+                <div class="opt-group">
+                  <div class="opt-label">场景类型</div>
+                  <div class="opt-btns">
+                    <button class="opt-btn sel" onclick="toggleOpt(this,'scene')">物体</button>
+                    <button class="opt-btn" onclick="toggleOpt(this,'scene')">室内</button>
+                    <button class="opt-btn" onclick="toggleOpt(this,'scene')">室外</button>
+                  </div>
+                </div>
+
+                <div class="opt-group">
+                  <div class="opt-label">输出格式</div>
+                  <div class="opt-btns">
+                    <button class="opt-btn sel" onclick="toggleOpt(this,'aiformat')">3DGS</button>
+                    <button class="opt-btn" onclick="toggleOpt(this,'aiformat')">Mesh</button>
+                  </div>
+                </div>
+
+                <div class="opt-group">
+                  <div class="opt-label">附加选项</div>
+                  <label class="opt-check-row checked" onclick="toggleCheck(this)">
+                    <div class="opt-check-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <span class="opt-check-text">生成预览视频</span>
+                  </label>
+                  <label class="opt-check-row" onclick="toggleCheck(this)">
+                    <div class="opt-check-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <span class="opt-check-text">多视角渲染图</span>
+                  </label>
+                </div>
+              </div>
+
+              <button class="ai-generate-btn" onclick="startAIGenerate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                立即生成
+              </button>
+
+              <p style="font-size:11px;color:var(--text-3);text-align:center;line-height:1.6;padding:0 4px">
+                生成时间约 2–8 分钟<br>完成后将通知你查看结果
+              </p>
+            </div>
+
+          </div>
+        </div><!-- /panelAI -->
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COMMUNITY SECTION ── -->
+  <section>
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <h2 class="section-title">社区广场</h2>
+        <span class="section-count">2,847 个场景</span>
+      </div>
+      <div class="section-right">
+        <button class="filter-btn active" onclick="setFilter(this)">全部</button>
+        <button class="filter-btn" onclick="setFilter(this)">AI 生成</button>
+        <button class="filter-btn" onclick="setFilter(this)">拍摄重建</button>
+        <button class="filter-btn" onclick="setFilter(this)">最新</button>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid">
+      <!-- rendered by JS -->
+    </div>
+  </section>
+
+</main>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════
+   STATE
+══════════════════════════════════ */
+let currentMode   = 'capture';
+let selectedShoot = null;
+let fileSelected  = false;
+
+/* ══════════════════════════════════
+   TOGGLE PANEL
+══════════════════════════════════ */
+function toggleCreate() {
+  document.getElementById('createSection').classList.toggle('open');
+}
+
+/* ══════════════════════════════════
+   MODE SWITCH
+══════════════════════════════════ */
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('pill' + (mode === 'capture' ? 'Capture' : 'AI')).classList.add('active');
+  document.getElementById('panel' + (mode === 'capture' ? 'Capture' : 'AI')).classList.add('active');
+}
+
+/* ══════════════════════════════════
+   FILE UPLOAD
+══════════════════════════════════ */
+function triggerUpload() { document.getElementById('fileInput').click(); }
+
+function handleFileSelect(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  showFile(files[0], files.length > 1 ? files.length + ' 个文件' : null);
+}
+
+function showFile(file, multiLabel) {
+  fileSelected = true;
+  const bar = document.getElementById('fileBar');
+  bar.classList.add('show');
+  document.getElementById('fileName').textContent =
+    multiLabel || file.name;
+  document.getElementById('fileSize').textContent =
+    multiLabel
+      ? '共 ' + multiLabel.replace(' 个文件','') + ' 个文件'
+      : formatSize(file.size);
+
+  // fake upload progress
+  const fill = document.getElementById('uploadFill');
+  fill.style.width = '0%';
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct += Math.random() * 18;
+    if (pct >= 100) { pct = 100; clearInterval(iv); }
+    fill.style.width = pct + '%';
+    if (pct >= 100) {
+      setTimeout(() => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        // show shoot mode
+        document.getElementById('shootSection').classList.add('show');
+      }, 400);
+    }
+  }, 120);
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024)       return bytes + ' B';
+  if (bytes < 1048576)    return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+  return (bytes/1073741824).toFixed(2) + ' GB';
+}
+
+function removeFile() {
+  fileSelected = false; selectedShoot = null;
+  document.getElementById('fileBar').classList.remove('show');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('shootSection').classList.remove('show');
+  document.querySelectorAll('.shoot-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('captureStartBtn').disabled = true;
+  document.getElementById('uploadProgress').style.display = 'block';
+  document.getElementById('uploadFill').style.width = '0';
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  document.getElementById('uploadZone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) showFile(files[0], files.length > 1 ? files.length + ' 个文件' : null);
+}
+
+/* ══════════════════════════════════
+   SHOOT MODE
+══════════════════════════════════ */
+function selectShoot(mode, el) {
+  document.querySelectorAll('.shoot-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedShoot = mode;
+  document.getElementById('captureStartBtn').disabled = false;
+}
+
+/* ══════════════════════════════════
+   OPTIONS
+══════════════════════════════════ */
+function toggleOpt(btn, group) {
+  btn.closest('.opt-btns').querySelectorAll('.opt-btn')
+     .forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function toggleCheck(label) {
+  label.classList.toggle('checked');
+}
+
+/* ══════════════════════════════════
+   START CAPTURE
+══════════════════════════════════ */
+function startCapture() {
+  if (!fileSelected || !selectedShoot) return;
+  toast('上传成功，正在排队重建…');
+  setTimeout(() => {
+    toast('✓ 已加入队列，预计 3–8 分钟完成');
+    addProcessingCard();
+  }, 1200);
+  // collapse panel
+  setTimeout(() => {
+    document.getElementById('createSection').classList.remove('open');
+  }, 1600);
+}
+
+/* ══════════════════════════════════
+   AI IMAGE
+══════════════════════════════════ */
+function toggleImgUpload() {
+  const toggle = document.getElementById('imgToggle');
+  toggle.classList.toggle('on');
+  const upload = document.getElementById('aiImgUpload');
+  const preview = document.getElementById('aiImgPreview');
+  if (toggle.classList.contains('on')) {
+    if (!preview.classList.contains('show')) upload.classList.add('show');
+  } else {
+    upload.classList.remove('show');
+    preview.classList.remove('show');
+  }
+}
+
+function triggerImgUpload() { document.getElementById('aiImgInput').click(); }
+
+function previewAIImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  document.getElementById('aiImgPreviewImg').src = url;
+  document.getElementById('aiImgUpload').classList.remove('show');
+  document.getElementById('aiImgPreview').classList.add('show');
+}
+
+function removeAIImage() {
+  document.getElementById('aiImgPreview').classList.remove('show');
+  document.getElementById('aiImgPreviewImg').src = '';
+  document.getElementById('aiImgInput').value = '';
+  const toggle = document.getElementById('imgToggle');
+  if (toggle.classList.contains('on')) {
+    document.getElementById('aiImgUpload').classList.add('show');
+  }
+}
+
+/* ══════════════════════════════════
+   AI PROMPT
+══════════════════════════════════ */
+function updateCharCount() {
+  const len = document.getElementById('aiPrompt').value.length;
+  document.getElementById('charCount').textContent = len + ' / 500';
+}
+
+function fillPrompt(text) {
+  document.getElementById('aiPrompt').value = text;
+  updateCharCount();
+  document.getElementById('aiPrompt').focus();
+}
+
+/* ══════════════════════════════════
+   AI GENERATE
+══════════════════════════════════ */
+function startAIGenerate() {
+  const prompt = document.getElementById('aiPrompt').value.trim();
+  if (!prompt) {
+    toast('请输入创意描述~');
+    document.getElementById('aiPrompt').focus();
+    return;
+  }
+  toast('✦ AI 正在理解你的描述…');
+  setTimeout(() => {
+    toast('✓ 任务已提交，预计 5 分钟后完成');
+    addAICard(prompt);
+  }, 1200);
+  setTimeout(() => {
+    document.getElementById('createSection').classList.remove('open');
+  }, 1600);
+}
+
+/* ══════════════════════════════════
+   FILTER
+══════════════════════════════════ */
+function setFilter(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══════════════════════════════════
+   TOAST
+══════════════════════════════════ */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════
+   COMMUNITY DATA
+══════════════════════════════════ */
+const GRADIENTS = [
+  'linear-gradient(135deg,#667eea 0%,#764ba2 100%)',
+  'linear-gradient(135deg,#11998e 0%,#38ef7d 100%)',
+  'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)',
+  'linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)',
+  'linear-gradient(135deg,#f7971e 0%,#ffd200 100%)',
+  'linear-gradient(135deg,#f953c6 0%,#b91d73 100%)',
+  'linear-gradient(135deg,#43e97b 0%,#38f9d7 100%)',
+  'linear-gradient(135deg,#fa709a 0%,#fee140 100%)',
+  'linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%)',
+  'linear-gradient(135deg,#fccb90 0%,#d57eeb 100%)',
+  'linear-gradient(135deg,#e0c3fc 0%,#8ec5fc 100%)',
+  'linear-gradient(135deg,#96fbc4 0%,#f9f586 100%)',
+];
+
+const AVATARS = [
+  {bg:'#4f6ef7',text:'M'},
+  {bg:'#22c55e',text:'L'},
+  {bg:'#f59e0b',text:'S'},
+  {bg:'#ef4444',text:'R'},
+  {bg:'#8b5cf6',text:'Z'},
+  {bg:'#06b6d4',text:'K'},
+  {bg:'#ec4899',text:'Y'},
+  {bg:'#10b981',text:'W'},
+];
+
+const communityData = [
+  { title:'天空之城悬浮庭院', type:'ai',      author:'MingLi',   views:4821, likes:312, grad:0 },
+  { title:'工作室全景扫描',    type:'capture', author:'SkyDrone',  views:2104, likes:98,  grad:1 },
+  { title:'水晶洞穴探索',      type:'ai',      author:'ZeroFi',   views:8830, likes:621, grad:2 },
+  { title:'老街巷弄实景重建',  type:'capture', author:'RunLee',   views:3317, likes:201, grad:3 },
+  { title:'极简白色展厅',      type:'ai',      author:'Studio_K', views:1997, likes:143, grad:4 },
+  { title:'热带雨林穿越',      type:'ai',      author:'YuWang',   views:6644, likes:489, grad:5 },
+  { title:'地下车库全景',      type:'capture', author:'MingLi',   views:1122, likes:67,  grad:6 },
+  { title:'海底珊瑚王国',      type:'ai',      author:'ZeroFi',   views:9201, likes:734, grad:7 },
+  { title:'古镇茶馆实测',      type:'capture', author:'RunLee',   views:2780, likes:189, grad:8 },
+  { title:'废弃工厂探险',      type:'capture', author:'SkyDrone', views:5540, likes:377, grad:9 },
+  { title:'炫彩机甲战士',      type:'ai',      author:'Studio_K', views:12340, likes:901, grad:10 },
+  { title:'博物馆圆厅重建',    type:'capture', author:'YuWang',   views:4200, likes:265, grad:11 },
+];
+
+function fmtNum(n) {
+  return n >= 1000 ? (n/1000).toFixed(1) + 'k' : n;
+}
+
+function getAvatar(name) {
+  const idx = name.charCodeAt(0) % AVATARS.length;
+  return AVATARS[idx];
+}
+
+function renderCards(data) {
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = data.map((d,i) => {
+    const av = getAvatar(d.author);
+    return `
+    <div class="project-card" onclick="openProject('${d.title}')">
+      <div class="card-thumb">
+        <div class="card-thumb-bg" style="background:${GRADIENTS[d.grad]};width:100%;height:100%;"></div>
+        <span class="card-type-badge ${d.type}">${d.type === 'ai' ? 'AI 生成' : '拍摄重建'}</span>
+        <div class="card-3d-badge">⬡</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${d.title}</div>
+        <div class="card-meta">
+          <div class="card-author">
+            <div class="card-avatar" style="background:${av.bg}">${av.text}</div>
+            <span class="card-author-name">${d.author}</span>
+          </div>
+          <div class="card-stats">
+            <span class="card-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              ${fmtNum(d.views)}
+            </span>
+            <span class="card-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              ${fmtNum(d.likes)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addProcessingCard() {
+  communityData.unshift({
+    title:'我的新场景 · 重建中',
+    type:'capture', author:'你',
+    views:0, likes:0,
+    grad: Math.floor(Math.random()*GRADIENTS.length),
+    processing:true
+  });
+  renderCommunity();
+}
+
+function addAICard(prompt) {
+  communityData.unshift({
+    title: prompt.length > 18 ? prompt.slice(0,18)+'…' : prompt,
+    type:'ai', author:'你',
+    views:0, likes:0,
+    grad: Math.floor(Math.random()*GRADIENTS.length),
+    processing:true
+  });
+  renderCommunity();
+}
+
+function renderCommunity() {
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = communityData.map((d,i) => {
+    const av = getAvatar(d.author);
+    const processingOverlay = d.processing ? `
+      <div class="card-processing-overlay">
+        <div class="card-spinner"></div>
+        <div class="card-processing-text">生成中<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+      </div>` : '';
+    return `
+    <div class="project-card" onclick="${d.processing ? "toast('正在生成，请稍候')" : "openProject('"+d.title+"')"}">
+      <div class="card-thumb">
+        <div class="card-thumb-bg" style="background:${GRADIENTS[d.grad]};width:100%;height:100%;"></div>
+        <span class="card-type-badge ${d.type}">${d.type === 'ai' ? 'AI 生成' : '拍摄重建'}</span>
+        <div class="card-3d-badge">⬡</div>
+        ${processingOverlay}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${d.title}</div>
+        <div class="card-meta">
+          <div class="card-author">
+            <div class="card-avatar" style="background:${av.bg}">${av.text}</div>
+            <span class="card-author-name">${d.author}</span>
+          </div>
+          <div class="card-stats">
+            <span class="card-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              ${fmtNum(d.views)}
+            </span>
+            <span class="card-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              ${fmtNum(d.likes)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProject(title) {
+  toast('打开: ' + title);
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+renderCommunity();
+</script>
+</body>
+</html>
