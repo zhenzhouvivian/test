@@ -5,763 +5,642 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHOLO</title>
   <style>
-    /* ── TOKENS ── */
     :root {
       --sb-w: 130px;
+      --bg-app:    #09090e;
+      --bg-sb:     #0c0e16;
 
-      --bg-app:     #09090e;
-      --bg-sb:      #0c0e16;
-      --bg-panel:   rgba(13,15,26,0.90);
-      --bg-el:      rgba(255,255,255,.05);
-      --bg-el-h:    rgba(255,255,255,.08);
+      /* panel card bg — slightly lighter than app bg */
+      --card-bg:   #111320;
+      --card-tab-active-bg: #111320;
+      --card-tab-back-bg:   #0a0c18;
 
-      --blue:   #2563eb;
-      --blue2:  #3b82f6;
-      --blue-d: rgba(37,99,235,.25);
+      --blue:  #2563eb;
+      --blue2: #3b82f6;
+      --blue-d: rgba(37,99,235,.22);
       --purple: #7c3aed;
-      --cyan:   #06b6d4;
 
       --green:  #22c55e;
-      --red:    #ef4444;
       --amber:  #f59e0b;
+      --red:    #ef4444;
 
-      --t1: rgba(255,255,255,.92);
-      --t2: rgba(255,255,255,.52);
-      --t3: rgba(255,255,255,.28);
-      --t4: rgba(255,255,255,.12);
+      --t1: rgba(255,255,255,.93);
+      --t2: rgba(255,255,255,.54);
+      --t3: rgba(255,255,255,.30);
+      --t4: rgba(255,255,255,.13);
 
-      --b0: rgba(255,255,255,.06);
-      --b1: rgba(255,255,255,.11);
-      --b2: rgba(255,255,255,.18);
+      --b0: rgba(255,255,255,.05);
+      --b1: rgba(255,255,255,.10);
+      --b2: rgba(255,255,255,.17);
 
-      --r-xs: 6px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
-    }
-
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { height:100%; }
-    body {
-      font-family: 'PingFang SC','Helvetica Neue',system-ui,sans-serif;
-      background: var(--bg-app);
-      color: var(--t1);
-      height: 100%;
-      display: flex;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
+      --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
     }
 
-    /* ════════════════════════════════════
-       SIDEBAR
-    ════════════════════════════════════ */
-    .sb {
-      width: var(--sb-w);
-      flex-shrink: 0;
-      background: var(--bg-sb);
-      display: flex;
-      flex-direction: column;
-      padding: 16px 10px;
-      border-right: 1px solid var(--b0);
-      z-index: 10;
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      font-family:'PingFang SC','Helvetica Neue',system-ui,sans-serif;
+      background:var(--bg-app); color:var(--t1);
+      display:flex; overflow:hidden;
+      -webkit-font-smoothing:antialiased;
     }
 
-    .sb-logo {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 4px 18px;
+    /* ════════════ SIDEBAR ════════════ */
+    .sb{
+      width:var(--sb-w); flex-shrink:0;
+      background:var(--bg-sb);
+      display:flex; flex-direction:column;
+      padding:16px 10px;
+      border-right:1px solid var(--b0);
+      z-index:20;
     }
-    .sb-logo-text {
-      font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
-      color: var(--t1);
+    .sb-logo{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 4px 18px;
     }
-    .sb-menu-icon {
-      color: var(--t3); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+    .sb-logo-text{font-size:15px;font-weight:700;letter-spacing:1.6px;}
+    .sb-menu-icon{color:var(--t3);cursor:pointer;display:flex;align-items:center;}
+
+    .sb-create{
+      display:flex;align-items:center;gap:7px;
+      padding:9px 10px; border-radius:var(--r-sm);
+      background:rgba(37,99,235,.18);border:1px solid rgba(37,99,235,.35);
+      color:var(--blue2);font-size:13px;font-weight:600;
+      cursor:pointer;margin-bottom:16px;transition:all .15s;
+    }
+    .sb-create:hover{background:rgba(37,99,235,.28);}
+    .sb-create svg{width:13px;height:13px;}
+
+    .sb-nav{flex:1;display:flex;flex-direction:column;gap:2px;}
+    .sb-item{
+      display:flex;align-items:center;gap:9px;
+      padding:9px 10px;border-radius:var(--r-sm);
+      color:var(--t2);font-size:13px;cursor:pointer;transition:all .15s;
+    }
+    .sb-item:hover{color:var(--t1);background:rgba(255,255,255,.04);}
+    .sb-item svg{width:15px;height:15px;flex-shrink:0;}
+
+    .sb-foot{
+      border-top:1px solid var(--b0);padding-top:12px;
+      display:flex;flex-direction:column;gap:2px;
+    }
+    .sb-foot-item{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:7px 10px;border-radius:var(--r-sm);
+      color:var(--t3);font-size:12px;cursor:pointer;transition:all .15s;
+    }
+    .sb-foot-item:hover{color:var(--t2);background:rgba(255,255,255,.03);}
+    .sb-foot-item .lbl{display:flex;align-items:center;gap:7px;}
+    .sb-foot-item svg{width:13px;height:13px;}
+    .sb-tag{
+      padding:1px 6px;border-radius:4px;
+      background:rgba(37,99,235,.2);color:var(--blue2);
+      font-size:10px;font-weight:600;
+    }
+    .sb-credits{
+      display:flex;align-items:center;gap:6px;
+      padding:7px 10px;font-size:12px;color:var(--t3);
+    }
+    .sb-credits-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+    .sb-credits strong{color:var(--amber);}
+
+    /* ════════════ MAIN ════════════ */
+    .main{
+      flex:1;min-width:0;
+      display:flex;flex-direction:column;
+      overflow-y:auto;overflow-x:hidden;
+      position:relative;
     }
 
-    .sb-create {
-      display: flex; align-items: center; gap: 7px;
-      padding: 9px 10px; border-radius: var(--r-sm);
-      background: rgba(37,99,235,.18); border: 1px solid rgba(37,99,235,.35);
-      color: var(--blue2); font-size: 13px; font-weight: 600;
-      cursor: pointer; margin-bottom: 16px;
-      transition: all .15s;
-    }
-    .sb-create:hover { background: rgba(37,99,235,.28); }
-    .sb-create svg { width: 14px; height: 14px; }
-
-    .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-    .sb-item {
-      display: flex; align-items: center; gap: 9px;
-      padding: 9px 10px; border-radius: var(--r-sm);
-      color: var(--t2); font-size: 13px;
-      cursor: pointer; transition: all .15s;
-      text-decoration: none;
-    }
-    .sb-item:hover { color: var(--t1); background: var(--bg-el); }
-    .sb-item.active { color: var(--t1); }
-    .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-
-    .sb-foot {
-      border-top: 1px solid var(--b0);
-      padding-top: 12px;
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .sb-foot-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 10px; border-radius: var(--r-sm);
-      color: var(--t3); font-size: 12px;
-      cursor: pointer; transition: all .15s;
-    }
-    .sb-foot-item:hover { color: var(--t2); background: var(--bg-el); }
-    .sb-foot-item .label { display: flex; align-items: center; gap: 7px; }
-    .sb-foot-item svg { width: 14px; height: 14px; }
-    .sb-foot-tag {
-      padding: 1px 6px; border-radius: 4px;
-      background: rgba(37,99,235,.2); color: var(--blue2);
-      font-size: 10px; font-weight: 600;
+    /* ── HERO ── */
+    .hero{
+      position:relative;
+      flex-shrink:0;
+      display:flex;flex-direction:column;align-items:center;
+      padding:42px 40px 28px;
+      overflow:hidden;
     }
 
-    .sb-credits {
-      padding: 8px 10px; border-radius: var(--r-sm);
-      color: var(--t3); font-size: 12px;
-      display: flex; align-items: center; gap: 6px;
+    /* Aurora layers */
+    .aurora{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+    .al{position:absolute;width:140%;left:-20%;border-radius:50%;filter:blur(58px);}
+    .al:nth-child(1){
+      height:360px;top:-40px;
+      background:linear-gradient(108deg,
+        transparent 14%, rgba(90,35,210,.26) 32%,
+        rgba(50,90,250,.20) 50%, rgba(0,185,215,.15) 66%, transparent 80%);
+      animation:al1 13s ease-in-out infinite alternate;
     }
-    .sb-credits-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--amber);
+    .al:nth-child(2){
+      height:280px;top:40px;
+      background:linear-gradient(118deg,
+        rgba(160,25,85,.09) 8%, transparent 36%,
+        rgba(30,165,110,.07) 62%, rgba(70,45,215,.11) 80%, transparent 92%);
+      animation:al2 16s ease-in-out infinite alternate;
     }
-    .sb-credits strong { color: var(--amber); }
-
-    /* ════════════════════════════════════
-       MAIN
-    ════════════════════════════════════ */
-    .main {
-      flex: 1; min-width: 0;
-      display: flex; flex-direction: column;
-      overflow-y: auto;
-      overflow-x: hidden;
-      position: relative;
+    .al:nth-child(3){
+      height:180px;top:150px;
+      background:linear-gradient(98deg,
+        transparent 22%, rgba(205,55,95,.07) 42%,
+        rgba(70,160,255,.10) 60%, transparent 78%);
+      animation:al3 10s ease-in-out infinite alternate;
     }
-
-    /* ── HERO (aurora + panel) ── */
-    .hero {
-      position: relative;
-      min-height: 420px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 44px 40px 32px;
-      overflow: hidden;
-    }
-
-    /* Aurora streaks */
-    .aurora {
-      position: absolute; inset: 0;
-      pointer-events: none; overflow: hidden;
-    }
-    .aurora-layer {
-      position: absolute;
-      width: 140%; left: -20%;
-      border-radius: 50%;
-      filter: blur(55px);
-    }
-    .aurora-layer:nth-child(1) {
-      height: 380px; top: -60px;
-      background: linear-gradient(105deg,
-        transparent 15%,
-        rgba(100,40,220,.28) 32%,
-        rgba(60,100,255,.22) 48%,
-        rgba(0,190,210,.18) 62%,
-        transparent 78%);
-      animation: aur1 12s ease-in-out infinite alternate;
-    }
-    .aurora-layer:nth-child(2) {
-      height: 300px; top: 30px;
-      background: linear-gradient(115deg,
-        rgba(180,30,90,.10) 10%,
-        transparent 35%,
-        rgba(40,180,120,.08) 60%,
-        rgba(80,50,220,.12) 78%,
-        transparent 90%);
-      animation: aur2 15s ease-in-out infinite alternate;
-    }
-    .aurora-layer:nth-child(3) {
-      height: 200px; top: 140px;
-      background: linear-gradient(95deg,
-        transparent 20%,
-        rgba(220,60,100,.08) 40%,
-        rgba(80,170,255,.12) 58%,
-        transparent 75%);
-      animation: aur3 9s ease-in-out infinite alternate;
-    }
-    @keyframes aur1 {
-      from { transform: scaleX(1) translateY(0) rotate(-1.5deg); opacity:.85; }
-      to   { transform: scaleX(1.06) translateY(-16px) rotate(1.5deg); opacity:1; }
-    }
-    @keyframes aur2 {
-      from { transform: translateY(8px) rotate(1deg); opacity:.7; }
-      to   { transform: translateY(-12px) rotate(-1deg); opacity:.9; }
-    }
-    @keyframes aur3 {
-      from { transform: translateX(-20px); opacity:.6; }
-      to   { transform: translateX(20px); opacity:.85; }
-    }
-
-    /* radial top glow */
-    .hero::before {
-      content:''; position:absolute; inset:0; pointer-events:none;
-      background: radial-gradient(ellipse 70% 55% at 50% 0%,
-        rgba(60,80,200,.18) 0%, transparent 60%);
+    @keyframes al1{from{transform:scaleX(1) translateY(0) rotate(-1.5deg);opacity:.8;}
+                  to  {transform:scaleX(1.07) translateY(-18px) rotate(1.5deg);opacity:1;}}
+    @keyframes al2{from{transform:translateY(10px) rotate(1deg);opacity:.65;}
+                  to  {transform:translateY(-14px) rotate(-1deg);opacity:.9;}}
+    @keyframes al3{from{transform:translateX(-22px);opacity:.55;}
+                  to  {transform:translateX(22px);opacity:.8;}}
+    .hero::before{
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(ellipse 68% 52% at 50% 0%,
+        rgba(55,75,195,.16) 0%, transparent 62%);
     }
 
     /* ── Slogan ── */
-    .slogan {
-      position: relative; z-index: 2;
-      font-size: 32px; font-weight: 700;
-      letter-spacing: -.5px; text-align: center;
-      margin-bottom: 28px;
-      background: linear-gradient(135deg, #fff 0%, rgba(180,200,255,.85) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      min-height: 40px; /* placeholder space when TBD */
+    .slogan{
+      position:relative;z-index:2;
+      font-size:30px;font-weight:700;letter-spacing:-.4px;
+      text-align:center;margin-bottom:28px;
+      background:linear-gradient(130deg,#fff 0%,rgba(175,195,255,.82) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+      transition:opacity .3s;
     }
 
-    /* ── Creation panel ── */
-    .panel {
-      position: relative; z-index: 2;
-      width: 100%; max-width: 720px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(24px) saturate(140%);
-      border: 1px solid var(--b1);
-      border-radius: var(--r-xl);
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(0,0,0,.55),
-                  0 0 0 1px rgba(255,255,255,.04);
-      animation: panelIn .5s cubic-bezier(.22,.68,0,1.2) both;
+    /* ════════════════════════════════════════════
+       CREATION CARD  (即梦-style central card)
+    ════════════════════════════════════════════ */
+    .creation-wrap{
+      position:relative;z-index:2;
+      width:100%;max-width:780px;
+      animation:cardIn .55s cubic-bezier(.22,.68,0,1.15) both;
     }
-    @keyframes panelIn {
-      from { opacity:0; transform: translateY(22px) scale(.98); }
-      to   { opacity:1; transform: translateY(0) scale(1); }
+    @keyframes cardIn{
+      from{opacity:0;transform:translateY(24px) scale(.977);}
+      to  {opacity:1;transform:translateY(0) scale(1);}
     }
 
-    /* ── Panel tabs ── */
-    .panel-tabs {
-      display: flex; padding: 10px 12px 0;
-      gap: 4px; border-bottom: 1px solid var(--b0);
+    /* ── Overlapping tab cards ── */
+    .tab-scene{
+      position:relative;
+      height:52px;
+      /* tabs overflow downward into card top — handled by card's border-top align */
     }
-    .ptab {
-      flex: 1; display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px 12px;
-      border-radius: var(--r-md) var(--r-md) 0 0;
-      cursor: pointer; transition: all .2s;
-      position: relative;
-    }
-    .ptab:hover:not(.active) { background: var(--bg-el); }
-    .ptab.active {
-      background: linear-gradient(160deg,
-        rgba(37,99,235,.28) 0%, rgba(100,50,200,.22) 100%);
-    }
-    .ptab.active::after {
-      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--blue) 0%, var(--purple) 100%);
-      border-radius: 2px 2px 0 0;
+    .tab-card{
+      position:absolute;
+      height:52px;
+      display:flex;align-items:center;gap:9px;
+      padding:0 20px;
+      border-radius:var(--r-lg) var(--r-lg) 0 0;
+      cursor:pointer;
+      transition:all .28s cubic-bezier(.4,0,.2,1);
+      border:1px solid var(--b1);
+      border-bottom:none;
+      font-size:14px;font-weight:600;
+      user-select:none;
+      white-space:nowrap;
     }
 
-    .ptab-icon {
-      width: 36px; height: 36px; border-radius: 9px;
-      background: var(--bg-el); border: 1px solid var(--b1);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-size: 17px;
-      transition: all .2s;
+    /* Rebuild tab — left card */
+    #tabRebuild{
+      left:0; width:175px;
+      z-index:4;
+      transform-origin:bottom left;
     }
-    .ptab.active .ptab-icon {
-      background: linear-gradient(135deg, rgba(37,99,235,.35), rgba(100,50,200,.28));
-      border-color: rgba(37,99,235,.4);
-      box-shadow: 0 0 12px rgba(37,99,235,.3);
+    /* AI tab — right card, overlaps 28px behind rebuild */
+    #tabAI{
+      left:147px; width:170px;
+      z-index:2;
+      transform-origin:bottom right;
     }
 
-    .ptab-text {}
-    .ptab-name {
-      font-size: 13px; font-weight: 600; color: var(--t1);
-      transition: color .2s;
+    /* Active: front card */
+    .tab-card.active{
+      z-index:10;
+      background:var(--card-tab-active-bg);
+      border-color:var(--b2);
+      color:var(--t1);
+      box-shadow:0 -4px 18px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07);
     }
-    .ptab:not(.active) .ptab-name { color: var(--t2); }
-    .ptab-sub {
-      font-size: 11px; color: var(--t3); margin-top: 2px;
-      transition: color .2s;
+    /* Inactive: back card (peeks from behind) */
+    .tab-card:not(.active){
+      background:var(--card-tab-back-bg);
+      border-color:var(--b0);
+      color:var(--t3);
     }
-    .ptab.active .ptab-sub { color: rgba(130,160,255,.75); }
+    /* subtle scale-down for depth */
+    #tabRebuild:not(.active){transform:scale(.97) translateY(3px);}
+    #tabAI:not(.active){transform:scale(.97) translateY(3px);}
 
-    /* ── Panel body ── */
-    .panel-body {
-      padding: 18px 18px 16px;
+    .tab-icon{font-size:16px;flex-shrink:0;}
+    .tab-label{font-size:13px;font-weight:600;}
+
+    /* ── Main card body ── */
+    .card-body{
+      background:var(--card-bg);
+      border:1px solid var(--b2);
+      border-radius:0 var(--r-xl) var(--r-xl) var(--r-xl);
+      padding:22px 22px 18px;
+      box-shadow:0 12px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+      position:relative;z-index:5; /* above inactive tab */
     }
 
     /* tab panels */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
 
-    /* ════════════════════════════════════
-       REBUILD TAB
-    ════════════════════════════════════ */
+    /* ════════════════════════════════
+       REBUILD PANEL
+    ════════════════════════════════ */
+    .upload-zone{
+      border:1.5px dashed var(--b2);
+      border-radius:var(--r-lg);
+      background:rgba(255,255,255,.024);
+      padding:26px 20px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .22s;
+      position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag-over{
+      border-color:rgba(37,99,235,.55);
+      background:rgba(37,99,235,.05);
+    }
+    .upload-zone input{display:none;}
 
-    /* Upload zone */
-    .upload-zone {
-      border: 1.5px dashed var(--b2);
-      border-radius: var(--r-lg);
-      background: rgba(255,255,255,.025);
-      padding: 22px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all .2s;
-      position: relative;
+    .uz-icons{display:flex;justify-content:center;gap:14px;margin-bottom:12px;}
+    .uz-icon{
+      display:flex;flex-direction:column;align-items:center;gap:5px;
     }
-    .upload-zone:hover, .upload-zone.drag-over {
-      border-color: rgba(37,99,235,.6);
-      background: rgba(37,99,235,.06);
+    .uz-icon-box{
+      width:34px;height:34px;border-radius:var(--r-sm);
+      background:rgba(255,255,255,.05);border:1px solid var(--b1);
+      display:flex;align-items:center;justify-content:center;color:var(--t2);
     }
-    .upload-zone input { display: none; }
+    .uz-icon-box svg{width:17px;height:17px;}
+    .uz-icon span{font-size:10px;color:var(--t3);}
 
-    .uz-icons { display: flex; justify-content: center; gap: 16px; margin-bottom: 12px; }
-    .uz-icon {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
+    .uz-title{font-size:14px;font-weight:500;color:var(--t2);margin-bottom:7px;}
+    .uz-fmts{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:8px;}
+    .uz-fmt{
+      padding:2px 8px;border-radius:5px;
+      background:rgba(255,255,255,.05);border:1px solid var(--b1);
+      font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px;
     }
-    .uz-icon-box {
-      width: 36px; height: 36px; border-radius: var(--r-sm);
-      background: var(--bg-el); border: 1px solid var(--b1);
-      display: flex; align-items: center; justify-content: center;
-      color: var(--t2);
+    .uz-limits{font-size:11px;color:var(--t4);line-height:1.75;}
+    .uz-guide{
+      display:inline-flex;align-items:center;gap:4px;
+      margin-top:8px;font-size:11px;color:var(--blue2);cursor:pointer;
     }
-    .uz-icon-box svg { width: 18px; height: 18px; }
-    .uz-icon span { font-size: 10px; color: var(--t3); }
+    .uz-guide svg{width:11px;height:11px;}
 
-    .uz-title { font-size: 13px; color: var(--t2); margin-bottom: 6px; }
-    .uz-formats { font-size: 11px; color: var(--t3); line-height: 1.7; }
-    .uz-guide {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-top: 8px; font-size: 11px; color: var(--blue2);
-      cursor: pointer;
+    /* File bar */
+    .file-bar{
+      display:none;align-items:center;gap:10px;
+      margin-top:10px;padding:10px 14px;
+      background:rgba(255,255,255,.04);border:1px solid var(--b1);
+      border-radius:var(--r-md);
     }
-    .uz-guide svg { width: 12px; height: 12px; }
-
-    /* file selected bar */
-    .file-bar {
-      display: none; align-items: center; gap: 10px;
-      margin-top: 10px; padding: 10px 14px;
-      background: var(--bg-el); border: 1px solid var(--b1);
-      border-radius: var(--r-md);
+    .file-bar.show{display:flex;}
+    .fb-icon{
+      width:30px;height:30px;border-radius:7px;
+      background:var(--blue-d);border:1px solid rgba(37,99,235,.3);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
     }
-    .file-bar.show { display: flex; }
-    .file-bar-icon {
-      width: 32px; height: 32px; border-radius: 7px;
-      background: var(--blue-d); border: 1px solid rgba(37,99,235,.35);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+    .fb-icon svg{width:14px;height:14px;color:var(--blue2);}
+    .fb-info{flex:1;min-width:0;}
+    .fb-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .fb-size{font-size:11px;color:var(--t3);margin-top:1px;}
+    .fb-prog{height:2px;background:var(--b1);border-radius:2px;margin-top:5px;overflow:hidden;}
+    .fb-fill{height:100%;border-radius:2px;width:0;transition:width .3s;
+      background:linear-gradient(90deg,var(--blue),var(--purple));}
+    .fb-rm{
+      width:20px;height:20px;border-radius:5px;
+      background:none;border:none;color:var(--t3);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:all .15s;
     }
-    .file-bar-icon svg { width: 15px; height: 15px; color: var(--blue2); }
-    .file-bar-info { flex: 1; min-width: 0; }
-    .file-bar-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .file-bar-size { font-size: 11px; color: var(--t3); margin-top: 2px; }
-    .file-bar-prog { height: 2px; background: var(--bg-el-h); border-radius: 2px; margin-top: 5px; overflow: hidden; }
-    .file-bar-fill { height: 100%; border-radius: 2px; width: 0; transition: width .3s ease;
-      background: linear-gradient(90deg, var(--blue), var(--purple)); }
-    .file-bar-rm {
-      width: 22px; height: 22px; border-radius: 5px;
-      background: none; border: none; color: var(--t3);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all .15s; flex-shrink: 0;
-    }
-    .file-bar-rm:hover { background: rgba(239,68,68,.12); color: var(--red); }
+    .fb-rm:hover{background:rgba(239,68,68,.12);color:var(--red);}
 
     /* Type selector */
-    .type-section {
-      display: none; margin-top: 14px;
+    .type-sec{display:none;margin-top:14px;}
+    .type-sec.show{display:block;}
+    .type-sec-lbl{
+      font-size:11px;font-weight:600;color:var(--t3);
+      letter-spacing:.6px;text-transform:uppercase;margin-bottom:9px;
     }
-    .type-section.show { display: block; }
-    .type-label {
-      font-size: 11px; font-weight: 600; color: var(--t3);
-      letter-spacing: .6px; text-transform: uppercase;
-      margin-bottom: 9px;
+    .type-row{display:flex;gap:8px;}
+    .type-btn{
+      flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;
+      padding:11px 8px;border-radius:var(--r-md);
+      border:1.5px solid var(--b1);background:rgba(255,255,255,.03);
+      cursor:pointer;transition:all .2s;position:relative;
     }
-    .type-row { display: flex; gap: 8px; }
-    .type-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-      padding: 10px 8px; border-radius: var(--r-md);
-      border: 1.5px solid var(--b1); background: var(--bg-el);
-      cursor: pointer; transition: all .2s; position: relative;
+    .type-btn:hover{border-color:var(--b2);}
+    .type-btn.active{
+      border-color:var(--blue);background:rgba(37,99,235,.10);
     }
-    .type-btn:hover { border-color: var(--b2); }
-    .type-btn.active {
-      border-color: var(--blue); background: rgba(37,99,235,.12);
+    .type-btn-ico{font-size:20px;}
+    .type-btn-name{font-size:12px;font-weight:600;color:var(--t1);}
+    .type-btn-sub{font-size:10px;color:var(--t3);}
+    .type-btn.active .type-btn-name{color:var(--blue2);}
+    .type-chk{
+      position:absolute;top:7px;right:7px;
+      width:14px;height:14px;border-radius:50%;
+      background:var(--blue);display:none;
+      align-items:center;justify-content:center;
     }
-    .type-btn-icon { font-size: 20px; }
-    .type-btn-name { font-size: 12px; font-weight: 600; color: var(--t1); }
-    .type-btn-sub { font-size: 10px; color: var(--t3); }
-    .type-btn.active .type-btn-name { color: var(--blue2); }
-    .type-check {
-      position: absolute; top: 6px; right: 6px;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--blue); display: none;
-      align-items: center; justify-content: center;
-    }
-    .type-btn.active .type-check { display: flex; }
-    .type-check svg { width: 8px; height: 8px; color: #fff; }
+    .type-btn.active .type-chk{display:flex;}
+    .type-chk svg{width:8px;height:8px;color:#fff;}
 
-    /* options row */
-    .opts-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 14px; gap: 10px;
+    /* Bottom bar */
+    .bottom-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-top:14px;gap:10px;
     }
-    .opts-left { display: flex; gap: 6px; }
-    .opt-pill {
-      display: flex; align-items: center; gap: 5px;
-      padding: 6px 12px; border-radius: var(--r-sm);
-      background: var(--bg-el); border: 1px solid var(--b1);
-      color: var(--t2); font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: all .15s;
+    .opt-pill{
+      display:flex;align-items:center;gap:5px;
+      padding:7px 13px;border-radius:var(--r-sm);
+      background:rgba(255,255,255,.04);border:1px solid var(--b1);
+      color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;
     }
-    .opt-pill:hover { border-color: var(--b2); color: var(--t1); }
-    .opt-pill.active { background: var(--blue-d); border-color: rgba(37,99,235,.45); color: var(--blue2); }
-    .opt-pill svg { width: 12px; height: 12px; }
+    .opt-pill:hover{border-color:var(--b2);color:var(--t1);}
+    .opt-pill svg{width:10px;height:10px;}
 
-    /* create / generate button */
-    .btn-create {
-      padding: 8px 20px; border-radius: var(--r-md);
-      background: var(--blue); color: #fff;
-      font-size: 13px; font-weight: 600; border: none; cursor: pointer;
-      transition: all .18s; white-space: nowrap;
-      opacity: .45; pointer-events: none;
+    .btn-create{
+      padding:9px 24px;border-radius:var(--r-md);
+      background:var(--blue);color:#fff;
+      font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .18s;
+      opacity:.4;pointer-events:none;
     }
-    .btn-create.ready { opacity: 1; pointer-events: all; }
-    .btn-create.ready:hover { background: var(--blue2); box-shadow: 0 4px 16px rgba(37,99,235,.4); }
+    .btn-create.ready{opacity:1;pointer-events:all;}
+    .btn-create.ready:hover{background:var(--blue2);box-shadow:0 4px 18px rgba(37,99,235,.38);}
 
-    /* ════════════════════════════════════
-       AI TAB
-    ════════════════════════════════════ */
+    /* ════════════════════════════════
+       AI PANEL
+    ════════════════════════════════ */
 
     /* Examples strip */
-    .ai-examples {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 14px;
+    .ai-strip{
+      display:flex;align-items:center;gap:8px;margin-bottom:14px;
     }
-    .ai-examples-label {
-      font-size: 11px; color: var(--t3);
-      white-space: nowrap; flex-shrink: 0;
+    .ai-strip-lbl{font-size:11px;color:var(--t3);flex-shrink:0;}
+    .ai-examples{
+      display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none;
     }
-    .ai-example-imgs {
-      display: flex; gap: 6px; flex: 1; overflow-x: auto;
-      scrollbar-width: none; padding-bottom: 2px;
+    .ai-examples::-webkit-scrollbar{display:none;}
+    .ai-ex{
+      width:54px;height:54px;border-radius:var(--r-sm);
+      flex-shrink:0;border:1.5px solid var(--b1);
+      cursor:pointer;transition:all .18s;overflow:hidden;position:relative;
     }
-    .ai-example-imgs::-webkit-scrollbar { display: none; }
-    .ai-example-img {
-      width: 52px; height: 52px; border-radius: var(--r-sm);
-      flex-shrink: 0; border: 1.5px solid var(--b1);
-      cursor: pointer; transition: all .18s; overflow: hidden;
-      position: relative;
+    .ai-ex:hover{border-color:rgba(37,99,235,.5);transform:scale(1.06);}
+    .ai-ex.sel{border-color:var(--blue);}
+    .ai-ex .thumb{
+      width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      font-size:22px;
     }
-    .ai-example-img:hover { border-color: rgba(37,99,235,.5); transform: scale(1.06); }
-    .ai-example-img.selected { border-color: var(--blue); }
-    .ai-example-img .thumb {
-      width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
+    .ai-ex.sel::after{
+      content:'✓';position:absolute;inset:0;
+      background:rgba(37,99,235,.52);
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;color:#fff;
     }
-    .ai-example-img.selected::after {
-      content: '✓'; position: absolute; inset: 0;
-      background: rgba(37,99,235,.5);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; color: #fff;
+    .ai-next{
+      flex-shrink:0;padding:5px 10px;border-radius:var(--r-sm);
+      background:rgba(255,255,255,.04);border:1px solid var(--b1);
+      color:var(--t3);font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;
     }
-    .ai-next-batch {
-      flex-shrink: 0; padding: 5px 10px; border-radius: var(--r-sm);
-      background: var(--bg-el); border: 1px solid var(--b1);
-      color: var(--t3); font-size: 11px; cursor: pointer;
-      transition: all .15s; white-space: nowrap;
-    }
-    .ai-next-batch:hover { color: var(--t2); border-color: var(--b2); }
+    .ai-next:hover{color:var(--t2);border-color:var(--b2);}
 
     /* AI main area */
-    .ai-main {
-      display: grid; grid-template-columns: 200px 1fr; gap: 12px;
+    .ai-main{display:grid;grid-template-columns:190px 1fr;gap:12px;}
+
+    /* Image zone (primary) */
+    .ai-img-zone{
+      border:1.5px dashed var(--b2);border-radius:var(--r-lg);
+      background:rgba(255,255,255,.024);
+      aspect-ratio:1;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+    }
+    .ai-img-zone:hover{border-color:rgba(37,99,235,.5);background:rgba(37,99,235,.04);}
+    .ai-img-zone input{display:none;}
+    .ai-img-zone svg{width:26px;height:26px;color:var(--t3);}
+    .ai-iz-text{font-size:12px;color:var(--t3);text-align:center;line-height:1.5;}
+
+    .ai-ex-preview{
+      position:absolute;inset:0;
+      display:none;align-items:center;justify-content:center;font-size:68px;
+    }
+    .ai-img-zone.has-ex .ai-iz-default{display:none;}
+    .ai-img-zone.has-ex .ai-ex-preview{display:flex;}
+
+    .ai-img-uploaded{
+      position:absolute;inset:0;display:none;
+    }
+    .ai-img-uploaded.show{display:block;}
+    .ai-img-uploaded img{width:100%;height:100%;object-fit:cover;}
+    .ai-img-rm{
+      position:absolute;top:5px;right:5px;
+      width:22px;height:22px;border-radius:5px;
+      background:rgba(0,0,0,.65);border:none;color:#fff;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:13px;
     }
 
-    /* Image upload (primary) */
-    .ai-img-zone {
-      border: 1.5px dashed var(--b2); border-radius: var(--r-lg);
-      background: rgba(255,255,255,.025);
-      aspect-ratio: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 8px;
-      cursor: pointer; transition: all .2s; position: relative;
-      overflow: hidden;
+    /* Prompt area */
+    .ai-prompt-box{
+      display:flex;flex-direction:column;
+      border:1px solid var(--b1);border-radius:var(--r-lg);
+      background:rgba(255,255,255,.03);overflow:hidden;
+      transition:border-color .2s;height:100%;
     }
-    .ai-img-zone:hover { border-color: rgba(37,99,235,.5); background: rgba(37,99,235,.05); }
-    .ai-img-zone input { display: none; }
-    .ai-img-zone svg { color: var(--t3); width: 28px; height: 28px; }
-    .ai-img-zone-text { font-size: 12px; color: var(--t3); text-align: center; line-height: 1.5; }
-    .ai-img-zone-hint { font-size: 10px; color: var(--t4); }
+    .ai-prompt-box:focus-within{border-color:rgba(37,99,235,.38);}
+    .ai-prompt-hint{
+      font-size:10px;font-weight:600;color:var(--t3);
+      letter-spacing:.5px;padding:10px 12px 4px;
+    }
+    .ai-ta{
+      flex:1;width:100%;background:none;border:none;outline:none;
+      color:var(--t1);font-size:13px;line-height:1.65;
+      font-family:inherit;resize:none;
+      padding:4px 12px 10px;min-height:96px;
+    }
+    .ai-ta::placeholder{color:var(--t4);}
+    .ai-prompt-foot{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 12px;border-top:1px solid var(--b0);
+    }
+    .ai-autofill{
+      display:flex;align-items:center;gap:5px;
+      padding:4px 10px;border-radius:var(--r-sm);
+      background:rgba(255,255,255,.04);border:1px solid var(--b1);
+      color:var(--t3);font-size:11px;cursor:pointer;transition:all .15s;
+    }
+    .ai-autofill:hover{color:var(--t2);}
+    .ai-autofill svg{width:11px;height:11px;}
+    .ai-cc{font-size:10px;color:var(--t4);}
 
-    /* Preview uploaded image */
-    .ai-img-preview {
-      position: absolute; inset: 0;
-      display: none; align-items: center; justify-content: center;
+    /* AI bottom bar */
+    .ai-bot{
+      display:flex;align-items:center;justify-content:space-between;margin-top:12px;
     }
-    .ai-img-preview.show { display: flex; }
-    .ai-img-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .ai-img-remove {
-      position: absolute; top: 5px; right: 5px;
-      width: 22px; height: 22px; border-radius: 5px;
-      background: rgba(0,0,0,.6); border: none; color: #fff;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 13px;
+    .ai-credits{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3);}
+    .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+    .ai-credits strong{color:var(--amber);}
+    .btn-gen{
+      padding:9px 24px;border-radius:var(--r-md);
+      background:linear-gradient(130deg,var(--blue) 0%,var(--purple) 100%);
+      color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;
+      transition:all .18s;display:flex;align-items:center;gap:7px;
     }
+    .btn-gen:hover{box-shadow:0 4px 20px rgba(37,99,235,.38);transform:translateY(-1px);}
+    .btn-gen svg{width:13px;height:13px;}
 
-    /* Example selected preview */
-    .ai-img-zone.has-example .ai-img-zone-default { display: none; }
-    .ai-example-preview {
-      position: absolute; inset: 0;
-      align-items: center; justify-content: center;
-      font-size: 60px; display: none;
-    }
-    .ai-img-zone.has-example .ai-example-preview { display: flex; }
+    /* ════════════════════════════════
+       COMMUNITY
+    ════════════════════════════════ */
+    .community{padding:6px 32px 48px;flex:1;}
 
-    /* Right: prompt area */
-    .ai-prompt-area {
-      display: flex; flex-direction: column; gap: 8px;
+    .comm-hd{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:14px;padding-bottom:10px;
+      border-bottom:1px solid var(--b0);
     }
-    .ai-prompt-box {
-      flex: 1; border: 1px solid var(--b1); border-radius: var(--r-lg);
-      background: rgba(255,255,255,.03);
-      display: flex; flex-direction: column; overflow: hidden;
-      transition: border-color .2s;
+    .comm-title{font-size:13px;font-weight:600;color:var(--t2);}
+    .comm-filters{display:flex;gap:4px;}
+    .comm-filter{
+      padding:4px 12px;border-radius:20px;
+      background:transparent;border:1px solid transparent;
+      color:var(--t3);font-size:12px;cursor:pointer;transition:all .15s;
     }
-    .ai-prompt-box:focus-within { border-color: rgba(37,99,235,.4); }
-    .ai-prompt-hint {
-      font-size: 10px; font-weight: 600; color: var(--t3);
-      letter-spacing: .5px; padding: 10px 12px 4px;
-    }
-    .ai-prompt-textarea {
-      flex: 1; width: 100%; background: none; border: none; outline: none;
-      color: var(--t1); font-size: 13px; line-height: 1.65;
-      font-family: inherit; resize: none; padding: 4px 12px 10px;
-      min-height: 80px;
-    }
-    .ai-prompt-textarea::placeholder { color: var(--t4); }
-    .ai-prompt-footer {
-      padding: 8px 12px; border-top: 1px solid var(--b0);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .ai-autofill {
-      display: flex; align-items: center; gap: 5px;
-      padding: 4px 10px; border-radius: var(--r-sm);
-      background: var(--bg-el); border: 1px solid var(--b1);
-      color: var(--t3); font-size: 11px; cursor: pointer; transition: all .15s;
-    }
-    .ai-autofill:hover { color: var(--t2); }
-    .ai-autofill svg { width: 12px; height: 12px; }
-    .ai-char-count { font-size: 10px; color: var(--t4); }
+    .comm-filter:hover{color:var(--t2);}
+    .comm-filter.active{border-color:var(--b1);color:var(--t1);background:rgba(255,255,255,.05);}
 
-    /* Bottom action row (AI) */
-    .ai-actions {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 12px;
+    .comm-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:12px;
     }
-    .ai-credits {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--t3);
+    .comm-card{
+      border-radius:var(--r-md);overflow:hidden;
+      cursor:pointer;transition:all .2s;
+      border:1px solid var(--b0);position:relative;
     }
-    .ai-credits-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
-    .ai-credits strong { color: var(--amber); }
-
-    .btn-generate {
-      padding: 9px 22px; border-radius: var(--r-md);
-      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
-      color: #fff; font-size: 13px; font-weight: 600; border: none; cursor: pointer;
-      transition: all .18s; display: flex; align-items: center; gap: 7px;
+    .comm-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.38);border-color:var(--b1);}
+    .cc-thumb{aspect-ratio:4/3;position:relative;overflow:hidden;}
+    .cc-bg{width:100%;height:100%;transition:transform .3s;}
+    .comm-card:hover .cc-bg{transform:scale(1.04);}
+    .cc-tag{
+      position:absolute;top:7px;left:7px;
+      padding:2px 7px;border-radius:4px;
+      font-size:10px;font-weight:600;
+      background:rgba(0,0,0,.52);backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.85);
     }
-    .btn-generate:hover {
-      box-shadow: 0 4px 20px rgba(37,99,235,.4); transform: translateY(-1px);
+    .cc-tag.ai-tag{background:rgba(37,99,235,.55);border-color:rgba(37,99,235,.38);}
+    .cc-body{padding:9px 10px 10px;background:rgba(255,255,255,.035);}
+    .cc-title{font-size:12px;font-weight:500;margin-bottom:5px;}
+    .cc-meta{display:flex;align-items:center;justify-content:space-between;}
+    .cc-author{display:flex;align-items:center;gap:5px;}
+    .cc-av{
+      width:15px;height:15px;border-radius:50%;
+      font-size:8px;font-weight:700;color:#fff;
+      display:flex;align-items:center;justify-content:center;
     }
-    .btn-generate svg { width: 14px; height: 14px; }
-
-    /* ════════════════════════════════════
-       COMMUNITY SECTION
-    ════════════════════════════════════ */
-    .community {
-      padding: 4px 32px 40px;
-      flex: 1;
-    }
-
-    .comm-hd {
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 14px; padding-bottom: 10px;
-      border-bottom: 1px solid var(--b0);
-    }
-    .comm-hd-title { font-size: 13px; font-weight: 600; color: var(--t2); }
-    .comm-filters { display: flex; gap: 4px; }
-    .comm-filter {
-      padding: 4px 12px; border-radius: 20px;
-      background: transparent; border: 1px solid transparent;
-      color: var(--t3); font-size: 12px; cursor: pointer; transition: all .15s;
-    }
-    .comm-filter:hover { color: var(--t2); }
-    .comm-filter.active {
-      border-color: var(--b1); color: var(--t1); background: var(--bg-el);
-    }
-
-    .comm-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
-    .comm-card {
-      border-radius: var(--r-md); overflow: hidden;
-      cursor: pointer; transition: all .2s; position: relative;
-      border: 1px solid var(--b0);
-    }
-    .comm-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); border-color: var(--b1); }
-    .comm-card-thumb {
-      aspect-ratio: 4/3; position: relative; overflow: hidden;
-    }
-    .comm-card-bg {
-      width: 100%; height: 100%; transition: transform .3s ease;
-    }
-    .comm-card:hover .comm-card-bg { transform: scale(1.04); }
-    .comm-card-tag {
-      position: absolute; top: 7px; left: 7px;
-      padding: 2px 7px; border-radius: 4px;
-      font-size: 10px; font-weight: 600; letter-spacing: .2px;
-      background: rgba(0,0,0,.55); backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.85);
-    }
-    .comm-card-tag.ai-tag {
-      background: rgba(37,99,235,.55); border-color: rgba(37,99,235,.4);
-    }
-    .comm-card-body { padding: 9px 10px 10px; background: var(--bg-el); }
-    .comm-card-title { font-size: 12px; font-weight: 500; margin-bottom: 5px; }
-    .comm-card-meta { display: flex; align-items: center; justify-content: space-between; }
-    .comm-card-author { display: flex; align-items: center; gap: 5px; }
-    .comm-card-av {
-      width: 16px; height: 16px; border-radius: 50%;
-      font-size: 9px; font-weight: 700; color: #fff;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .comm-card-name { font-size: 11px; color: var(--t3); }
-    .comm-card-stat { font-size: 10px; color: var(--t4); }
+    .cc-name{font-size:11px;color:var(--t3);}
+    .cc-stat{font-size:10px;color:var(--t4);}
 
     /* processing overlay */
-    .comm-card-proc {
-      position: absolute; inset: 0;
-      background: rgba(9,9,14,.65); backdrop-filter: blur(3px);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 7px;
+    .cc-proc{
+      position:absolute;inset:0;
+      background:rgba(9,9,14,.62);backdrop-filter:blur(3px);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:7px;
     }
-    .spinner {
-      width: 24px; height: 24px; border-radius: 50%;
-      border: 2px solid var(--b0); border-top-color: var(--blue);
-      animation: spin .7s linear infinite;
+    .spinner{
+      width:22px;height:22px;border-radius:50%;
+      border:2px solid var(--b1);border-top-color:var(--blue);
+      animation:spin .7s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .proc-text { font-size: 11px; color: var(--t3); }
-    @keyframes blink {
-      0%,100%{opacity:.25} 40%{opacity:1}
-    }
-    .dots span { animation: blink 1.4s infinite both; }
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .proc-txt{font-size:10px;color:var(--t3);}
+    @keyframes blink{0%,100%{opacity:.2}40%{opacity:1}}
+    .dots span{animation:blink 1.4s infinite both;}
     .dots span:nth-child(2){animation-delay:.2s}
     .dots span:nth-child(3){animation-delay:.4s}
 
-    /* ════════════════════════════════════
-       FLOATING PROJECTS PANEL
-    ════════════════════════════════════ */
-    .float-panel {
-      position: fixed; bottom: 20px; right: 20px;
-      background: rgba(16,18,30,.92);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--b1);
-      border-radius: var(--r-lg);
-      box-shadow: 0 8px 32px rgba(0,0,0,.5);
-      z-index: 100;
-      overflow: hidden;
-      animation: floatIn .4s .2s cubic-bezier(.22,.68,0,1.2) both;
-      transition: width .3s, height .3s;
+    /* ════════════════════════════════
+       FLOATING PROJECTS
+    ════════════════════════════════ */
+    .float-panel{
+      position:fixed;bottom:20px;right:20px;
+      background:rgba(14,16,26,.94);
+      backdrop-filter:blur(20px);
+      border:1px solid var(--b1);border-radius:var(--r-lg);
+      box-shadow:0 8px 32px rgba(0,0,0,.5);
+      z-index:100;overflow:hidden;
+      animation:fIn .4s .25s cubic-bezier(.22,.68,0,1.2) both;
     }
-    @keyframes floatIn {
-      from { opacity:0; transform: translateY(16px) scale(.95); }
-      to   { opacity:1; transform: translateY(0) scale(1); }
+    @keyframes fIn{from{opacity:0;transform:translateY(14px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+    .fp-hd{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 10px;border-bottom:1px solid var(--b0);
     }
+    .fp-hd-title{font-size:11px;color:var(--t3);font-weight:600;}
+    .fp-toggle{
+      width:17px;height:17px;border-radius:4px;background:none;border:none;
+      color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:12px;transition:color .15s;
+    }
+    .fp-toggle:hover{color:var(--t2);}
+    .fp-body{padding:8px;display:flex;gap:6px;}
+    .fp-body.collapsed{display:none;}
+    .fp-thumb{
+      width:70px;height:52px;border-radius:var(--r-sm);
+      overflow:hidden;flex-shrink:0;position:relative;cursor:pointer;
+      border:1px solid var(--b1);transition:border-color .15s;
+    }
+    .fp-thumb:hover{border-color:var(--b2);}
+    .fp-thumb-bg{width:100%;height:100%;}
+    .fp-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 50%);}
+    .fp-status{
+      position:absolute;bottom:4px;left:5px;
+      font-size:9px;color:rgba(255,255,255,.68);
+      display:flex;align-items:center;gap:3px;
+    }
+    .fp-dot{width:5px;height:5px;border-radius:50%;background:var(--green);}
+    .fp-dot.proc{background:var(--amber);animation:blink 1s infinite;}
 
-    .float-hd {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 10px; border-bottom: 1px solid var(--b0);
+    /* ── TOAST ── */
+    .toast{
+      position:fixed;bottom:78px;left:50%;
+      transform:translateX(-50%) translateY(10px);
+      padding:9px 18px;border-radius:var(--r-md);
+      background:rgba(18,20,32,.96);border:1px solid var(--b1);
+      color:var(--t1);font-size:12px;font-weight:500;
+      box-shadow:0 8px 28px rgba(0,0,0,.5);
+      z-index:1000;opacity:0;pointer-events:none;
+      transition:all .26s cubic-bezier(.4,0,.2,1);white-space:nowrap;
     }
-    .float-hd-title { font-size: 11px; color: var(--t3); font-weight: 600; }
-    .float-hd-btn {
-      width: 18px; height: 18px; border-radius: 4px;
-      background: none; border: none; color: var(--t3);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 12px; transition: all .15s;
-    }
-    .float-hd-btn:hover { color: var(--t1); }
-
-    .float-body {
-      padding: 8px; display: flex; gap: 6px;
-    }
-    .float-body.collapsed { display: none; }
-
-    .float-thumb {
-      width: 72px; height: 54px; border-radius: var(--r-sm);
-      overflow: hidden; flex-shrink: 0; position: relative; cursor: pointer;
-      border: 1px solid var(--b1); transition: border-color .15s;
-    }
-    .float-thumb:hover { border-color: var(--b2); }
-    .float-thumb-bg { width: 100%; height: 100%; }
-    .float-thumb-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 50%);
-    }
-    .float-thumb-status {
-      position: absolute; bottom: 4px; left: 5px;
-      font-size: 9px; color: rgba(255,255,255,.7);
-      display: flex; align-items: center; gap: 3px;
-    }
-    .float-status-dot {
-      width: 5px; height: 5px; border-radius: 50%; background: var(--green);
-    }
-    .float-status-dot.proc { background: var(--amber); animation: blink 1s infinite; }
-
-    /* ════════════════════════════════════
-       TOAST
-    ════════════════════════════════════ */
-    .toast {
-      position: fixed; bottom: 80px; left: 50%;
-      transform: translateX(-50%) translateY(10px);
-      padding: 9px 18px; border-radius: var(--r-md);
-      background: rgba(22,24,38,.95); border: 1px solid var(--b1);
-      color: var(--t1); font-size: 12px; font-weight: 500;
-      box-shadow: 0 8px 28px rgba(0,0,0,.5);
-      z-index: 1000; opacity: 0; pointer-events: none;
-      transition: all .28s cubic-bezier(.4,0,.2,1);
-      white-space: nowrap;
-    }
-    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   </style>
 </head>
 
 <body>
 
-<!-- ═══════════ SIDEBAR ═══════════ -->
+<!-- ═══ SIDEBAR ═══ -->
 <aside class="sb">
   <div class="sb-logo">
     <span class="sb-logo-text">AHOLO</span>
     <div class="sb-menu-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="6" x2="21" y2="6"/>
-        <line x1="3" y1="12" x2="21" y2="12"/>
-        <line x1="3" y1="18" x2="21" y2="18"/>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </div>
   </div>
 
-  <button class="sb-create" onclick="expandPanel()">
+  <button class="sb-create" onclick="scrollHero()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
@@ -769,22 +648,21 @@
   </button>
 
   <nav class="sb-nav">
-    <a class="sb-item active" onclick="showToast('项目列表')">
+    <div class="sb-item" onclick="showToast('项目列表')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
       </svg>
       项目
-    </a>
-    <a class="sb-item" id="sbCommunity" onclick="goToCommunity()">
+    </div>
+    <div class="sb-item" onclick="scrollComm()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
       社区
-    </a>
+    </div>
   </nav>
 
   <div class="sb-foot">
@@ -793,29 +671,29 @@
       <span><strong id="creditsNum">48932</strong> 积分</span>
     </div>
     <div class="sb-foot-item">
-      <div class="label">
+      <div class="lbl">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/>
         </svg>
         帮助中心
       </div>
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </div>
     <div class="sb-foot-item">
-      <div class="label">
+      <div class="lbl">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <span>186*x8sd</span>
+        186*x8sd
       </div>
-      <span class="sb-foot-tag">Free</span>
+      <span class="sb-tag">Free</span>
     </div>
     <div class="sb-foot-item">
-      <div class="label">
+      <div class="lbl">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
@@ -827,68 +705,59 @@
   </div>
 </aside>
 
-<!-- ═══════════ MAIN ═══════════ -->
+<!-- ═══ MAIN ═══ -->
 <main class="main" id="mainArea">
 
   <!-- HERO -->
   <section class="hero" id="heroSection">
-    <!-- Aurora -->
     <div class="aurora">
-      <div class="aurora-layer"></div>
-      <div class="aurora-layer"></div>
-      <div class="aurora-layer"></div>
+      <div class="al"></div><div class="al"></div><div class="al"></div>
     </div>
 
-    <!-- Slogan (TBD placeholder) -->
-    <h1 class="slogan" id="sloganText">高保真3D，从现实到想象</h1>
+    <!-- Dynamic slogan -->
+    <h1 class="slogan" id="sloganEl">高保真复刻真实的3D物体及空间</h1>
 
-    <!-- Creation Panel -->
-    <div class="panel" id="creationPanel">
+    <!-- ── CREATION CARD ── -->
+    <div class="creation-wrap">
 
-      <!-- Tabs -->
-      <div class="panel-tabs">
-        <div class="ptab active" id="tabRebuild" onclick="setTab('rebuild')">
-          <div class="ptab-icon">📷</div>
-          <div class="ptab-text">
-            <div class="ptab-name">重建</div>
-            <div class="ptab-sub">拍摄素材 · 3DGS精准还原</div>
-          </div>
+      <!-- Overlapping tab cards -->
+      <div class="tab-scene">
+
+        <div class="tab-card active" id="tabRebuild" onclick="setTab('rebuild')">
+          <span class="tab-icon">📷</span>
+          <span class="tab-label">拍摄重建</span>
         </div>
-        <div class="ptab" id="tabAI" onclick="setTab('ai')">
-          <div class="ptab-icon" style="font-size:15px;font-weight:700;letter-spacing:-.5px;color:var(--blue2);">A</div>
-          <div class="ptab-text">
-            <div class="ptab-name">AI 生成</div>
-            <div class="ptab-sub">图文驱动 · 3D世界一键生成</div>
-          </div>
+
+        <div class="tab-card" id="tabAI" onclick="setTab('ai')">
+          <span class="tab-icon" style="font-size:14px;font-weight:800;letter-spacing:-.5px;color:var(--blue2);">A</span>
+          <span class="tab-label">AI 生成</span>
         </div>
-      </div>
 
-      <!-- Panel body -->
-      <div class="panel-body">
+      </div><!-- /tab-scene -->
 
-        <!-- ── REBUILD PANEL ── -->
+      <!-- Card body -->
+      <div class="card-body">
+
+        <!-- ─── REBUILD ─── -->
         <div class="tab-panel active" id="panelRebuild">
 
-          <!-- Upload zone -->
-          <div class="upload-zone" id="rebuildUploadZone"
-               onclick="triggerRebuildUpload()"
-               ondragover="e=>{e.preventDefault();document.getElementById('rebuildUploadZone').classList.add('drag-over')}"
-               ondragleave="document.getElementById('rebuildUploadZone').classList.remove('drag-over')"
-               ondrop="handleRebuildDrop(event)">
-            <input type="file" id="rebuildFileInput" multiple
+          <div class="upload-zone" id="rebuildZone"
+               onclick="triggerRU()"
+               ondragover="event.preventDefault();document.getElementById('rebuildZone').classList.add('drag-over')"
+               ondragleave="document.getElementById('rebuildZone').classList.remove('drag-over')"
+               ondrop="handleRDrop(event)">
+            <input type="file" id="ruFile" multiple
                    accept="video/mp4,video/quicktime,video/avi,image/jpeg,image/png,image/heic,image/webp,.insv,.ply,.spz"
-                   onchange="handleRebuildFiles(event)">
+                   onchange="handleRU(event)">
 
             <div class="uz-icons">
               <div class="uz-icon">
                 <div class="uz-icon-box">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                   </svg>
-                </div>
-                <span>图片</span>
+                </div><span>图片</span>
               </div>
               <div class="uz-icon">
                 <div class="uz-icon-box">
@@ -896,8 +765,7 @@
                     <polygon points="23 7 16 12 23 17 23 7"/>
                     <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
                   </svg>
-                </div>
-                <span>视频</span>
+                </div><span>视频</span>
               </div>
               <div class="uz-icon">
                 <div class="uz-icon-box">
@@ -906,180 +774,151 @@
                     <line x1="2" y1="12" x2="22" y2="12"/>
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                   </svg>
-                </div>
-                <span>360°</span>
+                </div><span>360°</span>
               </div>
             </div>
 
             <div class="uz-title">拖拽或点击上传素材</div>
-            <div class="uz-formats">
-              支持上传：图片（20~2000张全角度照片）、视频（1~3个视频或全景图）<br>
-              Insta360文件（.insv）、3D点云文件（.ply/.spz）
+            <div class="uz-fmts">
+              <span class="uz-fmt">MP4</span><span class="uz-fmt">MOV</span>
+              <span class="uz-fmt">AVI</span><span class="uz-fmt">JPG</span>
+              <span class="uz-fmt">PNG</span><span class="uz-fmt">HEIC</span>
+              <span class="uz-fmt">WEBP</span><span class="uz-fmt">.insv</span>
+              <span class="uz-fmt">.ply</span><span class="uz-fmt">.spz</span>
+            </div>
+            <div class="uz-limits">
+              图片：20~2000张全角度照片 · 视频：1~3个视频或全景图 · 单文件 ≤ 2 GB
             </div>
             <div class="uz-guide">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                <line x1="12" y1="12" x2="12" y2="16"/>
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/>
               </svg>
               拍摄指南与限制
             </div>
           </div>
 
-          <!-- File selected bar -->
-          <div class="file-bar" id="rebuildFileBar">
-            <div class="file-bar-icon">
+          <!-- File bar -->
+          <div class="file-bar" id="ruBar">
+            <div class="fb-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
             </div>
-            <div class="file-bar-info">
-              <div class="file-bar-name" id="rebuildFileName">-</div>
-              <div class="file-bar-size" id="rebuildFileSize">-</div>
-              <div class="file-bar-prog">
-                <div class="file-bar-fill" id="rebuildFileFill"></div>
-              </div>
+            <div class="fb-info">
+              <div class="fb-name" id="ruFName">-</div>
+              <div class="fb-size" id="ruFSize">-</div>
+              <div class="fb-prog"><div class="fb-fill" id="ruFill"></div></div>
             </div>
-            <button class="file-bar-rm" onclick="removeRebuildFile()">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.5">
+            <button class="fb-rm" onclick="removeRU()">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
           </div>
 
-          <!-- Type selector (appears after upload) -->
-          <div class="type-section" id="typeSec">
-            <div class="type-label">选择拍摄方式</div>
+          <!-- Type selector -->
+          <div class="type-sec" id="typeSec">
+            <div class="type-sec-lbl">选择拍摄方式</div>
             <div class="type-row">
-
-              <div class="type-btn" id="typeOrbit" onclick="selectType('orbit',this)">
-                <div class="type-check">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+              <div class="type-btn" onclick="selectType('orbit',this)">
+                <div class="type-chk">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div class="type-btn-icon">🔄</div>
+                <div class="type-btn-ico">🔄</div>
                 <div class="type-btn-name">环拍物体</div>
                 <div class="type-btn-sub">聚焦拍摄</div>
               </div>
-
-              <div class="type-btn" id="typeIndoor" onclick="selectType('indoor',this)">
-                <div class="type-check">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+              <div class="type-btn" onclick="selectType('indoor',this)">
+                <div class="type-chk">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div class="type-btn-icon">🏠</div>
+                <div class="type-btn-ico">🏠</div>
                 <div class="type-btn-name">室内</div>
                 <div class="type-btn-sub">行走拍摄</div>
               </div>
-
-              <div class="type-btn" id="typeOutdoor" onclick="selectType('outdoor',this)">
-                <div class="type-check">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+              <div class="type-btn" onclick="selectType('outdoor',this)">
+                <div class="type-chk">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div class="type-btn-icon">🌳</div>
+                <div class="type-btn-ico">🌳</div>
                 <div class="type-btn-name">室外</div>
                 <div class="type-btn-sub">行走拍摄</div>
               </div>
-
             </div>
           </div>
 
-          <!-- Options row -->
-          <div class="opts-row">
-            <div class="opts-left">
-              <button class="opt-pill active" id="optStd"
-                      onclick="toggleQuality(this,'std')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 2v3m0 14v3M4.22 4.22l2.12 2.12m11.31 11.31 2.12 2.12M2 12h3m14 0h3M4.22 19.78l2.12-2.12m11.31-11.31 2.12-2.12"/>
-                </svg>
-                标准
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:9px;height:9px;">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <button class="opt-pill" id="optRect"
-                      onclick="toggleRect(this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                </svg>
-                矩形
-              </button>
-            </div>
+          <!-- Bottom -->
+          <div class="bottom-bar">
+            <button class="opt-pill" onclick="showToast('精度选项即将上线')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3m0 14v3M4.22 4.22l2.12 2.12m11.31 11.31 2.12 2.12M2 12h3m14 0h3"/>
+              </svg>
+              标准
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
             <button class="btn-create" id="btnCreate" onclick="startRebuild()">创建</button>
           </div>
         </div><!-- /panelRebuild -->
 
-        <!-- ── AI PANEL ── -->
+        <!-- ─── AI ─── -->
         <div class="tab-panel" id="panelAI">
 
-          <!-- Examples strip -->
-          <div class="ai-examples">
-            <span class="ai-examples-label">试试示例</span>
-            <div class="ai-example-imgs" id="exampleImgs">
-              <!-- rendered by JS -->
-            </div>
-            <button class="ai-next-batch" onclick="nextBatch()">↺ 下一批</button>
+          <!-- Examples -->
+          <div class="ai-strip">
+            <span class="ai-strip-lbl">试试示例</span>
+            <div class="ai-examples" id="aiExamples"></div>
+            <button class="ai-next" onclick="nextBatch()">↺ 下一批</button>
           </div>
 
-          <!-- Main area: image + prompt -->
+          <!-- Main: image + prompt -->
           <div class="ai-main">
-            <!-- Image (primary) -->
-            <div class="ai-img-zone" id="aiImgZone" onclick="triggerAIImgUpload()">
-              <input type="file" id="aiImgInput" accept="image/*"
-                     onchange="previewAIImg(event)">
-              <div class="ai-img-zone-default">
+            <div class="ai-img-zone" id="aiImgZone" onclick="triggerAIImg()">
+              <input type="file" id="aiImgFile" accept="image/*" onchange="previewAIImg(event)">
+
+              <div class="ai-iz-default">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                     style="width:28px;height:28px;color:var(--t3);display:block;margin:0 auto 7px;">
+                     style="display:block;margin:0 auto 7px;">
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                 </svg>
-                <div class="ai-img-zone-text">上传图片<br>（可选，增强匹配度）</div>
+                <div class="ai-iz-text">上传参考图片<br><span style="font-size:10px;color:var(--t4)">可大幅提升匹配度</span></div>
               </div>
-
-              <!-- example large preview -->
-              <div class="ai-example-preview" id="aiExamplePreview"></div>
-
-              <!-- uploaded preview -->
-              <div class="ai-img-preview" id="aiImgPreviewWrap">
-                <img id="aiImgPreviewImg" src="" alt="">
-                <button class="ai-img-remove" onclick="removeAIImg(event)">×</button>
+              <div class="ai-ex-preview" id="aiExPreview"></div>
+              <div class="ai-img-uploaded" id="aiImgUploaded">
+                <img id="aiImgUploadedImg" src="" alt="">
+                <button class="ai-img-rm" onclick="removeAIImg(event)">×</button>
               </div>
             </div>
 
-            <!-- Prompt area -->
-            <div class="ai-prompt-area">
-              <div class="ai-prompt-box">
-                <div class="ai-prompt-hint">PROMPT（可选）</div>
-                <textarea class="ai-prompt-textarea" id="aiPromptTA"
-                  placeholder="描述场景或物体风格，留空时 AI 将根据图片自动理解…"
-                  oninput="updateAIChar()"></textarea>
-                <div class="ai-prompt-footer">
-                  <button class="ai-autofill" onclick="autoFill()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    自动填写
-                  </button>
-                  <span class="ai-char-count" id="aiCharCount">0/500</span>
-                </div>
+            <div class="ai-prompt-box">
+              <div class="ai-prompt-hint">PROMPT（可选）</div>
+              <textarea class="ai-ta" id="aiTA"
+                placeholder="描述你想要创建的场景或物体，留空时 AI 将根据图片自动理解…"
+                oninput="updateCC()"></textarea>
+              <div class="ai-prompt-foot">
+                <button class="ai-autofill" onclick="autoFill()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  自动填写
+                </button>
+                <span class="ai-cc" id="aiCC">0/500</span>
               </div>
             </div>
           </div>
 
-          <!-- Action row -->
-          <div class="ai-actions">
+          <!-- AI Bottom -->
+          <div class="ai-bot">
             <div class="ai-credits">
-              <div class="ai-credits-dot"></div>
-              <span><strong id="aiCredits">20</strong> 积分/次</span>
+              <div class="ai-dot"></div>
+              <span><strong id="aiCreditNum">20</strong> 积分/次</span>
             </div>
-            <button class="btn-generate" onclick="startAIGenerate()">
+            <button class="btn-gen" onclick="startAI()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
@@ -1088,475 +927,337 @@
           </div>
         </div><!-- /panelAI -->
 
-      </div><!-- /panel-body -->
-    </div><!-- /panel -->
+      </div><!-- /card-body -->
+    </div><!-- /creation-wrap -->
   </section>
 
   <!-- COMMUNITY -->
-  <section class="community" id="communitySection">
+  <section class="community" id="commSection">
     <div class="comm-hd">
-      <span class="comm-hd-title" id="commTitle">模型</span>
+      <span class="comm-title" id="commTitle">模型</span>
       <div class="comm-filters">
-        <button class="comm-filter active" id="filtAll" onclick="setCommFilter('all',this)">全部</button>
-        <button class="comm-filter" id="filtRebuild" onclick="setCommFilter('rebuild',this)">重建</button>
-        <button class="comm-filter" id="filtAI" onclick="setCommFilter('ai',this)">AI 生成</button>
+        <button class="comm-filter active" onclick="setFilt('all',this)">全部</button>
+        <button class="comm-filter" id="filtAI" onclick="setFilt('ai',this)">AI 生成</button>
+        <button class="comm-filter" id="filtRe" onclick="setFilt('rebuild',this)">拍摄重建</button>
       </div>
     </div>
     <div class="comm-grid" id="commGrid"></div>
   </section>
-
 </main>
 
-<!-- FLOATING PROJECTS -->
+<!-- FLOATING PANEL -->
 <div class="float-panel" id="floatPanel">
-  <div class="float-hd">
-    <span class="float-hd-title">最近项目</span>
-    <button class="float-hd-btn" id="floatToggle" onclick="toggleFloat()">−</button>
+  <div class="fp-hd">
+    <span class="fp-hd-title">最近项目</span>
+    <button class="fp-toggle" id="fpToggle" onclick="toggleFP()">−</button>
   </div>
-  <div class="float-body" id="floatBody">
-    <div class="float-thumb" onclick="showToast('打开: 客厅场景')">
-      <div class="float-thumb-bg" style="background:linear-gradient(135deg,#11998e,#38ef7d);width:100%;height:100%;"></div>
-      <div class="float-thumb-overlay"></div>
-      <div class="float-thumb-status">
-        <div class="float-status-dot"></div>
-        <span style="font-size:9px;">完成</span>
-      </div>
+  <div class="fp-body" id="fpBody">
+    <div class="fp-thumb" onclick="showToast('打开: 客厅场景')">
+      <div class="fp-thumb-bg" style="background:linear-gradient(135deg,#11998e,#38ef7d);width:100%;height:100%;"></div>
+      <div class="fp-overlay"></div>
+      <div class="fp-status"><div class="fp-dot"></div><span>完成</span></div>
     </div>
-    <div class="float-thumb" onclick="showToast('打开: AI花瓶')">
-      <div class="float-thumb-bg" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:100%;height:100%;"></div>
-      <div class="float-thumb-overlay"></div>
-      <div class="float-thumb-status">
-        <div class="float-status-dot proc"></div>
-        <span style="font-size:9px;">生成中</span>
-      </div>
+    <div class="fp-thumb" onclick="showToast('打开: AI生成')">
+      <div class="fp-thumb-bg" style="background:linear-gradient(135deg,#7c3aed,#e879f9);width:100%;height:100%;"></div>
+      <div class="fp-overlay"></div>
+      <div class="fp-status"><div class="fp-dot proc"></div><span>生成中</span></div>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════
-   STATE
-══════════════════════════════════ */
+/* ── STATE ── */
 let activeTab = 'rebuild';
-let rebuildFileSelected = false;
-let rebuildTypeSelected = null;
-let commFilter = 'all';
-let floatCollapsed = false;
-let selectedExample = null;
+let ruFileOk  = false;
+let ruTypeOk  = false;
+let commFilt  = 'all';
+let fpCollapsed = false;
+let selExample  = null;
+let batchIdx    = 0;
 
-/* ══════════════════════════════════
-   INIT: URL hash support
-══════════════════════════════════ */
-(function init() {
-  if (location.hash === '#ai') setTab('ai');
-  renderExamples(0);
+const SLOGANS = {
+  rebuild: '高保真复刻真实的3D物体及空间',
+  ai:      '一句创意 / 一张图片，生成高保真3D空间'
+};
+
+/* ── INIT ── */
+(function(){
+  if(location.hash === '#ai') setTab('ai');
+  renderBatch(0);
   renderComm();
 })();
 
-/* ══════════════════════════════════
-   TAB SWITCH
-══════════════════════════════════ */
-const SLOGANS = {
-  rebuild: '高保真复刻真实的3D物体及空间',
-  ai: '一句创意 / 一张图片，生成高保真3D空间'
-};
-
-function setTab(tab) {
+/* ── TAB ── */
+function setTab(tab){
   activeTab = tab;
-  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-
-  document.getElementById('tab' + (tab==='rebuild'?'Rebuild':'AI')).classList.add('active');
-  document.getElementById('panel' + (tab==='rebuild'?'Rebuild':'AI')).classList.add('active');
-
-  document.getElementById('sloganText').textContent = SLOGANS[tab];
-
-  // req 2c: switching to AI → sync community filter to AI (not reverse)
-  if (tab === 'ai') {
-    setCommFilter('ai', document.getElementById('filtAI'));
-  }
-}
-
-/* ══════════════════════════════════
-   PANEL EXPAND
-══════════════════════════════════ */
-function expandPanel() {
-  document.getElementById('heroSection').scrollIntoView({ behavior:'smooth' });
-  document.getElementById('creationPanel').style.animation = 'none';
-  requestAnimationFrame(() => {
-    document.getElementById('creationPanel').style.animation = 'panelIn .4s cubic-bezier(.22,.68,0,1.2) both';
+  ['Rebuild','AI'].forEach(t => {
+    const el = document.getElementById('tab'+t);
+    const panel = document.getElementById('panel'+t);
+    const isActive = t.toLowerCase().includes(tab === 'rebuild' ? 'rebuild' : 'ai')
+                     || (tab==='ai' && t==='AI') || (tab==='rebuild' && t==='Rebuild');
+    el.classList.toggle('active', (tab==='rebuild' && t==='Rebuild') || (tab==='ai' && t==='AI'));
+    panel.classList.toggle('active', (tab==='rebuild' && t==='Rebuild') || (tab==='ai' && t==='AI'));
   });
+  document.getElementById('sloganEl').textContent = SLOGANS[tab];
+
+  // Req 2c: AI tab → sync community filter
+  if(tab === 'ai') setFilt('ai', document.getElementById('filtAI'));
 }
 
-function goToCommunity() {
-  document.getElementById('communitySection').scrollIntoView({ behavior:'smooth' });
-}
-
-/* ══════════════════════════════════
-   REBUILD – FILE
-══════════════════════════════════ */
-function triggerRebuildUpload() { document.getElementById('rebuildFileInput').click(); }
-
-function handleRebuildFiles(e) {
-  const files = e.target.files;
-  if (!files || !files.length) return;
-  showRebuildFile(files[0], files.length > 1 ? files.length : null);
-}
-
-function handleRebuildDrop(e) {
+/* ── REBUILD FILE ── */
+function triggerRU(){ document.getElementById('ruFile').click(); }
+function handleRU(e){ if(e.target.files.length) showRUFile(e.target.files[0], e.target.files.length > 1 ? e.target.files.length : null); }
+function handleRDrop(e){
   e.preventDefault();
-  document.getElementById('rebuildUploadZone').classList.remove('drag-over');
-  const files = e.dataTransfer.files;
-  if (files.length) showRebuildFile(files[0], files.length > 1 ? files.length : null);
+  document.getElementById('rebuildZone').classList.remove('drag-over');
+  if(e.dataTransfer.files.length) showRUFile(e.dataTransfer.files[0], e.dataTransfer.files.length > 1 ? e.dataTransfer.files.length : null);
 }
-
-function showRebuildFile(file, count) {
-  rebuildFileSelected = true;
-  const bar = document.getElementById('rebuildFileBar');
-  bar.classList.add('show');
-  document.getElementById('rebuildFileName').textContent =
-    count ? count + ' 个文件' : file.name;
-  document.getElementById('rebuildFileSize').textContent =
-    count ? '已选择 ' + count + ' 个文件' : fmtSize(file.size);
-
-  // simulate upload progress
-  const fill = document.getElementById('rebuildFileFill');
+function showRUFile(file, count){
+  ruFileOk = true;
+  document.getElementById('ruBar').classList.add('show');
+  document.getElementById('ruFName').textContent = count ? count+' 个文件' : file.name;
+  document.getElementById('ruFSize').textContent = count ? '已选择 '+count+' 个文件' : fmtSz(file.size);
+  const fill = document.getElementById('ruFill');
   fill.style.width = '0';
   let p = 0;
-  const iv = setInterval(() => {
-    p += Math.random() * 22;
-    if (p >= 100) { p = 100; clearInterval(iv); showTypeSelector(); }
-    fill.style.width = p + '%';
+  const iv = setInterval(()=>{
+    p += Math.random()*24; if(p>=100){ p=100; clearInterval(iv); showTypeSelector(); }
+    fill.style.width = p+'%';
   }, 100);
 }
-
-function showTypeSelector() {
+function showTypeSelector(){
   document.getElementById('typeSec').classList.add('show');
   updateCreateBtn();
 }
-
-function removeRebuildFile() {
-  rebuildFileSelected = false; rebuildTypeSelected = null;
-  document.getElementById('rebuildFileBar').classList.remove('show');
-  document.getElementById('rebuildFileInput').value = '';
+function removeRU(){
+  ruFileOk = false; ruTypeOk = false;
+  document.getElementById('ruBar').classList.remove('show');
+  document.getElementById('ruFile').value = '';
   document.getElementById('typeSec').classList.remove('show');
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('rebuildFileFill').style.width = '0';
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ruFill').style.width = '0';
   updateCreateBtn();
 }
 
-/* ══════════════════════════════════
-   REBUILD – TYPE
-══════════════════════════════════ */
-function selectType(type, el) {
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+/* ── REBUILD TYPE ── */
+function selectType(t, el){
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  rebuildTypeSelected = type;
+  ruTypeOk = true;
   updateCreateBtn();
 }
-
-function updateCreateBtn() {
-  const btn = document.getElementById('btnCreate');
-  const ready = rebuildFileSelected && rebuildTypeSelected;
-  btn.classList.toggle('ready', !!ready);
+function updateCreateBtn(){
+  document.getElementById('btnCreate').classList.toggle('ready', ruFileOk && ruTypeOk);
 }
 
-/* ══════════════════════════════════
-   REBUILD – OPTIONS
-══════════════════════════════════ */
-function toggleQuality(btn) {
-  // future: show quality options
-  showToast('精度选项（开发中）');
-}
-function toggleRect(btn) {
-  btn.classList.toggle('active');
-}
-
-/* ══════════════════════════════════
-   REBUILD – SUBMIT
-══════════════════════════════════ */
-function startRebuild() {
+/* ── REBUILD SUBMIT ── */
+function startRebuild(){
   showToast('已提交，正在排队重建…');
-  setTimeout(() => showToast('✓ 任务已加入队列，预计 3–8 分钟'), 1200);
-  addCommCard({ type:'rebuild', title:'我的新重建项目', processing:true });
-  addFloatThumb('rebuild');
+  setTimeout(()=>showToast('✓ 任务已加入队列，预计 3–8 分钟'), 1200);
+  addCommCard({type:'rebuild',title:'新重建项目',proc:true});
+  addFPThumb('rebuild');
 }
 
-/* ══════════════════════════════════
-   AI – EXAMPLES
-══════════════════════════════════ */
-const EXAMPLE_BATCHES = [
-  [
-    { emoji:'🌿', label:'盆景树桩', grad:'linear-gradient(135deg,#134e4a,#4ade80)' },
-    { emoji:'👧', label:'卡通女孩', grad:'linear-gradient(135deg,#be123c,#fb7185)' },
-    { emoji:'⚔️', label:'盔甲武士', grad:'linear-gradient(135deg,#1e3a5f,#60a5fa)' },
-    { emoji:'🏺', label:'陶瓷花瓶', grad:'linear-gradient(135deg,#7c2d12,#fb923c)' },
-    { emoji:'🏮', label:'木质灯柱', grad:'linear-gradient(135deg,#422006,#fbbf24)' },
-  ],
-  [
-    { emoji:'🚀', label:'飞船', grad:'linear-gradient(135deg,#1e1b4b,#818cf8)' },
-    { emoji:'🏰', label:'城堡', grad:'linear-gradient(135deg,#374151,#9ca3af)' },
-    { emoji:'🌊', label:'珊瑚礁', grad:'linear-gradient(135deg,#0c4a6e,#38bdf8)' },
-    { emoji:'🦋', label:'蝴蝶标本', grad:'linear-gradient(135deg,#14532d,#86efac)' },
-    { emoji:'🎸', label:'电吉他', grad:'linear-gradient(135deg,#4a044e,#e879f9)' },
-  ],
+/* ── AI EXAMPLES ── */
+const BATCHES = [
+  [{e:'🌿',l:'盆景树桩',g:'linear-gradient(135deg,#134e4a,#4ade80)'},
+   {e:'👧',l:'卡通女孩',g:'linear-gradient(135deg,#be123c,#fb7185)'},
+   {e:'⚔️',l:'盔甲武士',g:'linear-gradient(135deg,#1e3a5f,#60a5fa)'},
+   {e:'🏺',l:'陶瓷花瓶',g:'linear-gradient(135deg,#7c2d12,#fb923c)'},
+   {e:'🏮',l:'木质灯柱',g:'linear-gradient(135deg,#422006,#fbbf24)'}],
+  [{e:'🚀',l:'飞船',g:'linear-gradient(135deg,#1e1b4b,#818cf8)'},
+   {e:'🏰',l:'城堡',g:'linear-gradient(135deg,#374151,#9ca3af)'},
+   {e:'🌊',l:'珊瑚礁',g:'linear-gradient(135deg,#0c4a6e,#38bdf8)'},
+   {e:'🦋',l:'蝴蝶标本',g:'linear-gradient(135deg,#14532d,#86efac)'},
+   {e:'🎸',l:'电吉他',g:'linear-gradient(135deg,#4a044e,#e879f9)'}],
 ];
-let batchIdx = 0;
-
-function renderExamples(idx) {
-  const batch = EXAMPLE_BATCHES[idx % EXAMPLE_BATCHES.length];
-  const container = document.getElementById('exampleImgs');
-  container.innerHTML = batch.map((ex, i) => `
-    <div class="ai-example-img" onclick="selectExample(${idx},${i})" title="${ex.label}">
-      <div class="thumb" style="background:${ex.grad};">${ex.emoji}</div>
+function renderBatch(idx){
+  const b = BATCHES[idx % BATCHES.length];
+  document.getElementById('aiExamples').innerHTML = b.map((ex,i)=>`
+    <div class="ai-ex" onclick="pickExample(${idx},${i})" title="${ex.l}">
+      <div class="thumb" style="background:${ex.g};">${ex.e}</div>
     </div>`).join('');
 }
-
-function nextBatch() {
-  batchIdx = (batchIdx + 1) % EXAMPLE_BATCHES.length;
-  renderExamples(batchIdx);
-  selectedExample = null;
-  document.getElementById('aiExamplePreview').textContent = '';
-  document.getElementById('aiImgZone').classList.remove('has-example');
+function nextBatch(){
+  batchIdx = (batchIdx+1) % BATCHES.length;
+  renderBatch(batchIdx);
+  clearExamplePreview();
+}
+function pickExample(bi, ii){
+  document.querySelectorAll('.ai-ex').forEach(e=>e.classList.remove('sel'));
+  const els = document.querySelectorAll('.ai-ex');
+  if(els[ii]) els[ii].classList.add('sel');
+  const ex = BATCHES[bi % BATCHES.length][ii];
+  selExample = ex;
+  document.getElementById('aiExPreview').textContent = ex.e;
+  document.getElementById('aiExPreview').style.fontSize = '66px';
+  document.getElementById('aiImgZone').classList.add('has-ex');
+  document.getElementById('aiImgUploaded').classList.remove('show');
+  document.getElementById('aiTA').value = ex.l;
+  updateCC();
+}
+function clearExamplePreview(){
+  selExample = null;
+  document.getElementById('aiExPreview').textContent = '';
+  document.getElementById('aiImgZone').classList.remove('has-ex');
+  document.querySelectorAll('.ai-ex').forEach(e=>e.classList.remove('sel'));
 }
 
-function selectExample(bIdx, imgIdx) {
-  // deselect all
-  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
-  const els = document.querySelectorAll('.ai-example-img');
-  if (els[imgIdx]) els[imgIdx].classList.add('selected');
-
-  const batch = EXAMPLE_BATCHES[bIdx % EXAMPLE_BATCHES.length];
-  const ex = batch[imgIdx];
-  selectedExample = ex;
-
-  // show emoji preview in upload zone
-  const previewEl = document.getElementById('aiExamplePreview');
-  previewEl.textContent = ex.emoji;
-  previewEl.style.fontSize = '64px';
-  document.getElementById('aiImgZone').classList.add('has-example');
-
-  // clear uploaded image
-  document.getElementById('aiImgPreviewWrap').classList.remove('show');
-  document.getElementById('aiImgPreviewImg').src = '';
-
-  // auto-fill prompt
-  document.getElementById('aiPromptTA').value = ex.label;
-  updateAIChar();
+/* ── AI IMAGE ── */
+function triggerAIImg(){ document.getElementById('aiImgFile').click(); }
+function previewAIImg(e){
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('aiImgUploadedImg').src = URL.createObjectURL(f);
+  document.getElementById('aiImgUploaded').classList.add('show');
+  document.getElementById('aiImgZone').classList.remove('has-ex');
+  document.getElementById('aiExPreview').textContent = '';
+  document.querySelectorAll('.ai-ex').forEach(e=>e.classList.remove('sel'));
+  selExample = null;
+}
+function removeAIImg(ev){
+  ev.stopPropagation();
+  document.getElementById('aiImgUploaded').classList.remove('show');
+  document.getElementById('aiImgUploadedImg').src = '';
+  document.getElementById('aiImgFile').value = '';
 }
 
-/* ══════════════════════════════════
-   AI – IMAGE UPLOAD
-══════════════════════════════════ */
-function triggerAIImgUpload() {
-  document.getElementById('aiImgInput').click();
+/* ── AI PROMPT ── */
+function updateCC(){
+  const l = document.getElementById('aiTA').value.length;
+  document.getElementById('aiCC').textContent = l+'/500';
 }
-
-function previewAIImg(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  document.getElementById('aiImgPreviewImg').src = url;
-  document.getElementById('aiImgPreviewWrap').classList.add('show');
-  document.getElementById('aiImgZone').classList.remove('has-example');
-  document.getElementById('aiExamplePreview').textContent = '';
-  // deselect examples
-  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
-  selectedExample = null;
-}
-
-function removeAIImg(e) {
-  e.stopPropagation();
-  document.getElementById('aiImgPreviewWrap').classList.remove('show');
-  document.getElementById('aiImgPreviewImg').src = '';
-  document.getElementById('aiImgInput').value = '';
-}
-
-/* ══════════════════════════════════
-   AI – PROMPT
-══════════════════════════════════ */
-function updateAIChar() {
-  const len = document.getElementById('aiPromptTA').value.length;
-  document.getElementById('aiCharCount').textContent = len + '/500';
-}
-
-const AUTO_PROMPTS = [
-  '赛博朋克风格街道，霓虹灯雨夜，写实质感',
+const AUTO = [
+  '赛博朋克街道，霓虹灯雨夜，写实质感',
   '极简北欧客厅，落地窗与晨光，白色系',
   '古典中式庭院，青砖灰瓦，晨雾缭绕',
   '深海珊瑚礁，五彩热带鱼，梦幻蓝光',
 ];
-let apIdx = 0;
-
-function autoFill() {
-  document.getElementById('aiPromptTA').value = AUTO_PROMPTS[apIdx % AUTO_PROMPTS.length];
-  apIdx++;
-  updateAIChar();
+let autoIdx = 0;
+function autoFill(){
+  document.getElementById('aiTA').value = AUTO[autoIdx % AUTO.length];
+  autoIdx++; updateCC();
 }
 
-/* ══════════════════════════════════
-   AI – GENERATE
-══════════════════════════════════ */
-function startAIGenerate() {
-  const prompt = document.getElementById('aiPromptTA').value.trim();
-  if (!prompt && !selectedExample) {
-    showToast('请上传参考图片或输入描述');
-    return;
-  }
-  const credits = parseInt(document.getElementById('aiCredits').textContent) || 20;
-  document.getElementById('aiCredits').textContent = Math.max(0, credits - 20);
+/* ── AI SUBMIT ── */
+function startAI(){
+  const p = document.getElementById('aiTA').value.trim();
+  if(!p && !selExample){showToast('请上传参考图片或输入描述'); return;}
+  const n = parseInt(document.getElementById('aiCreditNum').textContent)||20;
+  document.getElementById('aiCreditNum').textContent = Math.max(0, n-20);
   document.getElementById('creditsNum').textContent =
-    Math.max(0, parseInt(document.getElementById('creditsNum').textContent) - 20);
-
-  showToast('✦ 正在理解你的描述…');
-  setTimeout(() => showToast('✓ 已提交！预计 3–5 分钟后完成'), 1300);
-
-  const title = prompt || (selectedExample ? selectedExample.label : 'AI生成场景');
-  addCommCard({ type:'ai', title: title.length>14 ? title.slice(0,14)+'…' : title, processing:true });
-  addFloatThumb('ai');
-
-  // reset
-  document.getElementById('aiPromptTA').value = '';
-  updateAIChar();
-  document.getElementById('aiImgPreviewWrap').classList.remove('show');
-  document.getElementById('aiImgPreviewImg').src = '';
-  document.getElementById('aiImgZone').classList.remove('has-example');
-  document.getElementById('aiExamplePreview').textContent = '';
-  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
-  selectedExample = null;
+    Math.max(0, parseInt(document.getElementById('creditsNum').textContent)-20);
+  showToast('✦ AI 正在理解你的输入…');
+  setTimeout(()=>showToast('✓ 已提交！预计 3–5 分钟完成'),1300);
+  const title = p || (selExample ? selExample.l : 'AI生成场景');
+  addCommCard({type:'ai', title: title.length>14 ? title.slice(0,14)+'…' : title, proc:true});
+  addFPThumb('ai');
+  document.getElementById('aiTA').value = ''; updateCC();
+  document.getElementById('aiImgUploaded').classList.remove('show');
+  clearExamplePreview();
 }
 
-/* ══════════════════════════════════
-   COMMUNITY DATA
-══════════════════════════════════ */
+/* ── COMMUNITY ── */
 const GRADS = [
-  'linear-gradient(135deg,#134e4a 0%,#4ade80 100%)',
-  'linear-gradient(135deg,#0c4a6e 0%,#38bdf8 100%)',
-  'linear-gradient(135deg,#7e22ce 0%,#e879f9 100%)',
-  'linear-gradient(135deg,#7c2d12 0%,#fb923c 100%)',
-  'linear-gradient(135deg,#1e1b4b 0%,#818cf8 100%)',
-  'linear-gradient(135deg,#be123c 0%,#fb7185 100%)',
-  'linear-gradient(135deg,#14532d 0%,#86efac 100%)',
-  'linear-gradient(135deg,#1e3a5f 0%,#60a5fa 100%)',
-  'linear-gradient(135deg,#422006 0%,#fbbf24 100%)',
-  'linear-gradient(135deg,#4a044e 0%,#e879f9 100%)',
+  'linear-gradient(135deg,#134e4a,#4ade80)',
+  'linear-gradient(135deg,#0c4a6e,#38bdf8)',
+  'linear-gradient(135deg,#7e22ce,#e879f9)',
+  'linear-gradient(135deg,#7c2d12,#fb923c)',
+  'linear-gradient(135deg,#1e1b4b,#818cf8)',
+  'linear-gradient(135deg,#be123c,#fb7185)',
+  'linear-gradient(135deg,#14532d,#86efac)',
+  'linear-gradient(135deg,#1e3a5f,#60a5fa)',
+  'linear-gradient(135deg,#422006,#fbbf24)',
+  'linear-gradient(135deg,#4a044e,#e879f9)',
 ];
 const AVS = [
   {bg:'#2563eb',t:'M'},{bg:'#059669',t:'L'},{bg:'#d97706',t:'S'},
   {bg:'#dc2626',t:'R'},{bg:'#7c3aed',t:'Z'},{bg:'#0891b2',t:'K'},
 ];
-
 let commData = [
-  {type:'rebuild',title:'小熊玩偶',author:'MingLi',views:4821,likes:312,grad:0},
-  {type:'rebuild',title:'破冰船全景',author:'SkyDrone',views:2104,likes:98,grad:1},
-  {type:'rebuild',title:'灯塔海岸',author:'ZeroFi',views:8830,likes:621,grad:2},
-  {type:'ai',title:'赛博街道',author:'RunLee',views:3317,likes:201,grad:3},
-  {type:'ai',title:'星际飞船',author:'Studio_K',views:1997,likes:143,grad:4},
-  {type:'rebuild',title:'峡湾景观',author:'YuWang',views:6644,likes:489,grad:5},
-  {type:'ai',title:'红玫瑰特写',author:'MingLi',views:1122,likes:67,grad:6},
-  {type:'rebuild',title:'博物馆圆厅',author:'ZeroFi',views:9201,likes:734,grad:7},
-  {type:'ai',title:'古典茶馆',author:'RunLee',views:2780,likes:189,grad:8},
-  {type:'ai',title:'炫彩机甲',author:'SkyDrone',views:5540,likes:377,grad:9},
+  {type:'rebuild',title:'小熊玩偶',author:'MingLi',views:4821,g:0},
+  {type:'rebuild',title:'破冰船全景',author:'SkyDrone',views:2104,g:1},
+  {type:'rebuild',title:'灯塔海岸',author:'ZeroFi',views:8830,g:2},
+  {type:'ai',title:'赛博街道',author:'RunLee',views:3317,g:3},
+  {type:'ai',title:'星际飞船',author:'Studio_K',views:1997,g:4},
+  {type:'rebuild',title:'峡湾景观',author:'YuWang',views:6644,g:5},
+  {type:'ai',title:'红玫瑰特写',author:'MingLi',views:1122,g:6},
+  {type:'rebuild',title:'博物馆圆厅',author:'ZeroFi',views:9201,g:7},
+  {type:'ai',title:'古典茶馆',author:'RunLee',views:2780,g:8},
+  {type:'ai',title:'炫彩机甲',author:'SkyDrone',views:5540,g:9},
 ];
-
-function setCommFilter(f, btn) {
-  commFilter = f;
-  document.querySelectorAll('.comm-filter').forEach(b => b.classList.remove('active'));
+function setFilt(f, btn){
+  commFilt = f;
+  document.querySelectorAll('.comm-filter').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderComm();
 }
-
-function addCommCard(card) {
-  commData.unshift({ ...card, views:0, likes:0, grad: Math.floor(Math.random()*GRADS.length) });
+function addCommCard(card){
+  commData.unshift({...card, views:0, g: Math.floor(Math.random()*GRADS.length)});
   renderComm();
 }
-
-function renderComm() {
-  const data = commFilter === 'all' ? commData
-             : commFilter === 'ai' ? commData.filter(d => d.type==='ai')
-             : commData.filter(d => d.type==='rebuild');
-
+function renderComm(){
+  const data = commFilt==='all' ? commData
+             : commFilt==='ai' ? commData.filter(d=>d.type==='ai')
+             : commData.filter(d=>d.type==='rebuild');
   document.getElementById('commTitle').textContent =
-    commFilter === 'all' ? '模型' : commFilter === 'ai' ? 'AI 生成' : '重建模型';
-
-  document.getElementById('commGrid').innerHTML = data.map(d => {
-    const av = AVS[d.author ? d.author.charCodeAt(0) % AVS.length : 0];
-    const proc = d.processing ? `
-      <div class="comm-card-proc">
-        <div class="spinner"></div>
-        <div class="proc-text">生成中<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
-      </div>` : '';
-    return `
-    <div class="comm-card" onclick="${d.processing?"showToast('正在生成，请稍候')":"showToast('打开: "+d.title+"')"}" >
-      <div class="comm-card-thumb">
-        <div class="comm-card-bg" style="background:${GRADS[d.grad]};width:100%;height:100%;"></div>
-        <span class="comm-card-tag ${d.type==='ai'?'ai-tag':''}">${d.type==='ai'?'AI 生成':'重建'}</span>
+    commFilt==='all' ? '模型' : commFilt==='ai' ? 'AI 生成' : '拍摄重建';
+  document.getElementById('commGrid').innerHTML = data.map(d=>{
+    const av = AVS[(d.author||'你').charCodeAt(0) % AVS.length];
+    const proc = d.proc ? `<div class="cc-proc"><div class="spinner"></div>
+      <div class="proc-txt">生成中<span class="dots"><span>.</span><span>.</span><span>.</span></span></div></div>`:'' ;
+    return `<div class="comm-card" onclick="${d.proc?"showToast('正在生成，请稍候')":"showToast('打开: "+d.title+"')"}">
+      <div class="cc-thumb">
+        <div class="cc-bg" style="background:${GRADS[d.g]};width:100%;height:100%;"></div>
+        <span class="cc-tag ${d.type==='ai'?'ai-tag':''}">${d.type==='ai'?'AI 生成':'拍摄重建'}</span>
         ${proc}
       </div>
-      <div class="comm-card-body">
-        <div class="comm-card-title">${d.title}</div>
-        <div class="comm-card-meta">
-          <div class="comm-card-author">
-            <div class="comm-card-av" style="background:${av.bg}">${av.t}</div>
-            <span class="comm-card-name">${d.author||'你'}</span>
+      <div class="cc-body">
+        <div class="cc-title">${d.title}</div>
+        <div class="cc-meta">
+          <div class="cc-author">
+            <div class="cc-av" style="background:${av.bg}">${av.t}</div>
+            <span class="cc-name">${d.author||'你'}</span>
           </div>
-          <span class="comm-card-stat">${fmtN(d.views)} 浏览</span>
+          <span class="cc-stat">${fmtN(d.views)} 浏览</span>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ══════════════════════════════════
-   FLOATING PANEL
-══════════════════════════════════ */
-function toggleFloat() {
-  floatCollapsed = !floatCollapsed;
-  const body = document.getElementById('floatBody');
-  const btn = document.getElementById('floatToggle');
-  body.classList.toggle('collapsed', floatCollapsed);
-  btn.textContent = floatCollapsed ? '+' : '−';
+/* ── FLOATING PANEL ── */
+function toggleFP(){
+  fpCollapsed = !fpCollapsed;
+  document.getElementById('fpBody').classList.toggle('collapsed', fpCollapsed);
+  document.getElementById('fpToggle').textContent = fpCollapsed ? '+' : '−';
+}
+function addFPThumb(type){
+  const body = document.getElementById('fpBody');
+  const d = document.createElement('div');
+  d.className = 'fp-thumb'; d.onclick = ()=>showToast('打开项目');
+  const g = type==='ai' ? 'linear-gradient(135deg,#7c3aed,#e879f9)'
+                        : 'linear-gradient(135deg,#2563eb,#38bdf8)';
+  d.innerHTML = `<div class="fp-thumb-bg" style="background:${g};width:100%;height:100%;"></div>
+    <div class="fp-overlay"></div>
+    <div class="fp-status"><div class="fp-dot proc"></div><span>生成中</span></div>`;
+  body.insertBefore(d, body.firstChild);
+  while(body.children.length > 3) body.removeChild(body.lastChild);
 }
 
-function addFloatThumb(type) {
-  const body = document.getElementById('floatBody');
-  const div = document.createElement('div');
-  div.className = 'float-thumb';
-  div.onclick = () => showToast('打开项目');
-  const grad = type === 'ai'
-    ? 'linear-gradient(135deg,#7c3aed,#e879f9)'
-    : 'linear-gradient(135deg,#2563eb,#38bdf8)';
-  div.innerHTML = `
-    <div class="float-thumb-bg" style="background:${grad};width:100%;height:100%;"></div>
-    <div class="float-thumb-overlay"></div>
-    <div class="float-thumb-status">
-      <div class="float-status-dot proc"></div>
-      <span style="font-size:9px;">生成中</span>
-    </div>`;
-  body.insertBefore(div, body.firstChild);
-  // keep max 3
-  while (body.children.length > 3) body.removeChild(body.lastChild);
-}
+/* ── UTILS ── */
+function scrollHero(){ document.getElementById('heroSection').scrollIntoView({behavior:'smooth'}); }
+function scrollComm(){ document.getElementById('commSection').scrollIntoView({behavior:'smooth'}); }
+function fmtSz(b){ return b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB'; }
+function fmtN(n){ return n>=1000?(n/1000).toFixed(1)+'k':n; }
 
-/* ══════════════════════════════════
-   UTILS
-══════════════════════════════════ */
-function fmtSize(bytes) {
-  if (bytes < 1048576)    return (bytes/1024).toFixed(0) + ' KB';
-  if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
-  return (bytes/1073741824).toFixed(2) + ' GB';
-}
-function fmtN(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : n; }
-
-let toastTimer;
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+let toastT;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('show'),2600);
 }
 </script>
 </body>
