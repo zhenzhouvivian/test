@@ -3,1551 +3,1561 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aholo — 3D World Creator</title>
+  <title>AHOLO</title>
   <style>
+    /* ── TOKENS ── */
     :root {
-      --bg-root:       #09090c;
-      --bg-surface:    #111218;
-      --bg-card:       #16171f;
-      --bg-element:    #1d1e28;
-      --bg-input:      #13141b;
+      --sb-w: 130px;
 
-      --accent:        #4f6ef7;
-      --accent-dim:    rgba(79,110,247,.18);
-      --accent-border: rgba(79,110,247,.38);
-      --accent-glow:   rgba(79,110,247,.14);
-      --accent2:       #8b5cf6;
+      --bg-app:     #09090e;
+      --bg-sb:      #0c0e16;
+      --bg-panel:   rgba(13,15,26,0.90);
+      --bg-el:      rgba(255,255,255,.05);
+      --bg-el-h:    rgba(255,255,255,.08);
 
-      --success:  #22c55e;
-      --warning:  #f59e0b;
-      --danger:   #ef4444;
+      --blue:   #2563eb;
+      --blue2:  #3b82f6;
+      --blue-d: rgba(37,99,235,.25);
+      --purple: #7c3aed;
+      --cyan:   #06b6d4;
 
-      --text-1:  #eef0f8;
-      --text-2:  #8b8fa8;
-      --text-3:  #4c4f68;
+      --green:  #22c55e;
+      --red:    #ef4444;
+      --amber:  #f59e0b;
 
-      --border:        rgba(255,255,255,.055);
-      --border-hover:  rgba(255,255,255,.10);
+      --t1: rgba(255,255,255,.92);
+      --t2: rgba(255,255,255,.52);
+      --t3: rgba(255,255,255,.28);
+      --t4: rgba(255,255,255,.12);
 
-      --r-sm: 8px;
-      --r-md: 12px;
-      --r-lg: 16px;
-      --r-xl: 20px;
-      --r-2xl: 28px;
+      --b0: rgba(255,255,255,.06);
+      --b1: rgba(255,255,255,.11);
+      --b2: rgba(255,255,255,.18);
+
+      --r-xs: 6px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
     }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-    html { scroll-behavior: smooth; }
-
+    html { height:100%; }
     body {
-      font-family: 'Inter','PingFang SC','Helvetica Neue',system-ui,sans-serif;
-      background: var(--bg-root);
-      color: var(--text-1);
-      min-height: 100vh;
-      overflow-x: hidden;
+      font-family: 'PingFang SC','Helvetica Neue',system-ui,sans-serif;
+      background: var(--bg-app);
+      color: var(--t1);
+      height: 100%;
+      display: flex;
+      overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Background grid ── */
-    body::before {
-      content:'';
-      position:fixed; inset:0;
-      background-image:
-        linear-gradient(rgba(79,110,247,.028) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(79,110,247,.028) 1px, transparent 1px);
-      background-size: 48px 48px;
-      pointer-events:none; z-index:0;
+    /* ════════════════════════════════════
+       SIDEBAR
+    ════════════════════════════════════ */
+    .sb {
+      width: var(--sb-w);
+      flex-shrink: 0;
+      background: var(--bg-sb);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 10px;
+      border-right: 1px solid var(--b0);
+      z-index: 10;
     }
 
-    /* radial gradient vignette */
-    body::after {
-      content:'';
-      position:fixed; inset:0;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,110,247,.07) 0%, transparent 65%);
-      pointer-events:none; z-index:0;
-    }
-
-    /* ══════════════════════════════════════
-       NAV
-    ══════════════════════════════════════ */
-    .nav {
-      position: sticky; top:0; z-index:200;
-      height: 56px;
-      background: rgba(9,9,12,.82);
-      backdrop-filter: blur(20px) saturate(150%);
-      border-bottom: 1px solid var(--border);
+    .sb-logo {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px;
+      padding: 0 4px 18px;
     }
-    .nav-logo {
-      display:flex; align-items:center; gap:10px;
-      font-size:17px; font-weight:700; letter-spacing:-.4px;
-      text-decoration:none; color:var(--text-1);
+    .sb-logo-text {
+      font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+      color: var(--t1);
     }
-    .nav-logo-mark {
-      width:30px; height:30px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      border-radius:8px;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow: 0 0 16px rgba(79,110,247,.35);
-    }
-    .nav-logo-mark svg { width:16px; height:16px; }
-
-    .nav-right { display:flex; align-items:center; gap:12px; }
-
-    .nav-link {
-      color:var(--text-2); font-size:14px; text-decoration:none;
-      padding:6px 12px; border-radius:var(--r-sm);
-      transition:all .15s;
-    }
-    .nav-link:hover { color:var(--text-1); background:var(--bg-element); }
-
-    .nav-btn {
-      padding:7px 16px; border-radius:var(--r-md);
-      background:var(--accent); color:#fff;
-      font-size:13px; font-weight:600; border:none; cursor:pointer;
-      transition:all .15s;
-    }
-    .nav-btn:hover { background:#5f7cf8; }
-
-    .nav-avatar {
-      width:32px; height:32px; border-radius:50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:600; cursor:pointer;
-      border: 1.5px solid var(--accent-border);
+    .sb-menu-icon {
+      color: var(--t3); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
     }
 
-    /* ══════════════════════════════════════
-       MAIN CONTAINER
-    ══════════════════════════════════════ */
+    .sb-create {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 10px; border-radius: var(--r-sm);
+      background: rgba(37,99,235,.18); border: 1px solid rgba(37,99,235,.35);
+      color: var(--blue2); font-size: 13px; font-weight: 600;
+      cursor: pointer; margin-bottom: 16px;
+      transition: all .15s;
+    }
+    .sb-create:hover { background: rgba(37,99,235,.28); }
+    .sb-create svg { width: 14px; height: 14px; }
+
+    .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .sb-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 10px; border-radius: var(--r-sm);
+      color: var(--t2); font-size: 13px;
+      cursor: pointer; transition: all .15s;
+      text-decoration: none;
+    }
+    .sb-item:hover { color: var(--t1); background: var(--bg-el); }
+    .sb-item.active { color: var(--t1); }
+    .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sb-foot {
+      border-top: 1px solid var(--b0);
+      padding-top: 12px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .sb-foot-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border-radius: var(--r-sm);
+      color: var(--t3); font-size: 12px;
+      cursor: pointer; transition: all .15s;
+    }
+    .sb-foot-item:hover { color: var(--t2); background: var(--bg-el); }
+    .sb-foot-item .label { display: flex; align-items: center; gap: 7px; }
+    .sb-foot-item svg { width: 14px; height: 14px; }
+    .sb-foot-tag {
+      padding: 1px 6px; border-radius: 4px;
+      background: rgba(37,99,235,.2); color: var(--blue2);
+      font-size: 10px; font-weight: 600;
+    }
+
+    .sb-credits {
+      padding: 8px 10px; border-radius: var(--r-sm);
+      color: var(--t3); font-size: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .sb-credits-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--amber);
+    }
+    .sb-credits strong { color: var(--amber); }
+
+    /* ════════════════════════════════════
+       MAIN
+    ════════════════════════════════════ */
     .main {
-      position:relative; z-index:1;
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 28px 32px 80px;
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* ══════════════════════════════════════
-       CREATE SECTION (collapsible)
-    ══════════════════════════════════════ */
-    .create-section {
-      margin-bottom: 36px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-2xl);
+    /* ── HERO (aurora + panel) ── */
+    .hero {
+      position: relative;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 44px 40px 32px;
       overflow: hidden;
-      transition: border-color .3s, box-shadow .3s;
-    }
-    .create-section.open {
-      border-color: var(--accent-border);
-      box-shadow: 0 0 0 1px rgba(79,110,247,.12), 0 24px 64px rgba(79,110,247,.09);
     }
 
-    /* header row */
-    .create-hd {
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 18px 24px;
-      cursor: pointer; user-select:none;
-      transition: background .15s;
+    /* Aurora streaks */
+    .aurora {
+      position: absolute; inset: 0;
+      pointer-events: none; overflow: hidden;
     }
-    .create-hd:hover { background: rgba(255,255,255,.02); }
-
-    .create-hd-left { display:flex; align-items:center; gap:14px; }
-
-    .create-hd-icon {
-      width:38px; height:38px;
-      background: linear-gradient(135deg, rgba(79,110,247,.22), rgba(139,92,246,.22));
-      border: 1px solid var(--accent-border);
-      border-radius:11px;
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0;
+    .aurora-layer {
+      position: absolute;
+      width: 140%; left: -20%;
+      border-radius: 50%;
+      filter: blur(55px);
     }
-
-    .create-hd-text {}
-    .create-hd-title { font-size:15px; font-weight:600; }
-    .create-hd-sub { font-size:12px; color:var(--text-2); margin-top:2px; }
-
-    .create-hd-right { display:flex; align-items:center; gap:10px; }
-
-    .create-badge {
-      padding:4px 10px; border-radius:20px;
-      font-size:11px; font-weight:600; letter-spacing:.4px;
-      background:var(--accent-dim); color:var(--accent);
-      border:1px solid rgba(79,110,247,.25);
+    .aurora-layer:nth-child(1) {
+      height: 380px; top: -60px;
+      background: linear-gradient(105deg,
+        transparent 15%,
+        rgba(100,40,220,.28) 32%,
+        rgba(60,100,255,.22) 48%,
+        rgba(0,190,210,.18) 62%,
+        transparent 78%);
+      animation: aur1 12s ease-in-out infinite alternate;
     }
-
-    .chevron-btn {
-      width:30px; height:30px; border-radius:var(--r-sm);
-      background:var(--bg-element); border:1px solid var(--border);
-      display:flex; align-items:center; justify-content:center;
-      color:var(--text-2); cursor:pointer; transition:all .2s;
+    .aurora-layer:nth-child(2) {
+      height: 300px; top: 30px;
+      background: linear-gradient(115deg,
+        rgba(180,30,90,.10) 10%,
+        transparent 35%,
+        rgba(40,180,120,.08) 60%,
+        rgba(80,50,220,.12) 78%,
+        transparent 90%);
+      animation: aur2 15s ease-in-out infinite alternate;
     }
-    .chevron-btn:hover { background:var(--bg-card); color:var(--text-1); }
-    .chevron-icon { transition:transform .35s cubic-bezier(.4,0,.2,1); }
-    .create-section.open .chevron-icon { transform:rotate(180deg); }
-
-    /* collapsible body */
-    .create-body {
-      max-height:0; overflow:hidden;
-      transition:max-height .45s cubic-bezier(.4,0,.2,1);
+    .aurora-layer:nth-child(3) {
+      height: 200px; top: 140px;
+      background: linear-gradient(95deg,
+        transparent 20%,
+        rgba(220,60,100,.08) 40%,
+        rgba(80,170,255,.12) 58%,
+        transparent 75%);
+      animation: aur3 9s ease-in-out infinite alternate;
     }
-    .create-section.open .create-body { max-height:900px; }
-
-    .create-inner {
-      border-top:1px solid var(--border);
-      padding: 22px 24px 26px;
+    @keyframes aur1 {
+      from { transform: scaleX(1) translateY(0) rotate(-1.5deg); opacity:.85; }
+      to   { transform: scaleX(1.06) translateY(-16px) rotate(1.5deg); opacity:1; }
+    }
+    @keyframes aur2 {
+      from { transform: translateY(8px) rotate(1deg); opacity:.7; }
+      to   { transform: translateY(-12px) rotate(-1deg); opacity:.9; }
+    }
+    @keyframes aur3 {
+      from { transform: translateX(-20px); opacity:.6; }
+      to   { transform: translateX(20px); opacity:.85; }
     }
 
-    /* ── Mode selector ── */
-    .mode-row {
-      display:flex; align-items:center; gap:8px;
-      margin-bottom:22px;
+    /* radial top glow */
+    .hero::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(ellipse 70% 55% at 50% 0%,
+        rgba(60,80,200,.18) 0%, transparent 60%);
     }
-    .mode-pill {
-      display:flex; align-items:center; gap:8px;
-      padding:9px 18px; border-radius:var(--r-md);
-      border:1px solid var(--border); background:var(--bg-element);
-      color:var(--text-2); font-size:14px; font-weight:500;
-      cursor:pointer; transition:all .2s;
-    }
-    .mode-pill:hover { border-color:var(--accent-border); color:var(--text-1); }
-    .mode-pill.active {
-      background:var(--accent-dim); border-color:var(--accent);
-      color:var(--text-1);
-      box-shadow:0 0 12px rgba(79,110,247,.15);
-    }
-    .mode-pill svg { width:16px; height:16px; flex-shrink:0; }
 
-    /* ── Mode panels ── */
-    .mode-panel { display:none; }
-    .mode-panel.active { display:block; }
-
-    /* ══════════════════════════════════════
-       CAPTURE MODE
-    ══════════════════════════════════════ */
-    .capture-wrap {
-      display:grid;
-      grid-template-columns:1fr 320px;
-      gap:20px;
-      align-items:start;
+    /* ── Slogan ── */
+    .slogan {
+      position: relative; z-index: 2;
+      font-size: 32px; font-weight: 700;
+      letter-spacing: -.5px; text-align: center;
+      margin-bottom: 28px;
+      background: linear-gradient(135deg, #fff 0%, rgba(180,200,255,.85) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      min-height: 40px; /* placeholder space when TBD */
     }
-    @media(max-width:900px){ .capture-wrap{ grid-template-columns:1fr; } }
+
+    /* ── Creation panel ── */
+    .panel {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 720px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(24px) saturate(140%);
+      border: 1px solid var(--b1);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(255,255,255,.04);
+      animation: panelIn .5s cubic-bezier(.22,.68,0,1.2) both;
+    }
+    @keyframes panelIn {
+      from { opacity:0; transform: translateY(22px) scale(.98); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Panel tabs ── */
+    .panel-tabs {
+      display: flex; padding: 10px 12px 0;
+      gap: 4px; border-bottom: 1px solid var(--b0);
+    }
+    .ptab {
+      flex: 1; display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px 12px;
+      border-radius: var(--r-md) var(--r-md) 0 0;
+      cursor: pointer; transition: all .2s;
+      position: relative;
+    }
+    .ptab:hover:not(.active) { background: var(--bg-el); }
+    .ptab.active {
+      background: linear-gradient(160deg,
+        rgba(37,99,235,.28) 0%, rgba(100,50,200,.22) 100%);
+    }
+    .ptab.active::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--purple) 100%);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .ptab-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: var(--bg-el); border: 1px solid var(--b1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 17px;
+      transition: all .2s;
+    }
+    .ptab.active .ptab-icon {
+      background: linear-gradient(135deg, rgba(37,99,235,.35), rgba(100,50,200,.28));
+      border-color: rgba(37,99,235,.4);
+      box-shadow: 0 0 12px rgba(37,99,235,.3);
+    }
+
+    .ptab-text {}
+    .ptab-name {
+      font-size: 13px; font-weight: 600; color: var(--t1);
+      transition: color .2s;
+    }
+    .ptab:not(.active) .ptab-name { color: var(--t2); }
+    .ptab-sub {
+      font-size: 11px; color: var(--t3); margin-top: 2px;
+      transition: color .2s;
+    }
+    .ptab.active .ptab-sub { color: rgba(130,160,255,.75); }
+
+    /* ── Panel body ── */
+    .panel-body {
+      padding: 18px 18px 16px;
+    }
+
+    /* tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ════════════════════════════════════
+       REBUILD TAB
+    ════════════════════════════════════ */
 
     /* Upload zone */
     .upload-zone {
-      border:2px dashed var(--border-hover);
-      border-radius:var(--r-lg);
-      background:var(--bg-input);
-      padding:36px 24px;
-      text-align:center;
-      cursor:pointer;
-      transition:all .25s;
-      position:relative; overflow:hidden;
+      border: 1.5px dashed var(--b2);
+      border-radius: var(--r-lg);
+      background: rgba(255,255,255,.025);
+      padding: 22px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
     }
-    .upload-zone::before {
-      content:'';
-      position:absolute; inset:0;
-      background:radial-gradient(ellipse 60% 40% at 50% 50%, rgba(79,110,247,.06) 0%, transparent 70%);
-      opacity:0; transition:opacity .25s;
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: rgba(37,99,235,.6);
+      background: rgba(37,99,235,.06);
     }
-    .upload-zone:hover,
-    .upload-zone.drag-over {
-      border-color:var(--accent);
-      background:rgba(79,110,247,.04);
-    }
-    .upload-zone:hover::before,
-    .upload-zone.drag-over::before { opacity:1; }
+    .upload-zone input { display: none; }
 
-    .upload-icon-wrap {
-      width:56px; height:56px; border-radius:14px;
-      background:var(--bg-element); border:1px solid var(--border-hover);
-      display:flex; align-items:center; justify-content:center;
-      margin:0 auto 16px;
+    .uz-icons { display: flex; justify-content: center; gap: 16px; margin-bottom: 12px; }
+    .uz-icon {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
     }
-    .upload-icon-wrap svg { width:24px; height:24px; color:var(--accent); }
+    .uz-icon-box {
+      width: 36px; height: 36px; border-radius: var(--r-sm);
+      background: var(--bg-el); border: 1px solid var(--b1);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--t2);
+    }
+    .uz-icon-box svg { width: 18px; height: 18px; }
+    .uz-icon span { font-size: 10px; color: var(--t3); }
 
-    .upload-title { font-size:15px; font-weight:600; margin-bottom:6px; }
-    .upload-sub { font-size:13px; color:var(--text-2); line-height:1.6; }
+    .uz-title { font-size: 13px; color: var(--t2); margin-bottom: 6px; }
+    .uz-formats { font-size: 11px; color: var(--t3); line-height: 1.7; }
+    .uz-guide {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 8px; font-size: 11px; color: var(--blue2);
+      cursor: pointer;
+    }
+    .uz-guide svg { width: 12px; height: 12px; }
 
-    .upload-formats {
-      display:flex; flex-wrap:wrap; gap:6px;
-      justify-content:center; margin-top:16px;
+    /* file selected bar */
+    .file-bar {
+      display: none; align-items: center; gap: 10px;
+      margin-top: 10px; padding: 10px 14px;
+      background: var(--bg-el); border: 1px solid var(--b1);
+      border-radius: var(--r-md);
     }
-    .fmt-tag {
-      padding:3px 9px; border-radius:6px;
-      background:var(--bg-element); border:1px solid var(--border);
-      font-size:11px; font-weight:600; color:var(--text-2);
-      letter-spacing:.3px;
+    .file-bar.show { display: flex; }
+    .file-bar-icon {
+      width: 32px; height: 32px; border-radius: 7px;
+      background: var(--blue-d); border: 1px solid rgba(37,99,235,.35);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
+    .file-bar-icon svg { width: 15px; height: 15px; color: var(--blue2); }
+    .file-bar-info { flex: 1; min-width: 0; }
+    .file-bar-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-bar-size { font-size: 11px; color: var(--t3); margin-top: 2px; }
+    .file-bar-prog { height: 2px; background: var(--bg-el-h); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+    .file-bar-fill { height: 100%; border-radius: 2px; width: 0; transition: width .3s ease;
+      background: linear-gradient(90deg, var(--blue), var(--purple)); }
+    .file-bar-rm {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: none; border: none; color: var(--t3);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .15s; flex-shrink: 0;
+    }
+    .file-bar-rm:hover { background: rgba(239,68,68,.12); color: var(--red); }
 
-    .upload-limits {
-      margin-top:12px; font-size:11px; color:var(--text-3);
-      line-height:1.7;
+    /* Type selector */
+    .type-section {
+      display: none; margin-top: 14px;
     }
+    .type-section.show { display: block; }
+    .type-label {
+      font-size: 11px; font-weight: 600; color: var(--t3);
+      letter-spacing: .6px; text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+    .type-row { display: flex; gap: 8px; }
+    .type-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+      padding: 10px 8px; border-radius: var(--r-md);
+      border: 1.5px solid var(--b1); background: var(--bg-el);
+      cursor: pointer; transition: all .2s; position: relative;
+    }
+    .type-btn:hover { border-color: var(--b2); }
+    .type-btn.active {
+      border-color: var(--blue); background: rgba(37,99,235,.12);
+    }
+    .type-btn-icon { font-size: 20px; }
+    .type-btn-name { font-size: 12px; font-weight: 600; color: var(--t1); }
+    .type-btn-sub { font-size: 10px; color: var(--t3); }
+    .type-btn.active .type-btn-name { color: var(--blue2); }
+    .type-check {
+      position: absolute; top: 6px; right: 6px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--blue); display: none;
+      align-items: center; justify-content: center;
+    }
+    .type-btn.active .type-check { display: flex; }
+    .type-check svg { width: 8px; height: 8px; color: #fff; }
 
-    #fileInput { display:none; }
+    /* options row */
+    .opts-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 14px; gap: 10px;
+    }
+    .opts-left { display: flex; gap: 6px; }
+    .opt-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: var(--r-sm);
+      background: var(--bg-el); border: 1px solid var(--b1);
+      color: var(--t2); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+    }
+    .opt-pill:hover { border-color: var(--b2); color: var(--t1); }
+    .opt-pill.active { background: var(--blue-d); border-color: rgba(37,99,235,.45); color: var(--blue2); }
+    .opt-pill svg { width: 12px; height: 12px; }
 
-    /* file selected state */
-    .file-selected-bar {
-      display:none; align-items:center; gap:12px;
-      margin-top:16px; padding:12px 16px;
-      background:var(--bg-element); border:1px solid var(--border);
-      border-radius:var(--r-md);
+    /* create / generate button */
+    .btn-create {
+      padding: 8px 20px; border-radius: var(--r-md);
+      background: var(--blue); color: #fff;
+      font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+      transition: all .18s; white-space: nowrap;
+      opacity: .45; pointer-events: none;
     }
-    .file-selected-bar.show { display:flex; }
-    .file-icon {
-      width:36px; height:36px; border-radius:8px;
-      background:var(--accent-dim); border:1px solid var(--accent-border);
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0;
-    }
-    .file-icon svg { width:16px; height:16px; color:var(--accent); }
-    .file-info { flex:1; min-width:0; }
-    .file-name {
-      font-size:13px; font-weight:500;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .file-size { font-size:11px; color:var(--text-2); margin-top:1px; }
-    .file-remove {
-      width:24px; height:24px; border-radius:6px;
-      background:none; border:none; color:var(--text-3);
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      transition:all .15s;
-    }
-    .file-remove:hover { background:rgba(239,68,68,.12); color:var(--danger); }
+    .btn-create.ready { opacity: 1; pointer-events: all; }
+    .btn-create.ready:hover { background: var(--blue2); box-shadow: 0 4px 16px rgba(37,99,235,.4); }
 
-    /* ── Shoot mode cards ── */
-    .shoot-section {
-      margin-top:20px;
-      display:none;
-    }
-    .shoot-section.show { display:block; }
-    .shoot-label {
-      font-size:12px; font-weight:600; color:var(--text-2);
-      letter-spacing:.6px; text-transform:uppercase;
-      margin-bottom:12px;
-    }
-    .shoot-cards {
-      display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
-    }
-    @media(max-width:640px){ .shoot-cards{ grid-template-columns:1fr; } }
+    /* ════════════════════════════════════
+       AI TAB
+    ════════════════════════════════════ */
 
-    .shoot-card {
-      border:1.5px solid var(--border);
-      border-radius:var(--r-md);
-      background:var(--bg-element);
-      padding:16px;
-      cursor:pointer; transition:all .2s;
-      position:relative; overflow:hidden;
+    /* Examples strip */
+    .ai-examples {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
     }
-    .shoot-card::after {
-      content:'';
-      position:absolute; inset:0;
-      background:linear-gradient(135deg, rgba(79,110,247,.08), rgba(139,92,246,.04));
-      opacity:0; transition:opacity .2s;
+    .ai-examples-label {
+      font-size: 11px; color: var(--t3);
+      white-space: nowrap; flex-shrink: 0;
     }
-    .shoot-card:hover { border-color:var(--accent-border); }
-    .shoot-card:hover::after { opacity:1; }
-    .shoot-card.selected {
-      border-color:var(--accent);
-      background:var(--accent-dim);
-      box-shadow:0 0 0 3px rgba(79,110,247,.08);
+    .ai-example-imgs {
+      display: flex; gap: 6px; flex: 1; overflow-x: auto;
+      scrollbar-width: none; padding-bottom: 2px;
     }
-    .shoot-card.selected::after { opacity:1; }
+    .ai-example-imgs::-webkit-scrollbar { display: none; }
+    .ai-example-img {
+      width: 52px; height: 52px; border-radius: var(--r-sm);
+      flex-shrink: 0; border: 1.5px solid var(--b1);
+      cursor: pointer; transition: all .18s; overflow: hidden;
+      position: relative;
+    }
+    .ai-example-img:hover { border-color: rgba(37,99,235,.5); transform: scale(1.06); }
+    .ai-example-img.selected { border-color: var(--blue); }
+    .ai-example-img .thumb {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .ai-example-img.selected::after {
+      content: '✓'; position: absolute; inset: 0;
+      background: rgba(37,99,235,.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .ai-next-batch {
+      flex-shrink: 0; padding: 5px 10px; border-radius: var(--r-sm);
+      background: var(--bg-el); border: 1px solid var(--b1);
+      color: var(--t3); font-size: 11px; cursor: pointer;
+      transition: all .15s; white-space: nowrap;
+    }
+    .ai-next-batch:hover { color: var(--t2); border-color: var(--b2); }
 
-    .shoot-card-icon {
-      width:40px; height:40px; border-radius:10px;
-      background:var(--bg-surface); border:1px solid var(--border);
-      display:flex; align-items:center; justify-content:center;
-      margin-bottom:10px; font-size:20px;
-      transition:border-color .2s;
-      position:relative; z-index:1;
-    }
-    .shoot-card.selected .shoot-card-icon { border-color:var(--accent-border); }
-    .shoot-card-title {
-      font-size:13px; font-weight:600; margin-bottom:4px;
-      position:relative; z-index:1;
-    }
-    .shoot-card-desc {
-      font-size:11.5px; color:var(--text-2); line-height:1.55;
-      position:relative; z-index:1;
-    }
-    .shoot-check {
-      position:absolute; top:10px; right:10px;
-      width:18px; height:18px; border-radius:50%;
-      background:var(--accent); display:none;
-      align-items:center; justify-content:center;
-      z-index:1;
-    }
-    .shoot-card.selected .shoot-check { display:flex; }
-    .shoot-check svg { width:10px; height:10px; color:#fff; }
-
-    /* ── Options sidebar ── */
-    .options-box {
-      background:var(--bg-element);
-      border:1px solid var(--border);
-      border-radius:var(--r-lg);
-      padding:20px;
-    }
-    .options-title {
-      font-size:13px; font-weight:600; color:var(--text-2);
-      letter-spacing:.5px; text-transform:uppercase;
-      margin-bottom:16px;
-      display:flex; align-items:center; gap:8px;
-    }
-    .opt-group { margin-bottom:18px; }
-    .opt-group:last-child { margin-bottom:0; }
-    .opt-label { font-size:12px; color:var(--text-2); margin-bottom:8px; font-weight:500; }
-    .opt-btns { display:flex; gap:6px; flex-wrap:wrap; }
-    .opt-btn {
-      padding:5px 12px; border-radius:var(--r-sm);
-      background:var(--bg-card); border:1px solid var(--border);
-      color:var(--text-2); font-size:12px; font-weight:500;
-      cursor:pointer; transition:all .15s;
-    }
-    .opt-btn:hover { border-color:var(--border-hover); color:var(--text-1); }
-    .opt-btn.sel {
-      background:var(--accent-dim); border-color:var(--accent);
-      color:var(--text-1);
-    }
-
-    /* checkbox row */
-    .opt-check-row {
-      display:flex; align-items:center; gap:8px;
-      cursor:pointer; margin-bottom:8px;
-    }
-    .opt-check-row:last-child { margin-bottom:0; }
-    .opt-check-box {
-      width:16px; height:16px; border-radius:4px;
-      border:1.5px solid var(--border-hover); background:var(--bg-card);
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; transition:all .15s;
-    }
-    .opt-check-row.checked .opt-check-box {
-      background:var(--accent); border-color:var(--accent);
-    }
-    .opt-check-box svg { width:10px; height:10px; color:#fff; display:none; }
-    .opt-check-row.checked .opt-check-box svg { display:block; }
-    .opt-check-text { font-size:12px; color:var(--text-2); }
-
-    /* start btn */
-    .capture-start-btn {
-      margin-top:20px; width:100%;
-      padding:12px; border-radius:var(--r-md);
-      background:var(--accent); color:#fff;
-      font-size:14px; font-weight:600; border:none; cursor:pointer;
-      transition:all .2s;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-    }
-    .capture-start-btn:hover { background:#5f7cf8; box-shadow:0 4px 20px rgba(79,110,247,.3); }
-    .capture-start-btn:disabled {
-      background:var(--bg-element); color:var(--text-3); cursor:not-allowed;
-      box-shadow:none;
+    /* AI main area */
+    .ai-main {
+      display: grid; grid-template-columns: 200px 1fr; gap: 12px;
     }
 
-    /* ══════════════════════════════════════
-       AI GENERATE MODE
-    ══════════════════════════════════════ */
-    .ai-wrap {
-      display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;
+    /* Image upload (primary) */
+    .ai-img-zone {
+      border: 1.5px dashed var(--b2); border-radius: var(--r-lg);
+      background: rgba(255,255,255,.025);
+      aspect-ratio: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; transition: all .2s; position: relative;
+      overflow: hidden;
     }
-    @media(max-width:900px){ .ai-wrap{ grid-template-columns:1fr; } }
+    .ai-img-zone:hover { border-color: rgba(37,99,235,.5); background: rgba(37,99,235,.05); }
+    .ai-img-zone input { display: none; }
+    .ai-img-zone svg { color: var(--t3); width: 28px; height: 28px; }
+    .ai-img-zone-text { font-size: 12px; color: var(--t3); text-align: center; line-height: 1.5; }
+    .ai-img-zone-hint { font-size: 10px; color: var(--t4); }
 
-    .ai-prompt-box {
-      background:var(--bg-input);
-      border:1.5px solid var(--border-hover);
-      border-radius:var(--r-lg); padding:20px;
-      transition:border-color .2s;
-      position:relative;
-    }
-    .ai-prompt-box:focus-within {
-      border-color:var(--accent);
-      box-shadow:0 0 0 3px rgba(79,110,247,.08);
-    }
-
-    .ai-prompt-label {
-      font-size:11px; font-weight:700; color:var(--accent);
-      letter-spacing:.8px; text-transform:uppercase;
-      margin-bottom:10px;
-    }
-
-    .ai-prompt-textarea {
-      width:100%; background:none; border:none; outline:none;
-      color:var(--text-1); font-size:15px; line-height:1.65;
-      font-family:inherit; resize:none;
-      min-height:88px;
-    }
-    .ai-prompt-textarea::placeholder { color:var(--text-3); }
-
-    .ai-prompt-footer {
-      display:flex; align-items:center; justify-content:space-between;
-      margin-top:14px; padding-top:14px;
-      border-top:1px solid var(--border);
-    }
-
-    .ai-chips { display:flex; gap:6px; flex-wrap:wrap; }
-    .ai-chip {
-      padding:4px 10px; border-radius:20px;
-      background:var(--bg-element); border:1px solid var(--border);
-      color:var(--text-2); font-size:11.5px;
-      cursor:pointer; transition:all .15s;
-    }
-    .ai-chip:hover { border-color:var(--accent-border); color:var(--text-1); }
-
-    .ai-char-count { font-size:11px; color:var(--text-3); flex-shrink:0; }
-
-    /* image upload toggle */
-    .ai-img-toggle {
-      display:flex; align-items:center; gap:8px;
-      cursor:pointer; margin-bottom:12px;
-    }
-    .ai-img-toggle-box {
-      width:36px; height:20px; border-radius:10px;
-      background:var(--bg-element); border:1px solid var(--border);
-      position:relative; transition:all .2s;
-    }
-    .ai-img-toggle-box::after {
-      content:''; position:absolute; top:2px; left:2px;
-      width:14px; height:14px; border-radius:50%;
-      background:var(--text-3); transition:all .2s;
-    }
-    .ai-img-toggle.on .ai-img-toggle-box {
-      background:var(--accent); border-color:var(--accent);
-    }
-    .ai-img-toggle.on .ai-img-toggle-box::after {
-      left:18px; background:#fff;
-    }
-    .ai-img-toggle-label { font-size:12px; color:var(--text-2); }
-
-    .ai-img-upload {
-      display:none; border:1.5px dashed var(--border-hover);
-      border-radius:var(--r-md); padding:20px;
-      text-align:center; cursor:pointer;
-      background:var(--bg-input);
-      transition:all .2s;
-    }
-    .ai-img-upload.show { display:block; }
-    .ai-img-upload:hover { border-color:var(--accent); }
-    .ai-img-upload svg { color:var(--accent); margin-bottom:8px; }
-    .ai-img-upload-text { font-size:12px; color:var(--text-2); }
-
+    /* Preview uploaded image */
     .ai-img-preview {
-      display:none; position:relative;
-      border-radius:var(--r-md); overflow:hidden;
-      aspect-ratio:4/3; background:var(--bg-element);
-      border:1px solid var(--border);
+      position: absolute; inset: 0;
+      display: none; align-items: center; justify-content: center;
     }
-    .ai-img-preview.show { display:block; }
-    .ai-img-preview img {
-      width:100%; height:100%; object-fit:cover;
-    }
-    .ai-img-preview-remove {
-      position:absolute; top:6px; right:6px;
-      width:24px; height:24px; border-radius:6px;
-      background:rgba(0,0,0,.6); border:none; color:#fff;
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      font-size:14px;
+    .ai-img-preview.show { display: flex; }
+    .ai-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .ai-img-remove {
+      position: absolute; top: 5px; right: 5px;
+      width: 22px; height: 22px; border-radius: 5px;
+      background: rgba(0,0,0,.6); border: none; color: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
     }
 
-    .ai-right { display:flex; flex-direction:column; gap:14px; }
+    /* Example selected preview */
+    .ai-img-zone.has-example .ai-img-zone-default { display: none; }
+    .ai-example-preview {
+      position: absolute; inset: 0;
+      align-items: center; justify-content: center;
+      font-size: 60px; display: none;
+    }
+    .ai-img-zone.has-example .ai-example-preview { display: flex; }
 
-    .ai-options-box {
-      background:var(--bg-element); border:1px solid var(--border);
-      border-radius:var(--r-lg); padding:18px;
+    /* Right: prompt area */
+    .ai-prompt-area {
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .ai-opt-title {
-      font-size:12px; font-weight:600; color:var(--text-2);
-      letter-spacing:.5px; text-transform:uppercase;
-      margin-bottom:14px;
+    .ai-prompt-box {
+      flex: 1; border: 1px solid var(--b1); border-radius: var(--r-lg);
+      background: rgba(255,255,255,.03);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: border-color .2s;
     }
+    .ai-prompt-box:focus-within { border-color: rgba(37,99,235,.4); }
+    .ai-prompt-hint {
+      font-size: 10px; font-weight: 600; color: var(--t3);
+      letter-spacing: .5px; padding: 10px 12px 4px;
+    }
+    .ai-prompt-textarea {
+      flex: 1; width: 100%; background: none; border: none; outline: none;
+      color: var(--t1); font-size: 13px; line-height: 1.65;
+      font-family: inherit; resize: none; padding: 4px 12px 10px;
+      min-height: 80px;
+    }
+    .ai-prompt-textarea::placeholder { color: var(--t4); }
+    .ai-prompt-footer {
+      padding: 8px 12px; border-top: 1px solid var(--b0);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ai-autofill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: var(--r-sm);
+      background: var(--bg-el); border: 1px solid var(--b1);
+      color: var(--t3); font-size: 11px; cursor: pointer; transition: all .15s;
+    }
+    .ai-autofill:hover { color: var(--t2); }
+    .ai-autofill svg { width: 12px; height: 12px; }
+    .ai-char-count { font-size: 10px; color: var(--t4); }
 
-    .ai-generate-btn {
-      width:100%; padding:14px;
-      border-radius:var(--r-md);
-      background:linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#fff; font-size:14px; font-weight:600;
-      border:none; cursor:pointer; transition:all .2s;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      position:relative; overflow:hidden;
+    /* Bottom action row (AI) */
+    .ai-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 12px;
     }
-    .ai-generate-btn::before {
-      content:''; position:absolute; inset:0;
-      background:linear-gradient(135deg, rgba(255,255,255,.1), transparent);
-      opacity:0; transition:opacity .2s;
+    .ai-credits {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--t3);
     }
-    .ai-generate-btn:hover {
-      box-shadow:0 6px 24px rgba(79,110,247,.35);
-      transform:translateY(-1px);
-    }
-    .ai-generate-btn:hover::before { opacity:1; }
+    .ai-credits-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+    .ai-credits strong { color: var(--amber); }
 
-    .ai-generate-btn svg { width:16px; height:16px; }
-
-    /* sparkle animation */
-    @keyframes sparkle {
-      0%,100% { transform:scale(1) rotate(0deg); }
-      50% { transform:scale(1.15) rotate(15deg); }
+    .btn-generate {
+      padding: 9px 22px; border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
+      color: #fff; font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+      transition: all .18s; display: flex; align-items: center; gap: 7px;
     }
-    .ai-generate-btn:hover svg { animation: sparkle .6s ease infinite; }
+    .btn-generate:hover {
+      box-shadow: 0 4px 20px rgba(37,99,235,.4); transform: translateY(-1px);
+    }
+    .btn-generate svg { width: 14px; height: 14px; }
 
-    /* ══════════════════════════════════════
+    /* ════════════════════════════════════
        COMMUNITY SECTION
-    ══════════════════════════════════════ */
-    .section-hd {
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom:20px;
-    }
-    .section-title-wrap { display:flex; align-items:center; gap:12px; }
-    .section-title { font-size:18px; font-weight:700; }
-    .section-count {
-      padding:3px 10px; border-radius:20px;
-      background:var(--bg-element); border:1px solid var(--border);
-      font-size:12px; color:var(--text-2);
-    }
-    .section-right { display:flex; align-items:center; gap:8px; }
-
-    .filter-btn {
-      padding:7px 14px; border-radius:var(--r-md);
-      background:var(--bg-element); border:1px solid var(--border);
-      color:var(--text-2); font-size:13px; cursor:pointer; transition:all .15s;
-    }
-    .filter-btn:hover { color:var(--text-1); border-color:var(--border-hover); }
-    .filter-btn.active {
-      background:var(--accent-dim); border-color:var(--accent); color:var(--text-1);
+    ════════════════════════════════════ */
+    .community {
+      padding: 4px 32px 40px;
+      flex: 1;
     }
 
-    /* project cards grid */
-    .cards-grid {
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap:18px;
+    .comm-hd {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--b0);
+    }
+    .comm-hd-title { font-size: 13px; font-weight: 600; color: var(--t2); }
+    .comm-filters { display: flex; gap: 4px; }
+    .comm-filter {
+      padding: 4px 12px; border-radius: 20px;
+      background: transparent; border: 1px solid transparent;
+      color: var(--t3); font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .comm-filter:hover { color: var(--t2); }
+    .comm-filter.active {
+      border-color: var(--b1); color: var(--t1); background: var(--bg-el);
     }
 
-    .project-card {
-      background:var(--bg-card);
-      border:1px solid var(--border);
-      border-radius:var(--r-lg);
-      overflow:hidden; cursor:pointer;
-      transition:all .22s;
-      position:relative;
-    }
-    .project-card:hover {
-      border-color:var(--border-hover);
-      transform:translateY(-3px);
-      box-shadow:0 16px 48px rgba(0,0,0,.35);
+    .comm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
     }
 
-    .card-thumb {
-      aspect-ratio:16/10; position:relative; overflow:hidden;
+    .comm-card {
+      border-radius: var(--r-md); overflow: hidden;
+      cursor: pointer; transition: all .2s; position: relative;
+      border: 1px solid var(--b0);
     }
-    .card-thumb-bg {
-      width:100%; height:100%;
-      transition:transform .35s ease;
+    .comm-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); border-color: var(--b1); }
+    .comm-card-thumb {
+      aspect-ratio: 4/3; position: relative; overflow: hidden;
     }
-    .project-card:hover .card-thumb-bg { transform:scale(1.04); }
+    .comm-card-bg {
+      width: 100%; height: 100%; transition: transform .3s ease;
+    }
+    .comm-card:hover .comm-card-bg { transform: scale(1.04); }
+    .comm-card-tag {
+      position: absolute; top: 7px; left: 7px;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 600; letter-spacing: .2px;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.85);
+    }
+    .comm-card-tag.ai-tag {
+      background: rgba(37,99,235,.55); border-color: rgba(37,99,235,.4);
+    }
+    .comm-card-body { padding: 9px 10px 10px; background: var(--bg-el); }
+    .comm-card-title { font-size: 12px; font-weight: 500; margin-bottom: 5px; }
+    .comm-card-meta { display: flex; align-items: center; justify-content: space-between; }
+    .comm-card-author { display: flex; align-items: center; gap: 5px; }
+    .comm-card-av {
+      width: 16px; height: 16px; border-radius: 50%;
+      font-size: 9px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .comm-card-name { font-size: 11px; color: var(--t3); }
+    .comm-card-stat { font-size: 10px; color: var(--t4); }
 
-    /* type badge on thumb */
-    .card-type-badge {
-      position:absolute; top:10px; left:10px;
-      padding:3px 9px; border-radius:20px;
-      font-size:10.5px; font-weight:600; letter-spacing:.3px;
-      background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
-      border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.9);
+    /* processing overlay */
+    .comm-card-proc {
+      position: absolute; inset: 0;
+      background: rgba(9,9,14,.65); backdrop-filter: blur(3px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 7px;
     }
-    .card-type-badge.ai { background:rgba(79,110,247,.6); border-color:rgba(79,110,247,.4); }
-    .card-type-badge.capture { background:rgba(34,197,94,.45); border-color:rgba(34,197,94,.35); }
-
-    /* 3D preview icon */
-    .card-3d-badge {
-      position:absolute; top:10px; right:10px;
-      width:28px; height:28px; border-radius:8px;
-      background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
-      border:1px solid rgba(255,255,255,.12);
-      display:flex; align-items:center; justify-content:center;
-      color:rgba(255,255,255,.7); font-size:12px;
+    .spinner {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid var(--b0); border-top-color: var(--blue);
+      animation: spin .7s linear infinite;
     }
-
-    .card-body { padding:14px 16px 16px; }
-    .card-title { font-size:14px; font-weight:600; margin-bottom:8px; }
-
-    .card-meta { display:flex; align-items:center; justify-content:space-between; }
-    .card-author { display:flex; align-items:center; gap:6px; }
-    .card-avatar {
-      width:20px; height:20px; border-radius:50%;
-      font-size:10px; font-weight:600; color:#fff;
-      display:flex; align-items:center; justify-content:center;
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .proc-text { font-size: 11px; color: var(--t3); }
+    @keyframes blink {
+      0%,100%{opacity:.25} 40%{opacity:1}
     }
-    .card-author-name { font-size:12px; color:var(--text-2); }
-
-    .card-stats { display:flex; gap:10px; }
-    .card-stat {
-      display:flex; align-items:center; gap:4px;
-      font-size:11.5px; color:var(--text-3);
-    }
-    .card-stat svg { width:12px; height:12px; }
-
-    /* status overlay for processing cards */
-    .card-processing-overlay {
-      position:absolute; inset:0;
-      background:rgba(9,9,12,.65); backdrop-filter:blur(2px);
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:8px;
-    }
-    .card-spinner {
-      width:32px; height:32px; border-radius:50%;
-      border:2.5px solid var(--bg-element);
-      border-top-color:var(--accent);
-      animation:spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .card-processing-text { font-size:12px; color:var(--text-2); }
-
-    /* ══════════════════════════════════════
-       TOAST
-    ══════════════════════════════════════ */
-    .toast {
-      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
-      padding:11px 22px; border-radius:var(--r-md);
-      background:var(--bg-surface); border:1px solid var(--border-hover);
-      color:var(--text-1); font-size:13px; font-weight:500;
-      box-shadow:0 8px 32px rgba(0,0,0,.5);
-      z-index:1000; opacity:0;
-      transition:all .3s cubic-bezier(.4,0,.2,1);
-      white-space:nowrap; pointer-events:none;
-    }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-    /* ══════════════════════════════════════
-       UPLOAD PROGRESS (in card)
-    ══════════════════════════════════════ */
-    .upload-progress-bar {
-      height:3px; background:var(--bg-element); border-radius:2px;
-      margin-top:8px; overflow:hidden; display:none;
-    }
-    .upload-progress-bar.show { display:block; }
-    .upload-progress-fill {
-      height:100%;
-      background:linear-gradient(90deg, var(--accent), var(--accent2));
-      border-radius:2px; width:0;
-      transition:width .4s ease;
-    }
-
-    /* ── Animated dots ── */
-    @keyframes blink { 0%,100%{opacity:.2} 40%{opacity:1} }
-    .dots span { animation:blink 1.4s infinite both; }
+    .dots span { animation: blink 1.4s infinite both; }
     .dots span:nth-child(2){animation-delay:.2s}
     .dots span:nth-child(3){animation-delay:.4s}
 
-    /* ══════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════ */
-    @media(max-width:768px){
-      .main { padding:20px 16px 60px; }
-      .nav { padding:0 16px; }
-      .create-hd { padding:14px 16px; }
-      .create-inner { padding:16px 16px 20px; }
-      .nav-link { display:none; }
-      .cards-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+    /* ════════════════════════════════════
+       FLOATING PROJECTS PANEL
+    ════════════════════════════════════ */
+    .float-panel {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(16,18,30,.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--b1);
+      border-radius: var(--r-lg);
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      z-index: 100;
+      overflow: hidden;
+      animation: floatIn .4s .2s cubic-bezier(.22,.68,0,1.2) both;
+      transition: width .3s, height .3s;
     }
+    @keyframes floatIn {
+      from { opacity:0; transform: translateY(16px) scale(.95); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+
+    .float-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border-bottom: 1px solid var(--b0);
+    }
+    .float-hd-title { font-size: 11px; color: var(--t3); font-weight: 600; }
+    .float-hd-btn {
+      width: 18px; height: 18px; border-radius: 4px;
+      background: none; border: none; color: var(--t3);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; transition: all .15s;
+    }
+    .float-hd-btn:hover { color: var(--t1); }
+
+    .float-body {
+      padding: 8px; display: flex; gap: 6px;
+    }
+    .float-body.collapsed { display: none; }
+
+    .float-thumb {
+      width: 72px; height: 54px; border-radius: var(--r-sm);
+      overflow: hidden; flex-shrink: 0; position: relative; cursor: pointer;
+      border: 1px solid var(--b1); transition: border-color .15s;
+    }
+    .float-thumb:hover { border-color: var(--b2); }
+    .float-thumb-bg { width: 100%; height: 100%; }
+    .float-thumb-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 50%);
+    }
+    .float-thumb-status {
+      position: absolute; bottom: 4px; left: 5px;
+      font-size: 9px; color: rgba(255,255,255,.7);
+      display: flex; align-items: center; gap: 3px;
+    }
+    .float-status-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--green);
+    }
+    .float-status-dot.proc { background: var(--amber); animation: blink 1s infinite; }
+
+    /* ════════════════════════════════════
+       TOAST
+    ════════════════════════════════════ */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      padding: 9px 18px; border-radius: var(--r-md);
+      background: rgba(22,24,38,.95); border: 1px solid var(--b1);
+      color: var(--t1); font-size: 12px; font-weight: 500;
+      box-shadow: 0 8px 28px rgba(0,0,0,.5);
+      z-index: 1000; opacity: 0; pointer-events: none;
+      transition: all .28s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+    }
+    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 
 <body>
 
-<!-- ════════════════ NAV ════════════════ -->
-<nav class="nav">
-  <a class="nav-logo" href="#">
-    <div class="nav-logo-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sb">
+  <div class="sb-logo">
+    <span class="sb-logo-text">AHOLO</span>
+    <div class="sb-menu-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </div>
-    Aholo
-  </a>
-  <div class="nav-right">
-    <a class="nav-link" href="#">探索</a>
-    <a class="nav-link" href="#">我的项目</a>
-    <div class="nav-avatar">A</div>
   </div>
-</nav>
 
-<!-- ════════════════ MAIN ════════════════ -->
-<main class="main">
+  <button class="sb-create" onclick="expandPanel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    创建
+  </button>
 
-  <!-- ── CREATE SECTION ── -->
-  <section class="create-section open" id="createSection">
+  <nav class="sb-nav">
+    <a class="sb-item active" onclick="showToast('项目列表')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      项目
+    </a>
+    <a class="sb-item" id="sbCommunity" onclick="goToCommunity()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      社区
+    </a>
+  </nav>
 
-    <!-- header / toggle row -->
-    <div class="create-hd" onclick="toggleCreate()">
-      <div class="create-hd-left">
-        <div class="create-hd-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-               stroke="url(#grad1)" stroke-width="2.2">
-            <defs>
-              <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#4f6ef7"/>
-                <stop offset="100%" stop-color="#8b5cf6"/>
-              </linearGradient>
-            </defs>
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-        </div>
-        <div class="create-hd-text">
-          <div class="create-hd-title">开始创建</div>
-          <div class="create-hd-sub">拍摄素材重建 · 或用 AI 直接生成 3D 场景</div>
-        </div>
+  <div class="sb-foot">
+    <div class="sb-credits">
+      <div class="sb-credits-dot"></div>
+      <span><strong id="creditsNum">48932</strong> 积分</span>
+    </div>
+    <div class="sb-foot-item">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        帮助中心
       </div>
-      <div class="create-hd-right">
-        <span class="create-badge">NEW</span>
-        <div class="chevron-btn" id="chevronBtn">
-          <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </div>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </div>
+    <div class="sb-foot-item">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>186*x8sd</span>
+      </div>
+      <span class="sb-foot-tag">Free</span>
+    </div>
+    <div class="sb-foot-item">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        下载 App
       </div>
     </div>
+  </div>
+</aside>
 
-    <!-- collapsible body -->
-    <div class="create-body">
-      <div class="create-inner">
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main" id="mainArea">
 
-        <!-- mode pills -->
-        <div class="mode-row">
-          <button class="mode-pill active" id="pillCapture" onclick="setMode('capture')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            拍摄重建
-          </button>
-          <button class="mode-pill" id="pillAI" onclick="setMode('ai')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            AI 生成
-          </button>
-        </div>
+  <!-- HERO -->
+  <section class="hero" id="heroSection">
+    <!-- Aurora -->
+    <div class="aurora">
+      <div class="aurora-layer"></div>
+      <div class="aurora-layer"></div>
+      <div class="aurora-layer"></div>
+    </div>
 
-        <!-- ── CAPTURE PANEL ── -->
-        <div class="mode-panel active" id="panelCapture">
-          <div class="capture-wrap">
+    <!-- Slogan (TBD placeholder) -->
+    <h1 class="slogan" id="sloganText">高保真3D，从现实到想象</h1>
 
-            <div>
-              <!-- upload zone -->
-              <div class="upload-zone" id="uploadZone"
-                   onclick="triggerUpload()"
-                   ondragover="handleDragOver(event)"
-                   ondragleave="handleDragLeave(event)"
-                   ondrop="handleDrop(event)">
+    <!-- Creation Panel -->
+    <div class="panel" id="creationPanel">
 
-                <div class="upload-icon-wrap">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                </div>
-
-                <div class="upload-title">拖拽或点击上传素材</div>
-                <div class="upload-sub">支持连续视频或多角度图片序列</div>
-
-                <div class="upload-formats">
-                  <span class="fmt-tag">MP4</span>
-                  <span class="fmt-tag">MOV</span>
-                  <span class="fmt-tag">AVI</span>
-                  <span class="fmt-tag">JPG</span>
-                  <span class="fmt-tag">PNG</span>
-                  <span class="fmt-tag">HEIC</span>
-                  <span class="fmt-tag">WEBP</span>
-                </div>
-
-                <div class="upload-limits">
-                  视频：单文件 ≤ 2 GB · 时长建议 30 秒–5 分钟<br>
-                  图片：每次最多 200 张 · 单张 ≤ 20 MB
-                </div>
-
-                <input type="file" id="fileInput" multiple
-                       accept="video/mp4,video/quicktime,video/avi,image/jpeg,image/png,image/heic,image/webp"
-                       onchange="handleFileSelect(event)">
-              </div>
-
-              <!-- file selected bar -->
-              <div class="file-selected-bar" id="fileBar">
-                <div class="file-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                </div>
-                <div class="file-info">
-                  <div class="file-name" id="fileName">-</div>
-                  <div class="file-size" id="fileSize">-</div>
-                  <div class="upload-progress-bar show" id="uploadProgress">
-                    <div class="upload-progress-fill" id="uploadFill"></div>
-                  </div>
-                </div>
-                <button class="file-remove" onclick="removeFile()">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- shoot mode selection -->
-              <div class="shoot-section" id="shootSection">
-                <div class="shoot-label">选择拍摄方式</div>
-                <div class="shoot-cards">
-
-                  <div class="shoot-card" id="shootOrbit" onclick="selectShoot('orbit', this)">
-                    <div class="shoot-check">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                    <div class="shoot-card-icon">🔄</div>
-                    <div class="shoot-card-title">环拍物体</div>
-                    <div class="shoot-card-desc">围绕单件物品 360° 拍摄，适合产品、文物、模型</div>
-                  </div>
-
-                  <div class="shoot-card" id="shootIndoor" onclick="selectShoot('indoor', this)">
-                    <div class="shoot-check">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                    <div class="shoot-card-icon">🏠</div>
-                    <div class="shoot-card-title">室内行走拍摄</div>
-                    <div class="shoot-card-desc">在空间内缓慢行走录制，适合房间、商铺、展厅</div>
-                  </div>
-
-                  <div class="shoot-card" id="shootOutdoor" onclick="selectShoot('outdoor', this)">
-                    <div class="shoot-check">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                    <div class="shoot-card-icon">🌳</div>
-                    <div class="shoot-card-title">室外行走拍摄</div>
-                    <div class="shoot-card-desc">户外建筑物外立面或街景，适合建筑、庭院、遗址</div>
-                  </div>
-
-                </div>
-              </div>
-            </div><!-- /left col -->
-
-            <!-- options sidebar -->
-            <div class="options-box">
-              <div class="options-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M2 12h2m16 0h2M4.93 4.93l1.41 1.41M18.66 18.66l1.41 1.41M12 2v2m0 16v2"/>
-                </svg>
-                重建选项
-              </div>
-
-              <div class="opt-group">
-                <div class="opt-label">精度</div>
-                <div class="opt-btns">
-                  <button class="opt-btn" onclick="toggleOpt(this,'quality')">标准</button>
-                  <button class="opt-btn sel" onclick="toggleOpt(this,'quality')">高精</button>
-                  <button class="opt-btn" onclick="toggleOpt(this,'quality')">极致</button>
-                </div>
-              </div>
-
-              <div class="opt-group">
-                <div class="opt-label">输出格式</div>
-                <div class="opt-btns">
-                  <button class="opt-btn sel" onclick="toggleOpt(this,'format')">3DGS</button>
-                  <button class="opt-btn" onclick="toggleOpt(this,'format')">NeRF</button>
-                  <button class="opt-btn" onclick="toggleOpt(this,'format')">Mesh</button>
-                </div>
-              </div>
-
-              <div class="opt-group">
-                <div class="opt-label">附加选项</div>
-                <label class="opt-check-row checked" onclick="toggleCheck(this)">
-                  <div class="opt-check-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                  <span class="opt-check-text">生成预览视频</span>
-                </label>
-                <label class="opt-check-row checked" onclick="toggleCheck(this)">
-                  <div class="opt-check-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                  <span class="opt-check-text">点云质量分析</span>
-                </label>
-                <label class="opt-check-row" onclick="toggleCheck(this)">
-                  <div class="opt-check-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                  <span class="opt-check-text">自动去背景</span>
-                </label>
-              </div>
-
-              <button class="capture-start-btn" id="captureStartBtn"
-                      onclick="startCapture()" disabled>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2.5">
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                </svg>
-                开始重建
-              </button>
-            </div>
-
+      <!-- Tabs -->
+      <div class="panel-tabs">
+        <div class="ptab active" id="tabRebuild" onclick="setTab('rebuild')">
+          <div class="ptab-icon">📷</div>
+          <div class="ptab-text">
+            <div class="ptab-name">重建</div>
+            <div class="ptab-sub">拍摄素材 · 3DGS精准还原</div>
           </div>
-        </div><!-- /panelCapture -->
+        </div>
+        <div class="ptab" id="tabAI" onclick="setTab('ai')">
+          <div class="ptab-icon" style="font-size:15px;font-weight:700;letter-spacing:-.5px;color:var(--blue2);">A</div>
+          <div class="ptab-text">
+            <div class="ptab-name">AI 生成</div>
+            <div class="ptab-sub">图文驱动 · 3D世界一键生成</div>
+          </div>
+        </div>
+      </div>
 
-        <!-- ── AI PANEL ── -->
-        <div class="mode-panel" id="panelAI">
-          <div class="ai-wrap">
+      <!-- Panel body -->
+      <div class="panel-body">
 
-            <!-- left: prompt -->
-            <div>
-              <div class="ai-prompt-box">
-                <div class="ai-prompt-label">✦ 创意提示词</div>
-                <textarea class="ai-prompt-textarea" id="aiPrompt"
-                  rows="4"
-                  placeholder="描述你脑海中的三维世界——一座悬浮在云端的宫殿、一片发光的水晶洞穴、或是某个童年记忆里的角落…"
-                  oninput="updateCharCount()"></textarea>
-                <div class="ai-prompt-footer">
-                  <div class="ai-chips">
-                    <span class="ai-chip" onclick="fillPrompt('赛博朋克街道，霓虹灯雨夜')">赛博朋克街道</span>
-                    <span class="ai-chip" onclick="fillPrompt('古典中式庭院，晨雾缭绕')">中式庭院</span>
-                    <span class="ai-chip" onclick="fillPrompt('极简现代客厅，落地窗与阳光')">极简客厅</span>
-                    <span class="ai-chip" onclick="fillPrompt('深海珊瑚礁，五彩鱼群穿梭')">深海珊瑚</span>
-                  </div>
-                  <span class="ai-char-count" id="charCount">0 / 500</span>
-                </div>
-              </div>
+        <!-- ── REBUILD PANEL ── -->
+        <div class="tab-panel active" id="panelRebuild">
 
-              <!-- reference image -->
-              <div style="margin-top:16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                  <label class="ai-img-toggle" id="imgToggle" onclick="toggleImgUpload()">
-                    <div class="ai-img-toggle-box"></div>
-                    <span class="ai-img-toggle-label">参考图片（可选）</span>
-                  </label>
-                  <span style="font-size:11px;color:var(--text-3)">提供参考可大幅提升匹配度</span>
-                </div>
+          <!-- Upload zone -->
+          <div class="upload-zone" id="rebuildUploadZone"
+               onclick="triggerRebuildUpload()"
+               ondragover="e=>{e.preventDefault();document.getElementById('rebuildUploadZone').classList.add('drag-over')}"
+               ondragleave="document.getElementById('rebuildUploadZone').classList.remove('drag-over')"
+               ondrop="handleRebuildDrop(event)">
+            <input type="file" id="rebuildFileInput" multiple
+                   accept="video/mp4,video/quicktime,video/avi,image/jpeg,image/png,image/heic,image/webp,.insv,.ply,.spz"
+                   onchange="handleRebuildFiles(event)">
 
-                <div class="ai-img-upload" id="aiImgUpload" onclick="triggerImgUpload()">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 8px;">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <div class="uz-icons">
+              <div class="uz-icon">
+                <div class="uz-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  <div class="ai-img-upload-text">上传一张参考图片</div>
-                  <input type="file" id="aiImgInput" accept="image/*"
-                         style="display:none" onchange="previewAIImage(event)">
                 </div>
-
-                <div class="ai-img-preview" id="aiImgPreview">
-                  <img id="aiImgPreviewImg" src="" alt="">
-                  <button class="ai-img-preview-remove" onclick="removeAIImage()">×</button>
+                <span>图片</span>
+              </div>
+              <div class="uz-icon">
+                <div class="uz-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <polygon points="23 7 16 12 23 17 23 7"/>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                  </svg>
                 </div>
+                <span>视频</span>
+              </div>
+              <div class="uz-icon">
+                <div class="uz-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </div>
+                <span>360°</span>
               </div>
             </div>
 
-            <!-- right: options + generate -->
-            <div class="ai-right">
-              <div class="ai-options-box">
-                <div class="ai-opt-title">生成设置</div>
+            <div class="uz-title">拖拽或点击上传素材</div>
+            <div class="uz-formats">
+              支持上传：图片（20~2000张全角度照片）、视频（1~3个视频或全景图）<br>
+              Insta360文件（.insv）、3D点云文件（.ply/.spz）
+            </div>
+            <div class="uz-guide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                <line x1="12" y1="12" x2="12" y2="16"/>
+              </svg>
+              拍摄指南与限制
+            </div>
+          </div>
 
-                <div class="opt-group">
-                  <div class="opt-label">场景类型</div>
-                  <div class="opt-btns">
-                    <button class="opt-btn sel" onclick="toggleOpt(this,'scene')">物体</button>
-                    <button class="opt-btn" onclick="toggleOpt(this,'scene')">室内</button>
-                    <button class="opt-btn" onclick="toggleOpt(this,'scene')">室外</button>
-                  </div>
-                </div>
+          <!-- File selected bar -->
+          <div class="file-bar" id="rebuildFileBar">
+            <div class="file-bar-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="file-bar-info">
+              <div class="file-bar-name" id="rebuildFileName">-</div>
+              <div class="file-bar-size" id="rebuildFileSize">-</div>
+              <div class="file-bar-prog">
+                <div class="file-bar-fill" id="rebuildFileFill"></div>
+              </div>
+            </div>
+            <button class="file-bar-rm" onclick="removeRebuildFile()">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
 
-                <div class="opt-group">
-                  <div class="opt-label">输出格式</div>
-                  <div class="opt-btns">
-                    <button class="opt-btn sel" onclick="toggleOpt(this,'aiformat')">3DGS</button>
-                    <button class="opt-btn" onclick="toggleOpt(this,'aiformat')">Mesh</button>
-                  </div>
-                </div>
+          <!-- Type selector (appears after upload) -->
+          <div class="type-section" id="typeSec">
+            <div class="type-label">选择拍摄方式</div>
+            <div class="type-row">
 
-                <div class="opt-group">
-                  <div class="opt-label">附加选项</div>
-                  <label class="opt-check-row checked" onclick="toggleCheck(this)">
-                    <div class="opt-check-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                    <span class="opt-check-text">生成预览视频</span>
-                  </label>
-                  <label class="opt-check-row" onclick="toggleCheck(this)">
-                    <div class="opt-check-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                    <span class="opt-check-text">多视角渲染图</span>
-                  </label>
+              <div class="type-btn" id="typeOrbit" onclick="selectType('orbit',this)">
+                <div class="type-check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
                 </div>
+                <div class="type-btn-icon">🔄</div>
+                <div class="type-btn-name">环拍物体</div>
+                <div class="type-btn-sub">聚焦拍摄</div>
               </div>
 
-              <button class="ai-generate-btn" onclick="startAIGenerate()">
+              <div class="type-btn" id="typeIndoor" onclick="selectType('indoor',this)">
+                <div class="type-check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div class="type-btn-icon">🏠</div>
+                <div class="type-btn-name">室内</div>
+                <div class="type-btn-sub">行走拍摄</div>
+              </div>
+
+              <div class="type-btn" id="typeOutdoor" onclick="selectType('outdoor',this)">
+                <div class="type-check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div class="type-btn-icon">🌳</div>
+                <div class="type-btn-name">室外</div>
+                <div class="type-btn-sub">行走拍摄</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Options row -->
+          <div class="opts-row">
+            <div class="opts-left">
+              <button class="opt-pill active" id="optStd"
+                      onclick="toggleQuality(this,'std')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 2v3m0 14v3M4.22 4.22l2.12 2.12m11.31 11.31 2.12 2.12M2 12h3m14 0h3M4.22 19.78l2.12-2.12m11.31-11.31 2.12-2.12"/>
                 </svg>
-                立即生成
+                标准
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:9px;height:9px;">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </button>
+              <button class="opt-pill" id="optRect"
+                      onclick="toggleRect(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                矩形
+              </button>
+            </div>
+            <button class="btn-create" id="btnCreate" onclick="startRebuild()">创建</button>
+          </div>
+        </div><!-- /panelRebuild -->
 
-              <p style="font-size:11px;color:var(--text-3);text-align:center;line-height:1.6;padding:0 4px">
-                生成时间约 2–8 分钟<br>完成后将通知你查看结果
-              </p>
+        <!-- ── AI PANEL ── -->
+        <div class="tab-panel" id="panelAI">
+
+          <!-- Examples strip -->
+          <div class="ai-examples">
+            <span class="ai-examples-label">试试示例</span>
+            <div class="ai-example-imgs" id="exampleImgs">
+              <!-- rendered by JS -->
+            </div>
+            <button class="ai-next-batch" onclick="nextBatch()">↺ 下一批</button>
+          </div>
+
+          <!-- Main area: image + prompt -->
+          <div class="ai-main">
+            <!-- Image (primary) -->
+            <div class="ai-img-zone" id="aiImgZone" onclick="triggerAIImgUpload()">
+              <input type="file" id="aiImgInput" accept="image/*"
+                     onchange="previewAIImg(event)">
+              <div class="ai-img-zone-default">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                     style="width:28px;height:28px;color:var(--t3);display:block;margin:0 auto 7px;">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <div class="ai-img-zone-text">上传图片<br>（可选，增强匹配度）</div>
+              </div>
+
+              <!-- example large preview -->
+              <div class="ai-example-preview" id="aiExamplePreview"></div>
+
+              <!-- uploaded preview -->
+              <div class="ai-img-preview" id="aiImgPreviewWrap">
+                <img id="aiImgPreviewImg" src="" alt="">
+                <button class="ai-img-remove" onclick="removeAIImg(event)">×</button>
+              </div>
             </div>
 
+            <!-- Prompt area -->
+            <div class="ai-prompt-area">
+              <div class="ai-prompt-box">
+                <div class="ai-prompt-hint">PROMPT（可选）</div>
+                <textarea class="ai-prompt-textarea" id="aiPromptTA"
+                  placeholder="描述场景或物体风格，留空时 AI 将根据图片自动理解…"
+                  oninput="updateAIChar()"></textarea>
+                <div class="ai-prompt-footer">
+                  <button class="ai-autofill" onclick="autoFill()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    自动填写
+                  </button>
+                  <span class="ai-char-count" id="aiCharCount">0/500</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action row -->
+          <div class="ai-actions">
+            <div class="ai-credits">
+              <div class="ai-credits-dot"></div>
+              <span><strong id="aiCredits">20</strong> 积分/次</span>
+            </div>
+            <button class="btn-generate" onclick="startAIGenerate()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              生成
+            </button>
           </div>
         </div><!-- /panelAI -->
 
-      </div>
-    </div>
+      </div><!-- /panel-body -->
+    </div><!-- /panel -->
   </section>
 
-  <!-- ── COMMUNITY SECTION ── -->
-  <section>
-    <div class="section-hd">
-      <div class="section-title-wrap">
-        <h2 class="section-title">社区广场</h2>
-        <span class="section-count">2,847 个场景</span>
-      </div>
-      <div class="section-right">
-        <button class="filter-btn active" onclick="setFilter(this)">全部</button>
-        <button class="filter-btn" onclick="setFilter(this)">AI 生成</button>
-        <button class="filter-btn" onclick="setFilter(this)">拍摄重建</button>
-        <button class="filter-btn" onclick="setFilter(this)">最新</button>
+  <!-- COMMUNITY -->
+  <section class="community" id="communitySection">
+    <div class="comm-hd">
+      <span class="comm-hd-title" id="commTitle">模型</span>
+      <div class="comm-filters">
+        <button class="comm-filter active" id="filtAll" onclick="setCommFilter('all',this)">全部</button>
+        <button class="comm-filter" id="filtRebuild" onclick="setCommFilter('rebuild',this)">重建</button>
+        <button class="comm-filter" id="filtAI" onclick="setCommFilter('ai',this)">AI 生成</button>
       </div>
     </div>
-
-    <div class="cards-grid" id="cardsGrid">
-      <!-- rendered by JS -->
-    </div>
+    <div class="comm-grid" id="commGrid"></div>
   </section>
 
 </main>
 
-<!-- ── TOAST ── -->
+<!-- FLOATING PROJECTS -->
+<div class="float-panel" id="floatPanel">
+  <div class="float-hd">
+    <span class="float-hd-title">最近项目</span>
+    <button class="float-hd-btn" id="floatToggle" onclick="toggleFloat()">−</button>
+  </div>
+  <div class="float-body" id="floatBody">
+    <div class="float-thumb" onclick="showToast('打开: 客厅场景')">
+      <div class="float-thumb-bg" style="background:linear-gradient(135deg,#11998e,#38ef7d);width:100%;height:100%;"></div>
+      <div class="float-thumb-overlay"></div>
+      <div class="float-thumb-status">
+        <div class="float-status-dot"></div>
+        <span style="font-size:9px;">完成</span>
+      </div>
+    </div>
+    <div class="float-thumb" onclick="showToast('打开: AI花瓶')">
+      <div class="float-thumb-bg" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:100%;height:100%;"></div>
+      <div class="float-thumb-overlay"></div>
+      <div class="float-thumb-status">
+        <div class="float-status-dot proc"></div>
+        <span style="font-size:9px;">生成中</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 /* ══════════════════════════════════
    STATE
 ══════════════════════════════════ */
-let currentMode   = 'capture';
-let selectedShoot = null;
-let fileSelected  = false;
+let activeTab = 'rebuild';
+let rebuildFileSelected = false;
+let rebuildTypeSelected = null;
+let commFilter = 'all';
+let floatCollapsed = false;
+let selectedExample = null;
 
 /* ══════════════════════════════════
-   TOGGLE PANEL
+   INIT: URL hash support
 ══════════════════════════════════ */
-function toggleCreate() {
-  document.getElementById('createSection').classList.toggle('open');
-}
+(function init() {
+  if (location.hash === '#ai') setTab('ai');
+  renderExamples(0);
+  renderComm();
+})();
 
 /* ══════════════════════════════════
-   MODE SWITCH
+   TAB SWITCH
 ══════════════════════════════════ */
-function setMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('pill' + (mode === 'capture' ? 'Capture' : 'AI')).classList.add('active');
-  document.getElementById('panel' + (mode === 'capture' ? 'Capture' : 'AI')).classList.add('active');
-}
+const SLOGANS = {
+  rebuild: '高保真复刻真实的3D物体及空间',
+  ai: '一句创意 / 一张图片，生成高保真3D空间'
+};
 
-/* ══════════════════════════════════
-   FILE UPLOAD
-══════════════════════════════════ */
-function triggerUpload() { document.getElementById('fileInput').click(); }
+function setTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
-function handleFileSelect(e) {
-  const files = e.target.files;
-  if (!files || files.length === 0) return;
-  showFile(files[0], files.length > 1 ? files.length + ' 个文件' : null);
-}
+  document.getElementById('tab' + (tab==='rebuild'?'Rebuild':'AI')).classList.add('active');
+  document.getElementById('panel' + (tab==='rebuild'?'Rebuild':'AI')).classList.add('active');
 
-function showFile(file, multiLabel) {
-  fileSelected = true;
-  const bar = document.getElementById('fileBar');
-  bar.classList.add('show');
-  document.getElementById('fileName').textContent =
-    multiLabel || file.name;
-  document.getElementById('fileSize').textContent =
-    multiLabel
-      ? '共 ' + multiLabel.replace(' 个文件','') + ' 个文件'
-      : formatSize(file.size);
+  document.getElementById('sloganText').textContent = SLOGANS[tab];
 
-  // fake upload progress
-  const fill = document.getElementById('uploadFill');
-  fill.style.width = '0%';
-  let pct = 0;
-  const iv = setInterval(() => {
-    pct += Math.random() * 18;
-    if (pct >= 100) { pct = 100; clearInterval(iv); }
-    fill.style.width = pct + '%';
-    if (pct >= 100) {
-      setTimeout(() => {
-        document.getElementById('uploadProgress').style.display = 'none';
-        // show shoot mode
-        document.getElementById('shootSection').classList.add('show');
-      }, 400);
-    }
-  }, 120);
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024)       return bytes + ' B';
-  if (bytes < 1048576)    return (bytes/1024).toFixed(1) + ' KB';
-  if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
-  return (bytes/1073741824).toFixed(2) + ' GB';
-}
-
-function removeFile() {
-  fileSelected = false; selectedShoot = null;
-  document.getElementById('fileBar').classList.remove('show');
-  document.getElementById('fileInput').value = '';
-  document.getElementById('shootSection').classList.remove('show');
-  document.querySelectorAll('.shoot-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('captureStartBtn').disabled = true;
-  document.getElementById('uploadProgress').style.display = 'block';
-  document.getElementById('uploadFill').style.width = '0';
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('uploadZone').classList.add('drag-over');
-}
-function handleDragLeave(e) {
-  document.getElementById('uploadZone').classList.remove('drag-over');
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('uploadZone').classList.remove('drag-over');
-  const files = e.dataTransfer.files;
-  if (files.length > 0) showFile(files[0], files.length > 1 ? files.length + ' 个文件' : null);
-}
-
-/* ══════════════════════════════════
-   SHOOT MODE
-══════════════════════════════════ */
-function selectShoot(mode, el) {
-  document.querySelectorAll('.shoot-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedShoot = mode;
-  document.getElementById('captureStartBtn').disabled = false;
-}
-
-/* ══════════════════════════════════
-   OPTIONS
-══════════════════════════════════ */
-function toggleOpt(btn, group) {
-  btn.closest('.opt-btns').querySelectorAll('.opt-btn')
-     .forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
-}
-
-function toggleCheck(label) {
-  label.classList.toggle('checked');
-}
-
-/* ══════════════════════════════════
-   START CAPTURE
-══════════════════════════════════ */
-function startCapture() {
-  if (!fileSelected || !selectedShoot) return;
-  toast('上传成功，正在排队重建…');
-  setTimeout(() => {
-    toast('✓ 已加入队列，预计 3–8 分钟完成');
-    addProcessingCard();
-  }, 1200);
-  // collapse panel
-  setTimeout(() => {
-    document.getElementById('createSection').classList.remove('open');
-  }, 1600);
-}
-
-/* ══════════════════════════════════
-   AI IMAGE
-══════════════════════════════════ */
-function toggleImgUpload() {
-  const toggle = document.getElementById('imgToggle');
-  toggle.classList.toggle('on');
-  const upload = document.getElementById('aiImgUpload');
-  const preview = document.getElementById('aiImgPreview');
-  if (toggle.classList.contains('on')) {
-    if (!preview.classList.contains('show')) upload.classList.add('show');
-  } else {
-    upload.classList.remove('show');
-    preview.classList.remove('show');
+  // req 2c: switching to AI → sync community filter to AI (not reverse)
+  if (tab === 'ai') {
+    setCommFilter('ai', document.getElementById('filtAI'));
   }
 }
 
-function triggerImgUpload() { document.getElementById('aiImgInput').click(); }
+/* ══════════════════════════════════
+   PANEL EXPAND
+══════════════════════════════════ */
+function expandPanel() {
+  document.getElementById('heroSection').scrollIntoView({ behavior:'smooth' });
+  document.getElementById('creationPanel').style.animation = 'none';
+  requestAnimationFrame(() => {
+    document.getElementById('creationPanel').style.animation = 'panelIn .4s cubic-bezier(.22,.68,0,1.2) both';
+  });
+}
 
-function previewAIImage(e) {
+function goToCommunity() {
+  document.getElementById('communitySection').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ══════════════════════════════════
+   REBUILD – FILE
+══════════════════════════════════ */
+function triggerRebuildUpload() { document.getElementById('rebuildFileInput').click(); }
+
+function handleRebuildFiles(e) {
+  const files = e.target.files;
+  if (!files || !files.length) return;
+  showRebuildFile(files[0], files.length > 1 ? files.length : null);
+}
+
+function handleRebuildDrop(e) {
+  e.preventDefault();
+  document.getElementById('rebuildUploadZone').classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) showRebuildFile(files[0], files.length > 1 ? files.length : null);
+}
+
+function showRebuildFile(file, count) {
+  rebuildFileSelected = true;
+  const bar = document.getElementById('rebuildFileBar');
+  bar.classList.add('show');
+  document.getElementById('rebuildFileName').textContent =
+    count ? count + ' 个文件' : file.name;
+  document.getElementById('rebuildFileSize').textContent =
+    count ? '已选择 ' + count + ' 个文件' : fmtSize(file.size);
+
+  // simulate upload progress
+  const fill = document.getElementById('rebuildFileFill');
+  fill.style.width = '0';
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random() * 22;
+    if (p >= 100) { p = 100; clearInterval(iv); showTypeSelector(); }
+    fill.style.width = p + '%';
+  }, 100);
+}
+
+function showTypeSelector() {
+  document.getElementById('typeSec').classList.add('show');
+  updateCreateBtn();
+}
+
+function removeRebuildFile() {
+  rebuildFileSelected = false; rebuildTypeSelected = null;
+  document.getElementById('rebuildFileBar').classList.remove('show');
+  document.getElementById('rebuildFileInput').value = '';
+  document.getElementById('typeSec').classList.remove('show');
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('rebuildFileFill').style.width = '0';
+  updateCreateBtn();
+}
+
+/* ══════════════════════════════════
+   REBUILD – TYPE
+══════════════════════════════════ */
+function selectType(type, el) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  rebuildTypeSelected = type;
+  updateCreateBtn();
+}
+
+function updateCreateBtn() {
+  const btn = document.getElementById('btnCreate');
+  const ready = rebuildFileSelected && rebuildTypeSelected;
+  btn.classList.toggle('ready', !!ready);
+}
+
+/* ══════════════════════════════════
+   REBUILD – OPTIONS
+══════════════════════════════════ */
+function toggleQuality(btn) {
+  // future: show quality options
+  showToast('精度选项（开发中）');
+}
+function toggleRect(btn) {
+  btn.classList.toggle('active');
+}
+
+/* ══════════════════════════════════
+   REBUILD – SUBMIT
+══════════════════════════════════ */
+function startRebuild() {
+  showToast('已提交，正在排队重建…');
+  setTimeout(() => showToast('✓ 任务已加入队列，预计 3–8 分钟'), 1200);
+  addCommCard({ type:'rebuild', title:'我的新重建项目', processing:true });
+  addFloatThumb('rebuild');
+}
+
+/* ══════════════════════════════════
+   AI – EXAMPLES
+══════════════════════════════════ */
+const EXAMPLE_BATCHES = [
+  [
+    { emoji:'🌿', label:'盆景树桩', grad:'linear-gradient(135deg,#134e4a,#4ade80)' },
+    { emoji:'👧', label:'卡通女孩', grad:'linear-gradient(135deg,#be123c,#fb7185)' },
+    { emoji:'⚔️', label:'盔甲武士', grad:'linear-gradient(135deg,#1e3a5f,#60a5fa)' },
+    { emoji:'🏺', label:'陶瓷花瓶', grad:'linear-gradient(135deg,#7c2d12,#fb923c)' },
+    { emoji:'🏮', label:'木质灯柱', grad:'linear-gradient(135deg,#422006,#fbbf24)' },
+  ],
+  [
+    { emoji:'🚀', label:'飞船', grad:'linear-gradient(135deg,#1e1b4b,#818cf8)' },
+    { emoji:'🏰', label:'城堡', grad:'linear-gradient(135deg,#374151,#9ca3af)' },
+    { emoji:'🌊', label:'珊瑚礁', grad:'linear-gradient(135deg,#0c4a6e,#38bdf8)' },
+    { emoji:'🦋', label:'蝴蝶标本', grad:'linear-gradient(135deg,#14532d,#86efac)' },
+    { emoji:'🎸', label:'电吉他', grad:'linear-gradient(135deg,#4a044e,#e879f9)' },
+  ],
+];
+let batchIdx = 0;
+
+function renderExamples(idx) {
+  const batch = EXAMPLE_BATCHES[idx % EXAMPLE_BATCHES.length];
+  const container = document.getElementById('exampleImgs');
+  container.innerHTML = batch.map((ex, i) => `
+    <div class="ai-example-img" onclick="selectExample(${idx},${i})" title="${ex.label}">
+      <div class="thumb" style="background:${ex.grad};">${ex.emoji}</div>
+    </div>`).join('');
+}
+
+function nextBatch() {
+  batchIdx = (batchIdx + 1) % EXAMPLE_BATCHES.length;
+  renderExamples(batchIdx);
+  selectedExample = null;
+  document.getElementById('aiExamplePreview').textContent = '';
+  document.getElementById('aiImgZone').classList.remove('has-example');
+}
+
+function selectExample(bIdx, imgIdx) {
+  // deselect all
+  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
+  const els = document.querySelectorAll('.ai-example-img');
+  if (els[imgIdx]) els[imgIdx].classList.add('selected');
+
+  const batch = EXAMPLE_BATCHES[bIdx % EXAMPLE_BATCHES.length];
+  const ex = batch[imgIdx];
+  selectedExample = ex;
+
+  // show emoji preview in upload zone
+  const previewEl = document.getElementById('aiExamplePreview');
+  previewEl.textContent = ex.emoji;
+  previewEl.style.fontSize = '64px';
+  document.getElementById('aiImgZone').classList.add('has-example');
+
+  // clear uploaded image
+  document.getElementById('aiImgPreviewWrap').classList.remove('show');
+  document.getElementById('aiImgPreviewImg').src = '';
+
+  // auto-fill prompt
+  document.getElementById('aiPromptTA').value = ex.label;
+  updateAIChar();
+}
+
+/* ══════════════════════════════════
+   AI – IMAGE UPLOAD
+══════════════════════════════════ */
+function triggerAIImgUpload() {
+  document.getElementById('aiImgInput').click();
+}
+
+function previewAIImg(e) {
   const file = e.target.files[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
   document.getElementById('aiImgPreviewImg').src = url;
-  document.getElementById('aiImgUpload').classList.remove('show');
-  document.getElementById('aiImgPreview').classList.add('show');
+  document.getElementById('aiImgPreviewWrap').classList.add('show');
+  document.getElementById('aiImgZone').classList.remove('has-example');
+  document.getElementById('aiExamplePreview').textContent = '';
+  // deselect examples
+  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
+  selectedExample = null;
 }
 
-function removeAIImage() {
-  document.getElementById('aiImgPreview').classList.remove('show');
+function removeAIImg(e) {
+  e.stopPropagation();
+  document.getElementById('aiImgPreviewWrap').classList.remove('show');
   document.getElementById('aiImgPreviewImg').src = '';
   document.getElementById('aiImgInput').value = '';
-  const toggle = document.getElementById('imgToggle');
-  if (toggle.classList.contains('on')) {
-    document.getElementById('aiImgUpload').classList.add('show');
-  }
 }
 
 /* ══════════════════════════════════
-   AI PROMPT
+   AI – PROMPT
 ══════════════════════════════════ */
-function updateCharCount() {
-  const len = document.getElementById('aiPrompt').value.length;
-  document.getElementById('charCount').textContent = len + ' / 500';
+function updateAIChar() {
+  const len = document.getElementById('aiPromptTA').value.length;
+  document.getElementById('aiCharCount').textContent = len + '/500';
 }
 
-function fillPrompt(text) {
-  document.getElementById('aiPrompt').value = text;
-  updateCharCount();
-  document.getElementById('aiPrompt').focus();
+const AUTO_PROMPTS = [
+  '赛博朋克风格街道，霓虹灯雨夜，写实质感',
+  '极简北欧客厅，落地窗与晨光，白色系',
+  '古典中式庭院，青砖灰瓦，晨雾缭绕',
+  '深海珊瑚礁，五彩热带鱼，梦幻蓝光',
+];
+let apIdx = 0;
+
+function autoFill() {
+  document.getElementById('aiPromptTA').value = AUTO_PROMPTS[apIdx % AUTO_PROMPTS.length];
+  apIdx++;
+  updateAIChar();
 }
 
 /* ══════════════════════════════════
-   AI GENERATE
+   AI – GENERATE
 ══════════════════════════════════ */
 function startAIGenerate() {
-  const prompt = document.getElementById('aiPrompt').value.trim();
-  if (!prompt) {
-    toast('请输入创意描述~');
-    document.getElementById('aiPrompt').focus();
+  const prompt = document.getElementById('aiPromptTA').value.trim();
+  if (!prompt && !selectedExample) {
+    showToast('请上传参考图片或输入描述');
     return;
   }
-  toast('✦ AI 正在理解你的描述…');
-  setTimeout(() => {
-    toast('✓ 任务已提交，预计 5 分钟后完成');
-    addAICard(prompt);
-  }, 1200);
-  setTimeout(() => {
-    document.getElementById('createSection').classList.remove('open');
-  }, 1600);
-}
+  const credits = parseInt(document.getElementById('aiCredits').textContent) || 20;
+  document.getElementById('aiCredits').textContent = Math.max(0, credits - 20);
+  document.getElementById('creditsNum').textContent =
+    Math.max(0, parseInt(document.getElementById('creditsNum').textContent) - 20);
 
-/* ══════════════════════════════════
-   FILTER
-══════════════════════════════════ */
-function setFilter(btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
+  showToast('✦ 正在理解你的描述…');
+  setTimeout(() => showToast('✓ 已提交！预计 3–5 分钟后完成'), 1300);
 
-/* ══════════════════════════════════
-   TOAST
-══════════════════════════════════ */
-let toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  const title = prompt || (selectedExample ? selectedExample.label : 'AI生成场景');
+  addCommCard({ type:'ai', title: title.length>14 ? title.slice(0,14)+'…' : title, processing:true });
+  addFloatThumb('ai');
+
+  // reset
+  document.getElementById('aiPromptTA').value = '';
+  updateAIChar();
+  document.getElementById('aiImgPreviewWrap').classList.remove('show');
+  document.getElementById('aiImgPreviewImg').src = '';
+  document.getElementById('aiImgZone').classList.remove('has-example');
+  document.getElementById('aiExamplePreview').textContent = '';
+  document.querySelectorAll('.ai-example-img').forEach(el => el.classList.remove('selected'));
+  selectedExample = null;
 }
 
 /* ══════════════════════════════════
    COMMUNITY DATA
 ══════════════════════════════════ */
-const GRADIENTS = [
-  'linear-gradient(135deg,#667eea 0%,#764ba2 100%)',
-  'linear-gradient(135deg,#11998e 0%,#38ef7d 100%)',
-  'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)',
-  'linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)',
-  'linear-gradient(135deg,#f7971e 0%,#ffd200 100%)',
-  'linear-gradient(135deg,#f953c6 0%,#b91d73 100%)',
-  'linear-gradient(135deg,#43e97b 0%,#38f9d7 100%)',
-  'linear-gradient(135deg,#fa709a 0%,#fee140 100%)',
-  'linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%)',
-  'linear-gradient(135deg,#fccb90 0%,#d57eeb 100%)',
-  'linear-gradient(135deg,#e0c3fc 0%,#8ec5fc 100%)',
-  'linear-gradient(135deg,#96fbc4 0%,#f9f586 100%)',
+const GRADS = [
+  'linear-gradient(135deg,#134e4a 0%,#4ade80 100%)',
+  'linear-gradient(135deg,#0c4a6e 0%,#38bdf8 100%)',
+  'linear-gradient(135deg,#7e22ce 0%,#e879f9 100%)',
+  'linear-gradient(135deg,#7c2d12 0%,#fb923c 100%)',
+  'linear-gradient(135deg,#1e1b4b 0%,#818cf8 100%)',
+  'linear-gradient(135deg,#be123c 0%,#fb7185 100%)',
+  'linear-gradient(135deg,#14532d 0%,#86efac 100%)',
+  'linear-gradient(135deg,#1e3a5f 0%,#60a5fa 100%)',
+  'linear-gradient(135deg,#422006 0%,#fbbf24 100%)',
+  'linear-gradient(135deg,#4a044e 0%,#e879f9 100%)',
+];
+const AVS = [
+  {bg:'#2563eb',t:'M'},{bg:'#059669',t:'L'},{bg:'#d97706',t:'S'},
+  {bg:'#dc2626',t:'R'},{bg:'#7c3aed',t:'Z'},{bg:'#0891b2',t:'K'},
 ];
 
-const AVATARS = [
-  {bg:'#4f6ef7',text:'M'},
-  {bg:'#22c55e',text:'L'},
-  {bg:'#f59e0b',text:'S'},
-  {bg:'#ef4444',text:'R'},
-  {bg:'#8b5cf6',text:'Z'},
-  {bg:'#06b6d4',text:'K'},
-  {bg:'#ec4899',text:'Y'},
-  {bg:'#10b981',text:'W'},
+let commData = [
+  {type:'rebuild',title:'小熊玩偶',author:'MingLi',views:4821,likes:312,grad:0},
+  {type:'rebuild',title:'破冰船全景',author:'SkyDrone',views:2104,likes:98,grad:1},
+  {type:'rebuild',title:'灯塔海岸',author:'ZeroFi',views:8830,likes:621,grad:2},
+  {type:'ai',title:'赛博街道',author:'RunLee',views:3317,likes:201,grad:3},
+  {type:'ai',title:'星际飞船',author:'Studio_K',views:1997,likes:143,grad:4},
+  {type:'rebuild',title:'峡湾景观',author:'YuWang',views:6644,likes:489,grad:5},
+  {type:'ai',title:'红玫瑰特写',author:'MingLi',views:1122,likes:67,grad:6},
+  {type:'rebuild',title:'博物馆圆厅',author:'ZeroFi',views:9201,likes:734,grad:7},
+  {type:'ai',title:'古典茶馆',author:'RunLee',views:2780,likes:189,grad:8},
+  {type:'ai',title:'炫彩机甲',author:'SkyDrone',views:5540,likes:377,grad:9},
 ];
 
-const communityData = [
-  { title:'天空之城悬浮庭院', type:'ai',      author:'MingLi',   views:4821, likes:312, grad:0 },
-  { title:'工作室全景扫描',    type:'capture', author:'SkyDrone',  views:2104, likes:98,  grad:1 },
-  { title:'水晶洞穴探索',      type:'ai',      author:'ZeroFi',   views:8830, likes:621, grad:2 },
-  { title:'老街巷弄实景重建',  type:'capture', author:'RunLee',   views:3317, likes:201, grad:3 },
-  { title:'极简白色展厅',      type:'ai',      author:'Studio_K', views:1997, likes:143, grad:4 },
-  { title:'热带雨林穿越',      type:'ai',      author:'YuWang',   views:6644, likes:489, grad:5 },
-  { title:'地下车库全景',      type:'capture', author:'MingLi',   views:1122, likes:67,  grad:6 },
-  { title:'海底珊瑚王国',      type:'ai',      author:'ZeroFi',   views:9201, likes:734, grad:7 },
-  { title:'古镇茶馆实测',      type:'capture', author:'RunLee',   views:2780, likes:189, grad:8 },
-  { title:'废弃工厂探险',      type:'capture', author:'SkyDrone', views:5540, likes:377, grad:9 },
-  { title:'炫彩机甲战士',      type:'ai',      author:'Studio_K', views:12340, likes:901, grad:10 },
-  { title:'博物馆圆厅重建',    type:'capture', author:'YuWang',   views:4200, likes:265, grad:11 },
-];
-
-function fmtNum(n) {
-  return n >= 1000 ? (n/1000).toFixed(1) + 'k' : n;
+function setCommFilter(f, btn) {
+  commFilter = f;
+  document.querySelectorAll('.comm-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderComm();
 }
 
-function getAvatar(name) {
-  const idx = name.charCodeAt(0) % AVATARS.length;
-  return AVATARS[idx];
+function addCommCard(card) {
+  commData.unshift({ ...card, views:0, likes:0, grad: Math.floor(Math.random()*GRADS.length) });
+  renderComm();
 }
 
-function renderCards(data) {
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = data.map((d,i) => {
-    const av = getAvatar(d.author);
-    return `
-    <div class="project-card" onclick="openProject('${d.title}')">
-      <div class="card-thumb">
-        <div class="card-thumb-bg" style="background:${GRADIENTS[d.grad]};width:100%;height:100%;"></div>
-        <span class="card-type-badge ${d.type}">${d.type === 'ai' ? 'AI 生成' : '拍摄重建'}</span>
-        <div class="card-3d-badge">⬡</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title">${d.title}</div>
-        <div class="card-meta">
-          <div class="card-author">
-            <div class="card-avatar" style="background:${av.bg}">${av.text}</div>
-            <span class="card-author-name">${d.author}</span>
-          </div>
-          <div class="card-stats">
-            <span class="card-stat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              ${fmtNum(d.views)}
-            </span>
-            <span class="card-stat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              ${fmtNum(d.likes)}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
+function renderComm() {
+  const data = commFilter === 'all' ? commData
+             : commFilter === 'ai' ? commData.filter(d => d.type==='ai')
+             : commData.filter(d => d.type==='rebuild');
 
-function addProcessingCard() {
-  communityData.unshift({
-    title:'我的新场景 · 重建中',
-    type:'capture', author:'你',
-    views:0, likes:0,
-    grad: Math.floor(Math.random()*GRADIENTS.length),
-    processing:true
-  });
-  renderCommunity();
-}
+  document.getElementById('commTitle').textContent =
+    commFilter === 'all' ? '模型' : commFilter === 'ai' ? 'AI 生成' : '重建模型';
 
-function addAICard(prompt) {
-  communityData.unshift({
-    title: prompt.length > 18 ? prompt.slice(0,18)+'…' : prompt,
-    type:'ai', author:'你',
-    views:0, likes:0,
-    grad: Math.floor(Math.random()*GRADIENTS.length),
-    processing:true
-  });
-  renderCommunity();
-}
-
-function renderCommunity() {
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = communityData.map((d,i) => {
-    const av = getAvatar(d.author);
-    const processingOverlay = d.processing ? `
-      <div class="card-processing-overlay">
-        <div class="card-spinner"></div>
-        <div class="card-processing-text">生成中<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+  document.getElementById('commGrid').innerHTML = data.map(d => {
+    const av = AVS[d.author ? d.author.charCodeAt(0) % AVS.length : 0];
+    const proc = d.processing ? `
+      <div class="comm-card-proc">
+        <div class="spinner"></div>
+        <div class="proc-text">生成中<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
       </div>` : '';
     return `
-    <div class="project-card" onclick="${d.processing ? "toast('正在生成，请稍候')" : "openProject('"+d.title+"')"}">
-      <div class="card-thumb">
-        <div class="card-thumb-bg" style="background:${GRADIENTS[d.grad]};width:100%;height:100%;"></div>
-        <span class="card-type-badge ${d.type}">${d.type === 'ai' ? 'AI 生成' : '拍摄重建'}</span>
-        <div class="card-3d-badge">⬡</div>
-        ${processingOverlay}
+    <div class="comm-card" onclick="${d.processing?"showToast('正在生成，请稍候')":"showToast('打开: "+d.title+"')"}" >
+      <div class="comm-card-thumb">
+        <div class="comm-card-bg" style="background:${GRADS[d.grad]};width:100%;height:100%;"></div>
+        <span class="comm-card-tag ${d.type==='ai'?'ai-tag':''}">${d.type==='ai'?'AI 生成':'重建'}</span>
+        ${proc}
       </div>
-      <div class="card-body">
-        <div class="card-title">${d.title}</div>
-        <div class="card-meta">
-          <div class="card-author">
-            <div class="card-avatar" style="background:${av.bg}">${av.text}</div>
-            <span class="card-author-name">${d.author}</span>
+      <div class="comm-card-body">
+        <div class="comm-card-title">${d.title}</div>
+        <div class="comm-card-meta">
+          <div class="comm-card-author">
+            <div class="comm-card-av" style="background:${av.bg}">${av.t}</div>
+            <span class="comm-card-name">${d.author||'你'}</span>
           </div>
-          <div class="card-stats">
-            <span class="card-stat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              ${fmtNum(d.views)}
-            </span>
-            <span class="card-stat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              ${fmtNum(d.likes)}
-            </span>
-          </div>
+          <span class="comm-card-stat">${fmtN(d.views)} 浏览</span>
         </div>
       </div>
     </div>`;
   }).join('');
-}
-
-function openProject(title) {
-  toast('打开: ' + title);
 }
 
 /* ══════════════════════════════════
-   INIT
+   FLOATING PANEL
 ══════════════════════════════════ */
-renderCommunity();
+function toggleFloat() {
+  floatCollapsed = !floatCollapsed;
+  const body = document.getElementById('floatBody');
+  const btn = document.getElementById('floatToggle');
+  body.classList.toggle('collapsed', floatCollapsed);
+  btn.textContent = floatCollapsed ? '+' : '−';
+}
+
+function addFloatThumb(type) {
+  const body = document.getElementById('floatBody');
+  const div = document.createElement('div');
+  div.className = 'float-thumb';
+  div.onclick = () => showToast('打开项目');
+  const grad = type === 'ai'
+    ? 'linear-gradient(135deg,#7c3aed,#e879f9)'
+    : 'linear-gradient(135deg,#2563eb,#38bdf8)';
+  div.innerHTML = `
+    <div class="float-thumb-bg" style="background:${grad};width:100%;height:100%;"></div>
+    <div class="float-thumb-overlay"></div>
+    <div class="float-thumb-status">
+      <div class="float-status-dot proc"></div>
+      <span style="font-size:9px;">生成中</span>
+    </div>`;
+  body.insertBefore(div, body.firstChild);
+  // keep max 3
+  while (body.children.length > 3) body.removeChild(body.lastChild);
+}
+
+/* ══════════════════════════════════
+   UTILS
+══════════════════════════════════ */
+function fmtSize(bytes) {
+  if (bytes < 1048576)    return (bytes/1024).toFixed(0) + ' KB';
+  if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+  return (bytes/1073741824).toFixed(2) + ' GB';
+}
+function fmtN(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : n; }
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
 </script>
 </body>
 </html>
